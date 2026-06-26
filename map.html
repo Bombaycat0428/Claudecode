@@ -148,6 +148,13 @@
   }
   .search-msg.err  { color: #c05050; }
   .search-msg.info { color: var(--gray); }
+  .search-note {
+    margin-top: 5px;
+    font-size: 10px;
+    color: var(--gray);
+    opacity: 0.7;
+    line-height: 1.4;
+  }
 
   /* ── pin list ── */
   #pinList {
@@ -559,7 +566,7 @@
         </div>
         <div class="search-msg" id="searchMsg"></div>
       </form>
-      <span>検索できない場合もあります。</span>
+      <div class="search-note">※ 検索できない場合は地図を直接クリックしてピンを追加してください</div>
     </div>
 
     <div id="pinList">
@@ -846,6 +853,12 @@
 
   ['infoGas', 'infoParking', 'infoHighway'].forEach(id => {
     document.getElementById(id).addEventListener('input', calcCarTotal);
+  });
+
+  document.getElementById('infoTrainTotal').addEventListener('blur', () => {
+    const el  = document.getElementById('infoTrainTotal');
+    const num = parseYen(el.value);
+    el.value  = num > 0 ? num.toLocaleString('ja-JP') + ' 円' : '';
   });
 
   function closeInfoModal() {
