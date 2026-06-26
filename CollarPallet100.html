@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>カラー変換ツール - 100色</title>
+<title>カラー変換ツール - 30色</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --studio-bg: #eef5fb;
     --panel: #ffffff;
     --panel-edge: #d6e6f2;
     --ink: #2e3b47;
@@ -18,6 +17,20 @@
 
   * { box-sizing: border-box; }
 
+  /* 炭酸ドリンクのようなグラデーション背景（下＝深い水色 → 上＝ほぼ白） */
+  html {
+    min-height: 100%;
+    background: linear-gradient(to top,
+      #7ec8e3 0%,
+      #9fd8ee 12%,
+      #b9e6f6 28%,
+      #d0eefc 45%,
+      #e3f5fd 62%,
+      #f0f9fe 80%,
+      #f8fcff 100%
+    );
+  }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -25,10 +38,18 @@
     flex-direction: column;
     align-items: center;
     font-family: "Noto Sans JP", sans-serif;
-    background-color: var(--studio-bg);
-    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.9), transparent 70%);
+    background: transparent;
     color: var(--ink);
     padding: 24px 12px;
+  }
+
+  /* バブルキャンバス: html背景とbodyコンテンツの間に配置 */
+  #bubbleCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
   }
 
   h1 {
@@ -81,6 +102,7 @@
 </style>
 </head>
 <body>
+  <canvas id="bubbleCanvas"></canvas>
   <h1>Color Pallet 100</h1>
   <div class="bench" id="bench"></div>
   <p class="notice">キャッシュクリアすると消えます。</p>
@@ -93,6 +115,88 @@
 </template>
 
 <script>
+  // ── 炭酸バブルアニメーション ─────────────────────────
+  (function () {
+    const canvas = document.getElementById('bubbleCanvas');
+    const ctx = canvas.getContext('2d');
+    const COUNT = 85;
+    let bubbles = [];
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    class Bubble {
+      constructor(spread) {
+        this.reset(spread);
+      }
+
+      reset(spread) {
+        this.r     = 1.5 + Math.random() * 9;
+        this.x     = Math.random() * canvas.width;
+        this.y     = spread ? Math.random() * canvas.height : canvas.height + this.r + 4;
+        this.vy    = 0.22 + Math.random() * 0.65;
+        this.phase = Math.random() * Math.PI * 2;
+        this.freq  = 0.007 + Math.random() * 0.016;
+        this.amp   = 0.3 + Math.random() * 1.1;
+        this.alpha = 0.07 + Math.random() * 0.20;
+      }
+
+      update() {
+        this.y -= this.vy;
+        this.phase += this.freq;
+        this.x += Math.sin(this.phase) * this.amp;
+        if (this.y + this.r < 0) this.reset(false);
+      }
+
+      draw() {
+        /* 輪郭 */
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${this.alpha * 2.0})`;
+        ctx.lineWidth   = 0.9;
+        ctx.stroke();
+
+        /* 内側のふわっとした塗り */
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${this.alpha * 0.30})`;
+        ctx.fill();
+
+        /* 左上ハイライト（ガラス玉感） */
+        ctx.beginPath();
+        ctx.arc(
+          this.x - this.r * 0.28,
+          this.y - this.r * 0.28,
+          this.r * 0.26,
+          0, Math.PI * 2
+        );
+        ctx.fillStyle = `rgba(255,255,255,${this.alpha * 1.4})`;
+        ctx.fill();
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      resize();
+      bubbles.forEach(b => {
+        if (b.x > canvas.width) b.x = Math.random() * canvas.width;
+      });
+    });
+
+    resize();
+    /* 初期スプレッド: 最初からランダムY位置に散らして自然に見せる */
+    bubbles = Array.from({ length: COUNT }, () => new Bubble(true));
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bubbles.forEach(b => { b.update(); b.draw(); });
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+
+  // ── カラーパレット ────────────────────────────────────
   function hslToHex(h, s, l) {
     s /= 100; l /= 100;
     const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -100,20 +204,20 @@
     const m = l - c / 2;
     let r1, g1, b1;
 
-    if (h < 60) { r1 = c; g1 = x; b1 = 0; }
+    if (h < 60)       { r1 = c; g1 = x; b1 = 0; }
     else if (h < 120) { r1 = x; g1 = c; b1 = 0; }
     else if (h < 180) { r1 = 0; g1 = c; b1 = x; }
     else if (h < 240) { r1 = 0; g1 = x; b1 = c; }
     else if (h < 300) { r1 = x; g1 = 0; b1 = c; }
-    else { r1 = c; g1 = 0; b1 = x; }
+    else              { r1 = c; g1 = 0; b1 = x; }
 
     const toHex = v => Math.round((v + m) * 255).toString(16).padStart(2, '0');
     return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`;
   }
 
-  const COLOR_COUNT = 100;
+  const COLOR_COUNT    = 100;
   const DEFAULT_COLORS = Array.from({ length: COLOR_COUNT }, (_, i) => hslToHex((i * 360) / COLOR_COUNT, 65, 55));
-  const STORAGE_KEY = 'colorPallet3Colors';
+  const STORAGE_KEY    = 'colorPallet3Colors';
 
   function loadColors() {
     try {
@@ -131,10 +235,10 @@
     const template = document.getElementById('cardTemplate');
     const node = template.content.firstElementChild.cloneNode(true);
 
-    const preview = node.querySelector('[data-role="preview"]');
+    const preview     = node.querySelector('[data-role="preview"]');
     const colorPicker = node.querySelector('[data-role="colorPicker"]');
 
-    colorPicker.value = initialHex;
+    colorPicker.value        = initialHex;
     preview.style.background = initialHex;
 
     colorPicker.addEventListener('input', () => {
@@ -146,7 +250,7 @@
     return node;
   }
 
-  const bench = document.getElementById('bench');
+  const bench  = document.getElementById('bench');
   const colors = loadColors();
   colors.forEach((hex, index) => bench.appendChild(createCard(hex, index, colors)));
 </script>
