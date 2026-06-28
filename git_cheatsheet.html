@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git コマンド チートシート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:         #080c15;
+  --surface:    #0d1123;
+  --surface-up: #111729;
+  --border:     #192040;
+  --border-2:   #252e52;
+
+  --accent:     #7c67ee;
+  --accent-lo:  rgba(124,103,238,0.12);
+  --accent-mid: rgba(124,103,238,0.28);
+
+  --cmd:        #e879f9;
+  --learned-c:  #4ade80;
+  --learned-bg: rgba(74,222,128,0.05);
+
+  --danger:     #fb7185;
+  --danger-bg:  rgba(251,113,133,0.1);
+  --tip-c:      #67e8f9;
+  --tip-bg:     rgba(103,232,249,0.08);
+
+  --text:       #dde4f0;
+  --muted:      #8896b0;
+  --faint:      #36446a;
+
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --sans: 'Inter', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', system-ui, sans-serif;
+  --r: 10px;
+  --r-sm: 5px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, #1a2244 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+/* ── Header ── */
+header { margin-bottom: 2.5rem; }
+
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-brand { display: flex; align-items: center; gap: 1rem; }
+
+.git-logo {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(240,81,51,0.55));
+}
+
+.header-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--faint);
+  letter-spacing: 0.16em;
+  margin-bottom: 4px;
+}
+
+header h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.header-sub {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.header-stats { text-align: right; flex-shrink: 0; }
+
+.stat-count {
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.stat-sep { color: var(--faint); font-size: 1.3rem; }
+.stat-denom { color: var(--muted); }
+.stat-label { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
+
+/* ── Git graph progress chain ── */
+.git-graph {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.git-graph::-webkit-scrollbar { height: 2px; }
+.git-graph::-webkit-scrollbar-thumb { background: var(--border); border-radius: 1px; }
+
+.graph-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.graph-dot {
+  --pct: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) calc(var(--pct) * 360deg), var(--border-2) 0);
+  position: relative;
+  transition: transform 0.2s;
+  cursor: default;
+}
+.graph-dot::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.graph-node:hover .graph-dot { transform: scale(1.35); }
+.graph-node[data-complete="true"] .graph-dot {
+  background: var(--learned-c);
+  box-shadow: 0 0 8px rgba(74,222,128,0.5);
+}
+.graph-node[data-complete="true"] .graph-dot::after { background: var(--bg); }
+
+.graph-label {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.graph-node[data-complete="true"] .graph-label { color: var(--learned-c); }
+
+.graph-line {
+  height: 2px;
+  flex: 1;
+  min-width: 14px;
+  background: var(--border);
+  align-self: flex-start;
+  margin-top: 7px;
+  position: relative;
+  overflow: hidden;
+}
+.graph-line::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: calc(var(--filled, 0) * 100%);
+  background: linear-gradient(90deg, var(--accent), #9580ff);
+  transition: width 0.6s ease;
+}
+
+/* ── Cards ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.35s ease both;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.card:hover {
+  border-color: var(--border-2);
+  box-shadow: 0 0 0 1px var(--border-2), 0 8px 28px rgba(0,0,0,0.45);
+}
+.card.sortable-ghost { opacity: 0.25; }
+.card.sortable-drag {
+  box-shadow: 0 12px 40px rgba(124,103,238,0.35), 0 0 0 1px var(--accent);
+  opacity: 0.95;
+}
+
+/* ── Card header ── */
+.card-header {
+  background: var(--surface-up);
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  width: calc(var(--section-pct, 0) * 100%);
+  background: linear-gradient(90deg, var(--accent), #9580ff);
+  transition: width 0.5s ease;
+}
+.card-header:active { cursor: grabbing; }
+
+.card-header-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+.card-commit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--accent-mid);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.card[data-complete="true"] .card-commit-dot {
+  background: var(--learned-c);
+  box-shadow: 0 0 8px rgba(74,222,128,0.45);
+}
+
+.card-section-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.card-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.card-hash {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+}
+
+.drag-handle { font-size: 0.9rem; color: var(--faint); }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; }
+
+tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+tr:last-child { border-bottom: none; }
+tr:hover { background: var(--surface-up); }
+tr.learned { background: var(--learned-bg); }
+tr.learned:hover { background: rgba(74,222,128,0.08); }
+
+td { padding: 0.7rem 0.75rem; vertical-align: middle; }
+
+td.check-col {
+  width: 34px;
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 0.7rem 0.25rem 0.7rem 0.75rem;
+  color: var(--faint);
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-left-color 0.15s;
+}
+tr:hover td.check-col { border-left-color: rgba(232,121,249,0.35); color: var(--border-2); }
+tr.learned td.check-col { color: var(--learned-c); border-left-color: rgba(74,222,128,0.5); }
+
+td.cmd-col {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--cmd);
+  white-space: normal;
+  word-break: break-all;
+  width: 44%;
+  transition: color 0.15s;
+}
+tr.learned td.cmd-col { color: var(--learned-c); }
+
+td.desc-col {
+  font-size: 0.87rem;
+  color: var(--muted);
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+tr.learned td.desc-col { color: rgba(74,222,128,0.65); }
+
+td.del-col {
+  width: 32px;
+  text-align: center;
+  color: var(--faint);
+  font-size: 0.8rem;
+  padding: 0.7rem 0.5rem;
+  font-weight: 700;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+td.del-col:hover { color: var(--danger); background: var(--danger-bg); }
+
+/* ── Tags ── */
+.tag {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 600;
+  font-family: var(--sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+.tag.danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(251,113,133,0.2); }
+.tag.tip    { background: var(--tip-bg);    color: var(--tip-c);  border: 1px solid rgba(103,232,249,0.15); }
+
+/* ── Add section ── */
+.add-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.add-form {
+  padding: 1rem 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.add-form .field { display: flex; flex-direction: column; gap: 5px; }
+
+.add-form label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.add-form input,
+.add-form select {
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.add-form input:focus,
+.add-form select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-lo);
+}
+.add-form input.cmd-input { font-family: var(--mono); color: var(--cmd); width: 220px; }
+.add-form input.desc-input { width: 280px; }
+.add-form select { width: 200px; cursor: pointer; }
+.add-form select option { background: #111729; color: var(--text); }
+
+.add-form button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0.52rem 1.25rem;
+  font-size: 0.9rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.add-form button:hover { background: #6b57d9; box-shadow: 0 0 14px var(--accent-mid); }
+.add-form button:active { transform: scale(0.97); }
+
+/* ── Footer ── */
+footer {
+  margin-top: 2rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--faint);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+footer p {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+/* ── Focus ── */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.3rem; }
+  .stat-count { font-size: 1.5rem; }
+  .add-form input { width: 100% !important; }
+  .add-form select { width: 100%; }
+  .header-top { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="header-top">
+    <div class="header-brand">
+      <svg class="git-logo" viewBox="0 0 92 92" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#f05133" d="M90.156 41.965 50.036 1.848a5.913 5.913 0 0 0-8.368 0l-8.332 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.673 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66l-9.5-9.497V59.36a7.04 7.04 0 0 1 1.86 11.29 7.04 7.04 0 0 1-9.957 0 7.04 7.04 0 0 1 0-9.958 7.034 7.034 0 0 1 2.308-1.539V33.926a7.001 7.001 0 0 1-2.308-1.535 7.049 7.049 0 0 1-1.516-7.699L30.396 14.177 1.734 42.835a5.918 5.918 0 0 0 0 8.371L41.855 90.32a5.92 5.92 0 0 0 8.368 0l39.933-39.934a5.925 5.925 0 0 0 0-8.421z"/>
+      </svg>
+      <div>
+        <div class="header-eyebrow">$ git --cheatsheet / 2026</div>
+        <h1>Git チートシート</h1>
+        <div class="header-sub">行クリックで習得済みをマーク — ヘッダーをドラッグで並び替え</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-count">
+        <span id="stat-learned">0</span><span class="stat-sep"> / </span><span id="stat-total" class="stat-denom">0</span>
+      </div>
+      <div class="stat-label">コマンド習得済み</div>
+    </div>
+  </div>
+  <div class="git-graph" id="git-graph"></div>
+</header>
+
+<div class="grid" id="grid">
+
+  <div class="card" data-section="セットアップ・初期化">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">セットアップ・初期化</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">a4f2c8d</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git init</td><td class="desc-col">新しいリポジトリを作成</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git clone &lt;url&gt;</td><td class="desc-col">リモートをクローン</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git clone &lt;url&gt; &lt;dir&gt;</td><td class="desc-col">指定フォルダにクローン</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git config --global user.name "名前"</td><td class="desc-col">グローバルユーザー名を設定</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git config --global user.email "mail"</td><td class="desc-col">グローバルメールを設定</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git config --list</td><td class="desc-col">現在の設定を一覧表示</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="ステージング・コミット">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">ステージング・コミット</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">3b9e15f</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git status</td><td class="desc-col">変更ファイルの状態を確認</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git add &lt;file&gt;</td><td class="desc-col">ファイルをステージング</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git add .</td><td class="desc-col">すべての変更をステージング</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git add -p</td><td class="desc-col">変更を対話的にステージング <span class="tag tip">便利</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git commit -m "msg"</td><td class="desc-col">メッセージ付きでコミット</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git commit --amend</td><td class="desc-col">直前のコミットを修正</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git diff</td><td class="desc-col">ステージング前の差分を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git diff --staged</td><td class="desc-col">ステージング済みの差分を表示</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="ブランチ操作">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">ブランチ操作</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">c71d3a2</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git branch</td><td class="desc-col">ブランチ一覧を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git branch &lt;name&gt;</td><td class="desc-col">新しいブランチを作成</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git switch &lt;branch&gt;</td><td class="desc-col">ブランチを切り替え</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git switch -c &lt;name&gt;</td><td class="desc-col">作成して切り替え <span class="tag tip">よく使う</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git branch -d &lt;name&gt;</td><td class="desc-col">ブランチをマージ済みで削除</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git branch -D &lt;name&gt;</td><td class="desc-col">ブランチを強制削除 <span class="tag danger">注意</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git branch -m &lt;old&gt; &lt;new&gt;</td><td class="desc-col">ブランチ名を変更</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="リモート操作">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">リモート操作</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">f8b0219</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git remote -v</td><td class="desc-col">リモート一覧を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git remote add &lt;name&gt; &lt;url&gt;</td><td class="desc-col">リモートを追加</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git fetch &lt;remote&gt;</td><td class="desc-col">リモートの変更を取得（マージしない）</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git pull</td><td class="desc-col">fetch + merge を実行</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git pull --rebase</td><td class="desc-col">fetch + rebase を実行 <span class="tag tip">推奨</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git push origin &lt;branch&gt;</td><td class="desc-col">リモートにプッシュ</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git push -u origin &lt;branch&gt;</td><td class="desc-col">初回プッシュ＋追跡設定</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git push --force-with-lease</td><td class="desc-col">安全な強制プッシュ <span class="tag tip">推奨</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="マージ・リベース">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">マージ・リベース</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">9d5e7b3</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git merge &lt;branch&gt;</td><td class="desc-col">ブランチをマージ</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git merge --no-ff &lt;branch&gt;</td><td class="desc-col">マージコミットを必ず作成</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git merge --abort</td><td class="desc-col">マージを中止して元に戻す</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git rebase &lt;branch&gt;</td><td class="desc-col">コミット履歴を付け替え</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git rebase -i HEAD~N</td><td class="desc-col">直近N件を対話的に編集 <span class="tag tip">便利</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git rebase --continue</td><td class="desc-col">コンフリクト解消後に再開</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git rebase --abort</td><td class="desc-col">リベースを中止して元に戻す</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git cherry-pick &lt;hash&gt;</td><td class="desc-col">特定コミットを取り込む</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="履歴・元に戻す">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">履歴・元に戻す</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">2a8f4e1</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git log --oneline</td><td class="desc-col">コミット履歴を1行で表示 <span class="tag tip">よく使う</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git log --oneline --graph</td><td class="desc-col">ブランチをグラフ付きで表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git show &lt;hash&gt;</td><td class="desc-col">コミットの内容を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git restore &lt;file&gt;</td><td class="desc-col">ファイルの変更を破棄</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git restore --staged &lt;file&gt;</td><td class="desc-col">ステージングを取り消し</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git reset --soft HEAD~1</td><td class="desc-col">直前コミットを取り消し（変更保持）</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git reset --hard HEAD~1</td><td class="desc-col">直前コミットを完全に削除 <span class="tag danger">注意</span></td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git revert &lt;hash&gt;</td><td class="desc-col">打ち消しコミットを作成（安全）</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git reflog</td><td class="desc-col">HEADの移動履歴を表示 <span class="tag tip">復元に有効</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="スタッシュ">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">スタッシュ</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">5c3d9f7</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash</td><td class="desc-col">変更を一時退避</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash push -m "msg"</td><td class="desc-col">名前を付けて退避</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash list</td><td class="desc-col">スタッシュ一覧を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash pop</td><td class="desc-col">最新スタッシュを適用して削除</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash apply stash@{N}</td><td class="desc-col">指定スタッシュを適用（保持）</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash drop stash@{N}</td><td class="desc-col">指定スタッシュを削除</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git stash clear</td><td class="desc-col">全スタッシュを削除 <span class="tag danger">注意</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="タグ・便利コマンド">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">タグ・便利コマンド</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">e20b8a6</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr><td class="check-col">○</td><td class="cmd-col">git tag &lt;name&gt;</td><td class="desc-col">軽量タグを作成</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git tag -a &lt;name&gt; -m "msg"</td><td class="desc-col">注釈付きタグを作成</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git push origin --tags</td><td class="desc-col">全タグをプッシュ</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git grep "pattern"</td><td class="desc-col">リポジトリ内を検索</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git blame &lt;file&gt;</td><td class="desc-col">各行の最終変更者を表示</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git bisect start</td><td class="desc-col">二分探索でバグ導入箇所を特定</td></tr>
+      <tr><td class="check-col">○</td><td class="cmd-col">git clean -fd</td><td class="desc-col">未追跡ファイルを削除 <span class="tag danger">注意</span></td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="add-section">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left">
+      <span class="card-commit-dot" style="background:var(--learned-c);box-shadow:0 0 6px rgba(74,222,128,0.3);"></span>
+      <span class="card-section-name" style="color:var(--learned-c);">コマンドを追加</span>
+    </div>
+    <span class="card-hash">new entry</span>
+  </div>
+  <div class="add-form">
+    <div class="field">
+      <label>コマンド</label>
+      <input class="cmd-input" id="new-cmd" type="text" placeholder="例: git log --oneline">
+    </div>
+    <div class="field">
+      <label>説明</label>
+      <input class="desc-input" id="new-desc" type="text" placeholder="例: 履歴を1行で確認">
+    </div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="new-section">
+        <option value="セットアップ・初期化">セットアップ・初期化</option>
+        <option value="ステージング・コミット">ステージング・コミット</option>
+        <option value="ブランチ操作">ブランチ操作</option>
+        <option value="リモート操作">リモート操作</option>
+        <option value="マージ・リベース">マージ・リベース</option>
+        <option value="履歴・元に戻す">履歴・元に戻す</option>
+        <option value="スタッシュ">スタッシュ</option>
+        <option value="タグ・便利コマンド">タグ・便利コマンド</option>
+        <option value="マイコマンド">＋ 新しいカテゴリ「マイコマンド」</option>
+      </select>
+    </div>
+    <button id="add-btn">+ 追加</button>
+  </div>
+</div>
+
+<footer>
+  <span>$ git log --all --oneline --graph</span>
+  <span>Git Cheatsheet — 2026</span>
+  <p>&copy;bombaycat0428</p>
+</footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const CUSTOM_KEY  = 'git_cheatsheet_custom';
+const LEARNED_KEY = 'git_cheatsheet_learned';
+const ORDER_KEY   = 'git_cheatsheet_order';
+
+function lsGet(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch(e) { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+const learnedSet = new Set(lsGet(LEARNED_KEY, []));
+function saveLearnedSet() { lsSet(LEARNED_KEY, [...learnedSet]); }
+
+function applyLearned(tr, isLearned) {
+  const check = tr.querySelector('.check-col');
+  if (isLearned) { tr.classList.add('learned');   check.textContent = '●'; }
+  else           { tr.classList.remove('learned'); check.textContent = '○'; }
+}
+
+function attachRowEvents(tr) {
+  const key = tr.querySelector('.cmd-col').textContent.trim();
+  applyLearned(tr, learnedSet.has(key));
+  tr.addEventListener('click', (e) => {
+    if (e.target.closest('.del-col')) return;
+    learnedSet.has(key) ? learnedSet.delete(key) : learnedSet.add(key);
+    applyLearned(tr, learnedSet.has(key));
+    saveLearnedSet();
+    updateProgress();
+  });
+}
+
+document.querySelectorAll('tr').forEach(tr => {
+  if (!tr.querySelector('.cmd-col')) return;
+  attachRowEvents(tr);
+});
+
+function getCustomRows() { return lsGet(CUSTOM_KEY, []); }
+function saveCustomRows(rows) { lsSet(CUSTOM_KEY, rows); }
+
+function addRowToDOM(section, cmd, desc, isCustom) {
+  let card = document.querySelector(`.card[data-section="${CSS.escape(section)}"]`);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.section = section;
+    const hash = Math.floor(Math.random() * 0xfffffff).toString(16).padStart(7, '0');
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="card-commit-dot"></span>
+          <span class="card-section-name">${section}</span>
+        </div>
+        <div class="card-header-right">
+          <span class="card-hash">${hash}</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+      </div>
+      <table></table>`;
+    document.getElementById('grid').appendChild(card);
+    buildGraph();
+  }
+
+  const table = card.querySelector('table');
+  const tr = document.createElement('tr');
+  const delCell = isCustom ? `<td class="del-col" title="削除">✕</td>` : '';
+  tr.innerHTML = `<td class="check-col">○</td><td class="cmd-col">${cmd}</td><td class="desc-col">${desc}</td>${delCell}`;
+
+  if (isCustom) {
+    tr.querySelector('.del-col').addEventListener('click', (e) => {
+      e.stopPropagation();
+      tr.style.transition = 'opacity 0.15s';
+      tr.style.opacity = '0';
+      setTimeout(() => {
+        tr.remove();
+        saveCustomRows(getCustomRows().filter(r => !(r.section === section && r.cmd === cmd)));
+        if (!table.querySelector('tr')) card.remove();
+        updateProgress();
+      }, 150);
+    });
+  }
+
+  table.appendChild(tr);
+  attachRowEvents(tr);
+  updateProgress();
+}
+
+getCustomRows().forEach(r => addRowToDOM(r.section, r.cmd, r.desc, true));
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  const cmd     = document.getElementById('new-cmd').value.trim();
+  const desc    = document.getElementById('new-desc').value.trim();
+  const section = document.getElementById('new-section').value;
+  if (!cmd || !desc) { alert('コマンドと説明を入力してください'); return; }
+  addRowToDOM(section, cmd, desc, true);
+  const rows = getCustomRows();
+  rows.push({ section, cmd, desc });
+  saveCustomRows(rows);
+  document.getElementById('new-cmd').value  = '';
+  document.getElementById('new-desc').value = '';
+});
+
+['new-cmd', 'new-desc'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-btn').click();
+  });
+});
+
+function saveOrder() {
+  lsSet(ORDER_KEY, [...document.querySelectorAll('#grid .card')].map(c => c.dataset.section));
+}
+function restoreOrder() {
+  const order = lsGet(ORDER_KEY, []);
+  const grid = document.getElementById('grid');
+  order.forEach(sec => {
+    const card = grid.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (card) grid.appendChild(card);
+  });
+}
+restoreOrder();
+
+function updateProgress() {
+  const allRows = [...document.querySelectorAll('#grid tr')].filter(tr => tr.querySelector('.cmd-col'));
+  const total   = allRows.length;
+  const learned = allRows.filter(tr => tr.classList.contains('learned')).length;
+
+  document.getElementById('stat-learned').textContent = learned;
+  document.getElementById('stat-total').textContent   = total;
+
+  document.querySelectorAll('#grid .card').forEach(card => {
+    const rows    = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal  = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct     = sTotal > 0 ? sLearned / sTotal : 0;
+    card.querySelector('.card-header').style.setProperty('--section-pct', pct);
+    card.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  const nodes = [...document.querySelectorAll('.graph-node')];
+  const lines = [...document.querySelectorAll('.graph-line')];
+
+  nodes.forEach(node => {
+    const sec  = node.dataset.section;
+    const card = document.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (!card) return;
+    const rows     = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal   = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct      = sTotal > 0 ? sLearned / sTotal : 0;
+    node.querySelector('.graph-dot').style.setProperty('--pct', pct);
+    node.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  lines.forEach((line, i) => {
+    const leftDot = nodes[i]?.querySelector('.graph-dot');
+    if (!leftDot) return;
+    const lp = parseFloat(leftDot.style.getPropertyValue('--pct')) || 0;
+    line.style.setProperty('--filled', lp);
+  });
+}
+
+function buildGraph() {
+  const graph = document.getElementById('git-graph');
+  graph.innerHTML = '';
+  const cards = [...document.querySelectorAll('#grid .card')];
+
+  cards.forEach((card, i) => {
+    const sec   = card.dataset.section;
+    const node  = document.createElement('div');
+    node.className   = 'graph-node';
+    node.dataset.section = sec;
+
+    const dot = document.createElement('div');
+    dot.className = 'graph-dot';
+
+    const label = document.createElement('div');
+    label.className = 'graph-label';
+    label.textContent = sec.replace('・', '·').slice(0, 9);
+    label.title = sec;
+
+    node.appendChild(dot);
+    node.appendChild(label);
+    graph.appendChild(node);
+
+    if (i < cards.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'graph-line';
+      line.style.setProperty('--filled', 0);
+      graph.appendChild(line);
+    }
+  });
+
+  updateProgress();
+}
+
+buildGraph();
+
+Sortable.create(document.getElementById('grid'), {
+  handle: '.card-header',
+  animation: 150,
+  ghostClass: 'sortable-ghost',
+  dragClass: 'sortable-drag',
+  onEnd: () => { saveOrder(); buildGraph(); },
+});
+</script>
+
+</body>
+</html>
