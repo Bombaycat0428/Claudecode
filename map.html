@@ -87,6 +87,18 @@
     margin-top: 10px;
   }
 
+  .sb-copy {
+    padding: 8px 18px;
+    font-family: "Space Mono", monospace;
+    font-size: 10px;
+    color: var(--gray);
+    opacity: 0.45;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    letter-spacing: 0.06em;
+  }
+
   .sb-hint {
     padding: 9px 18px 11px;
     font-size: 12px;
@@ -371,6 +383,12 @@
 
   .info-sub { display: flex; flex-direction: column; gap: 4px; }
 
+  .info-sub-row {
+    display: flex;
+    gap: 10px;
+  }
+  .info-sub-row .info-sub { flex: 1; min-width: 0; }
+
   .info-sub-label {
     font-family: "Space Mono", monospace;
     font-size: 10px;
@@ -528,6 +546,45 @@
   }
   #toast.show { opacity: 1; }
 
+  /* ── color picker ── */
+  .pin-color-btn {
+    width: 22px; height: 22px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    padding: 0;
+    opacity: 0;
+  }
+  .pin-item:hover .pin-color-btn { opacity: 1; }
+  .pin-color-btn:hover { background: rgba(37,99,235,0.07); }
+
+  #colorPicker {
+    position: fixed;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.16);
+    display: none;
+    grid-template-columns: repeat(4, 26px);
+    gap: 5px;
+  }
+
+  .color-swatch {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .color-swatch:hover { transform: scale(1.18); }
+  .color-swatch.active { border-color: var(--ink); }
+
   /* ── mobile ── */
   @media (max-width: 640px) {
     #app { flex-direction: column; }
@@ -572,11 +629,13 @@
     <div id="pinList">
       <p id="emptyMsg">まだピンがありません</p>
     </div>
+    <div class="sb-copy">&copy;bombaycat0428</div>
   </div>
 
   <div id="map"></div>
 </div>
 <div id="toast"></div>
+<div id="colorPicker"></div>
 
 <!-- 情報入力モーダル -->
 <div class="info-overlay" id="infoOverlay">
@@ -590,9 +649,15 @@
       <div class="info-section">
         <div class="info-section-label">🚃 電車</div>
         <div class="info-sub-section">
-          <div class="info-sub">
-            <div class="info-sub-label">💴 合計</div>
-            <input type="text" class="info-field info-total" id="infoTrainTotal" placeholder="例：往復 3,200円">
+          <div class="info-sub-row">
+            <div class="info-sub">
+              <div class="info-sub-label">💴 合計</div>
+              <input type="text" class="info-field info-total" id="infoTrainTotal" placeholder="例：3,200円">
+            </div>
+            <div class="info-sub">
+              <div class="info-sub-label">⏱ 時間</div>
+              <input type="text" class="info-field" id="infoTrainTime" placeholder="例：1時間30分">
+            </div>
           </div>
         </div>
         <textarea class="info-field" id="infoTrain" placeholder="路線・最寄り駅・乗り換えなど"></textarea>
@@ -601,9 +666,15 @@
       <div class="info-section">
         <div class="info-section-label">🚗 車</div>
         <div class="info-sub-section">
-          <div class="info-sub">
-            <div class="info-sub-label">💴 合計</div>
-            <input type="text" class="info-field info-total" id="infoCarTotal" placeholder="ガソリン・駐車場・高速から自動計算" readonly>
+          <div class="info-sub-row">
+            <div class="info-sub">
+              <div class="info-sub-label">💴 合計</div>
+              <input type="text" class="info-field info-total" id="infoCarTotal" placeholder="自動計算" readonly>
+            </div>
+            <div class="info-sub">
+              <div class="info-sub-label">⏱ 時間</div>
+              <input type="text" class="info-field" id="infoCarTime" placeholder="例：2時間">
+            </div>
           </div>
           <div class="info-sub">
             <div class="info-sub-label">⛽ ガソリン</div>
@@ -663,10 +734,11 @@
   }
 
   // ── Marker icon ────────────────────────────────────────
-  function makeIcon(num) {
+  function makeIcon(num, color) {
+    const bg = color || '#2563EB';
     return L.divIcon({
       className: '',
-      html: `<div class="m-pin">${num}</div>`,
+      html: `<div class="m-pin" style="background:${bg}">${num}</div>`,
       iconSize:   [30, 30],
       iconAnchor: [15, 30],
       popupAnchor:[0, -32],
@@ -689,7 +761,7 @@
     // add / update markers
     pins.forEach((pin, i) => {
       if (!markerMap[pin.id]) {
-        const marker = L.marker([pin.lat, pin.lng], { icon: makeIcon(i + 1) }).addTo(map);
+        const marker = L.marker([pin.lat, pin.lng], { icon: makeIcon(i + 1, pin.color) }).addTo(map);
         marker.bindTooltip(pin.name, { direction: 'top', className: 'pin-tip', offset: [0, -4] });
         marker.on('click', () => {
           map.flyTo([pin.lat, pin.lng], Math.max(map.getZoom(), 13), { duration: 0.7 });
@@ -697,7 +769,7 @@
         });
         markerMap[pin.id] = marker;
       } else {
-        markerMap[pin.id].setIcon(makeIcon(i + 1));
+        markerMap[pin.id].setIcon(makeIcon(i + 1, pin.color));
       }
     });
 
@@ -721,6 +793,7 @@
       const num = document.createElement('div');
       num.className   = 'pin-num';
       num.textContent = i + 1;
+      num.style.background = pin.color || '#2563EB';
 
       const info = document.createElement('div');
       info.className  = 'pin-info';
@@ -734,6 +807,14 @@
 
       const hasInfo = pin.info && Object.values(pin.info).some(v => v);
 
+      const pinColor = pin.color || '#2563EB';
+      const colorBtn = document.createElement('button');
+      colorBtn.className = 'pin-color-btn';
+      colorBtn.setAttribute('aria-label', 'ピンの色を変更');
+      colorBtn.setAttribute('title', 'ピンの色を変更');
+      colorBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13"><circle cx="6.5" cy="6.5" r="5.5" fill="${pinColor}" stroke="rgba(0,0,0,0.18)" stroke-width="1"/><circle cx="6.5" cy="6.5" r="2" fill="white" opacity="0.55"/></svg>`;
+      colorBtn.addEventListener('click', e => { e.stopPropagation(); openColorPicker(pin.id, colorBtn); });
+
       const editBtn = document.createElement('button');
       editBtn.className = 'pin-edit-btn' + (hasInfo ? ' has-info' : '');
       editBtn.setAttribute('aria-label', '情報を編集');
@@ -746,7 +827,7 @@
       del.textContent = '✕';
       del.addEventListener('click', e => { e.stopPropagation(); deletePin(pin.id); });
 
-      item.append(handle, num, info, editBtn, del);
+      item.append(handle, num, info, colorBtn, editBtn, del);
       setupPinDrag(item, pin.id);
       item.addEventListener('click', () => {
         map.flyTo([pin.lat, pin.lng], Math.max(map.getZoom(), 13), { duration: 0.7 });
@@ -829,10 +910,12 @@
     document.getElementById('infoTitle').textContent = pin.name;
     const info = pin.info || {};
     document.getElementById('infoTrainTotal').value = info.trainTotal || '';
+    document.getElementById('infoTrainTime').value  = info.trainTime  || '';
     document.getElementById('infoTrain').value      = info.train      || '';
     document.getElementById('infoGas').value        = info.gas        || '';
     document.getElementById('infoParking').value    = info.parking    || '';
     document.getElementById('infoHighway').value    = info.highway    || '';
+    document.getElementById('infoCarTime').value    = info.carTime    || '';
     calcCarTotal();
     document.getElementById('infoOverlay').classList.add('open');
     document.getElementById('infoTrainTotal').focus();
@@ -872,10 +955,12 @@
     if (!pin) return;
     pin.info = {
       trainTotal: document.getElementById('infoTrainTotal').value.trim(),
+      trainTime:  document.getElementById('infoTrainTime').value.trim(),
       train:      document.getElementById('infoTrain').value.trim(),
       gas:        document.getElementById('infoGas').value.trim(),
       parking:    document.getElementById('infoParking').value.trim(),
       highway:    document.getElementById('infoHighway').value.trim(),
+      carTime:    document.getElementById('infoCarTime').value.trim(),
     };
     save(); render();
     closeInfoModal();
@@ -888,7 +973,64 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeInfoModal();
+    if (e.key === 'Escape') { closeInfoModal(); closeColorPicker(); }
+  });
+
+  // ── Color picker ───────────────────────────────────────
+  const PIN_COLORS = [
+    '#2563EB', '#EF4444', '#16A34A', '#F97316',
+    '#9333EA', '#EC4899', '#EAB308', '#0D9488',
+  ];
+
+  const colorPickerEl = document.getElementById('colorPicker');
+  let colorPickerTargetId = null;
+
+  PIN_COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className       = 'color-swatch';
+    sw.dataset.color   = c;
+    sw.style.background = c;
+    sw.setAttribute('title', c);
+    sw.addEventListener('click', () => {
+      if (!colorPickerTargetId) return;
+      const pin = pins.find(p => p.id === colorPickerTargetId);
+      if (!pin) return;
+      pin.color = c;
+      save(); render();
+      closeColorPicker();
+    });
+    colorPickerEl.appendChild(sw);
+  });
+
+  function openColorPicker(pinId, triggerEl) {
+    colorPickerTargetId = pinId;
+    const pin     = pins.find(p => p.id === pinId);
+    const current = (pin && pin.color) || '#2563EB';
+    colorPickerEl.querySelectorAll('.color-swatch').forEach(sw =>
+      sw.classList.toggle('active', sw.dataset.color === current)
+    );
+    colorPickerEl.style.display = 'grid';
+    const rect  = triggerEl.getBoundingClientRect();
+    const PW    = 138; // approx picker width
+    const PH    = 75;  // approx picker height
+    let left    = rect.right + 6;
+    let top     = rect.top - 10;
+    if (left + PW > window.innerWidth)  left = rect.left - PW - 6;
+    if (top  + PH > window.innerHeight) top  = window.innerHeight - PH - 8;
+    if (top < 4) top = 4;
+    colorPickerEl.style.left = `${left}px`;
+    colorPickerEl.style.top  = `${top}px`;
+  }
+
+  function closeColorPicker() {
+    colorPickerEl.style.display = 'none';
+    colorPickerTargetId = null;
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#colorPicker') && !e.target.closest('.pin-color-btn')) {
+      closeColorPicker();
+    }
   });
 
   // ── Add pin on click ───────────────────────────────────
