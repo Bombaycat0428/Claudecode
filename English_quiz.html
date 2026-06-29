@@ -47,6 +47,21 @@ body {
   padding: 2rem 1.6rem;
 }
 
+.back-link {
+  display: inline-block;
+  color: var(--blue);
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.back-link:hover { text-decoration: underline; }
+.back-link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.result-back-link { display: block; text-align: center; margin-top: 1rem; margin-bottom: 0; }
+
 h1 {
   font-size: 1.9rem;
   font-weight: 700;
@@ -201,6 +216,7 @@ select option { background: #1c3324; color: var(--white); }
 <div class="page">
 
   <div id="screen-start">
+    <a class="back-link" href="English.html">◀ 英単語シートにもどる</a>
     <h1>中学3年 英単語クイズ</h1>
     <div class="sub">カテゴリを選んでスタート！4つの中から正しい意味を選んでね。</div>
     <div class="field">
@@ -239,6 +255,7 @@ select option { background: #1c3324; color: var(--white); }
     <div id="review-list"></div>
     <button class="btn" id="retry-btn">もう一度</button>
     <button class="btn secondary" id="back-btn">カテゴリ選択にもどる</button>
+    <a class="back-link result-back-link" href="English.html">◀ 黒板チートシートにもどる</a>
   </div>
 
 </div>
