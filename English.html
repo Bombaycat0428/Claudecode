@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中学3年 英単語 黒板チートシート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --wood:       #6b4423;
+  --board:      #15281c;
+  --board-up:   #1c3324;
+  --line:       rgba(255,255,255,0.35);
+  --line-soft:  rgba(255,255,255,0.2);
+  --white:      #ffffff;
+  --yellow:     #ffd84d;
+  --pink:       #ff9eb5;
+  --blue:       #8ecae6;
+  --green:      #8ee06a;
+  --muted:      rgba(255,255,255,0.78);
+
+  --jp: 'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --en: 'Inter', sans-serif;
+  --r: 8px;
+  --r-sm: 5px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 112.5%; } /* base 18px */
+
+body {
+  font-family: var(--jp);
+  background: #4a2f18;
+  color: var(--white);
+  min-height: 100vh;
+  padding: 24px 14px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  background-color: var(--board);
+  border: 12px solid var(--wood);
+  border-radius: 8px;
+  padding: 2rem 1.5rem 1.6rem;
+}
+
+/* ── Header ── */
+header { margin-bottom: 2rem; }
+
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+  border-bottom: 3px solid var(--line-soft);
+  padding-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.header-brand { display: flex; align-items: center; gap: 1rem; }
+
+.git-logo { width: 48px; height: 48px; flex-shrink: 0; }
+
+.header-eyebrow {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--yellow);
+  margin-bottom: 4px;
+}
+
+header h1 {
+  font-family: var(--jp);
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+}
+
+.header-sub {
+  font-family: var(--jp);
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.header-stats { text-align: right; flex-shrink: 0; }
+
+.stat-count {
+  font-family: var(--en);
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: var(--yellow);
+  line-height: 1;
+}
+
+.stat-sep { color: var(--muted); font-size: 1.6rem; }
+.stat-denom { color: var(--muted); }
+.stat-label { font-family: var(--jp); font-weight: 700; font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
+
+.quiz-link {
+  display: inline-block;
+  margin-top: 10px;
+  background: var(--yellow);
+  color: #2a1f06;
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.quiz-link:hover { background: #ffe27a; }
+.quiz-link:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+
+/* ── progress chain ── */
+.git-graph {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.git-graph::-webkit-scrollbar { height: 6px; }
+.git-graph::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 3px; }
+
+.graph-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.graph-dot {
+  --pct: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: conic-gradient(var(--yellow) calc(var(--pct) * 360deg), rgba(255,255,255,0.18) 0);
+  position: relative;
+  cursor: default;
+}
+.graph-dot::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--board);
+}
+.graph-node[data-complete="true"] .graph-dot {
+  background: var(--green);
+}
+.graph-node[data-complete="true"] .graph-dot::after { background: var(--board); }
+
+.graph-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+  max-width: 78px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.graph-node[data-complete="true"] .graph-label { color: var(--green); }
+
+.graph-line {
+  height: 4px;
+  flex: 1;
+  min-width: 16px;
+  background: rgba(255,255,255,0.18);
+  align-self: flex-start;
+  margin-top: 9px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.graph-line::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: calc(var(--filled, 0) * 100%);
+  background: var(--green);
+}
+
+/* ── Cards ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+/* ── Card header ── */
+.card-header {
+  background: rgba(255,255,255,0.07);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 3px solid var(--line);
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0;
+  height: 5px;
+  width: calc(var(--section-pct, 0) * 100%);
+  background: var(--green);
+}
+.card-header:active { cursor: grabbing; }
+
+.card-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.card-commit-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--yellow);
+  flex-shrink: 0;
+}
+.card[data-complete="true"] .card-commit-dot {
+  background: var(--green);
+}
+
+.card-section-name {
+  font-family: var(--jp);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.card-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.card-hash {
+  font-family: var(--en);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.drag-handle { font-size: 1.2rem; color: var(--muted); }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; }
+
+tr {
+  border-bottom: 2px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+tr:last-child { border-bottom: none; }
+tr:hover { background: rgba(255,255,255,0.08); }
+tr.learned { background: rgba(142,224,106,0.14); }
+tr.learned:hover { background: rgba(142,224,106,0.22); }
+
+td { padding: 1rem 0.9rem; vertical-align: middle; }
+
+td.check-col {
+  width: 56px;
+  text-align: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  padding: 1rem 0.4rem 1rem 0.9rem;
+  color: rgba(255,255,255,0.55);
+  border-left: 5px solid transparent;
+}
+tr:hover td.check-col { border-left-color: var(--blue); color: var(--blue); }
+tr.learned td.check-col { color: var(--green); border-left-color: var(--green); }
+
+td.cmd-col {
+  font-family: var(--en);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--yellow);
+  white-space: normal;
+  word-break: break-word;
+  width: 38%;
+}
+tr.learned td.cmd-col { color: var(--green); }
+
+td.desc-col {
+  font-family: var(--jp);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.55;
+}
+tr.learned td.desc-col { color: rgba(142,224,106,0.9); }
+
+td.del-col {
+  width: 48px;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 1.2rem;
+  padding: 1rem 0.6rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+td.del-col:hover { color: var(--pink); background: rgba(255,158,181,0.18); }
+
+/* ── Tags ── */
+.tag {
+  display: inline-block;
+  font-family: var(--jp);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+.tag.danger { background: rgba(255,158,181,0.2); color: var(--pink); border: 2px solid rgba(255,158,181,0.5); }
+.tag.tip    { background: rgba(142,202,230,0.2); color: var(--blue); border: 2px solid rgba(142,202,230,0.5); }
+
+/* ── Add section ── */
+.add-section {
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.add-form {
+  padding: 1.2rem 1.3rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.add-form .field { display: flex; flex-direction: column; gap: 6px; }
+
+.add-form label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.add-form input,
+.add-form select {
+  background: rgba(0,0,0,0.3);
+  border: 2px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--white);
+  padding: 0.7rem 0.9rem;
+  font-size: 1.1rem;
+  font-family: var(--jp);
+  outline: none;
+  min-height: 48px;
+}
+.add-form input:focus,
+.add-form select:focus {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255,216,77,0.3);
+}
+.add-form input.cmd-input { font-family: var(--en); font-weight: 700; color: var(--yellow); width: 220px; font-size: 1.15rem; }
+.add-form input.desc-input { width: 280px; }
+.add-form select { width: 220px; cursor: pointer; }
+.add-form select option { background: #1c3324; color: var(--white); }
+
+.add-form button {
+  background: var(--yellow);
+  color: #2a1f06;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  font-family: var(--jp);
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+}
+.add-form button:hover { background: #ffe27a; }
+.add-form button:active { transform: scale(0.97); }
+
+/* ── Footer ── */
+footer {
+  margin-top: 1.5rem;
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+footer p {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* ── Focus (大きく見やすいフォーカスリング) ── */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+tr:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--board-up);
+  border: 4px solid var(--yellow);
+  border-radius: 10px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.8rem 1.8rem 1.6rem;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: rgba(0,0,0,0.25);
+  color: var(--white);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { background: rgba(255,158,181,0.25); border-color: var(--pink); }
+
+.modal-word {
+  font-family: var(--en);
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--yellow);
+  padding-right: 3rem;
+}
+
+.modal-meaning {
+  font-family: var(--jp);
+  font-size: 1.2rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 3px solid var(--line-soft);
+}
+
+.modal-example {
+  margin-top: 1.2rem;
+}
+.modal-example-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--blue);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.modal-example-en {
+  font-family: var(--en);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+.modal-example-jp {
+  font-family: var(--jp);
+  font-size: 1.15rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  header h1 { font-size: 1.7rem; }
+  .stat-count { font-size: 2rem; }
+  .add-form input { width: 100% !important; }
+  .add-form select { width: 100%; }
+  td.cmd-col { font-size: 1.25rem; }
+  td.desc-col { font-size: 1.05rem; }
+  .modal-word { font-size: 1.5rem; }
+  .modal-example-en { font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="header-top">
+    <div class="header-brand">
+      <svg class="git-logo" viewBox="0 0 92 92" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="46" width="34" height="20" rx="3" fill="#ffffff"/>
+        <rect x="48" y="20" width="9" height="40" rx="3" fill="#ffd84d"/>
+      </svg>
+      <div>
+        <div class="header-eyebrow">本日の授業：英単語</div>
+        <h1>中学3年 英単語 黒板チートシート</h1>
+        <div class="header-sub">単語をクリックすると例文が見られます。左の☐をクリックすると覚えたチェックがつきます</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-count">
+        <span id="stat-learned">0</span><span class="stat-sep"> / </span><span id="stat-total" class="stat-denom">0</span>
+      </div>
+      <div class="stat-label">覚えた単語</div>
+      <a class="quiz-link" href="English_quiz.html">クイズに挑戦する ▶</a>
+    </div>
+  </div>
+  <div class="git-graph" id="git-graph"></div>
+</header>
+
+<div class="grid" id="grid">
+
+  <div class="card" data-section="動詞">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">動詞</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 1</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="I decided to study English every day." data-jp="私は毎日英語を勉強することに決めました。"><td class="check-col">☐</td><td class="cmd-col">decide</td><td class="desc-col">決める <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="This country is developing quickly." data-jp="この国は急速に発展しています。"><td class="check-col">☐</td><td class="cmd-col">develop</td><td class="desc-col">発展させる、開発する</td></tr>
+      <tr data-en="I want to improve my English skills." data-jp="私は英語力を向上させたいです。"><td class="check-col">☐</td><td class="cmd-col">improve</td><td class="desc-col">改善する、向上させる</td></tr>
+      <tr data-en="She achieved her goal." data-jp="彼女は自分の目標を達成しました。"><td class="check-col">☐</td><td class="cmd-col">achieve</td><td class="desc-col">達成する</td></tr>
+      <tr data-en="He suggested a new idea." data-jp="彼は新しいアイデアを提案しました。"><td class="check-col">☐</td><td class="cmd-col">suggest</td><td class="desc-col">提案する</td></tr>
+      <tr data-en="We communicate with friends online." data-jp="私たちはオンラインで友達とコミュニケーションをとります。"><td class="check-col">☐</td><td class="cmd-col">communicate</td><td class="desc-col">伝え合う、コミュニケーションをとる</td></tr>
+      <tr data-en="I experienced many things in Japan." data-jp="私は日本で多くのことを経験しました。"><td class="check-col">☐</td><td class="cmd-col">experience</td><td class="desc-col">経験する</td></tr>
+      <tr data-en="I realized my mistake." data-jp="私は自分の間違いに気づきました。"><td class="check-col">☐</td><td class="cmd-col">realize</td><td class="desc-col">気づく、実現する</td></tr>
+      <tr data-en="We should protect the environment." data-jp="私たちは環境を守るべきです。"><td class="check-col">☐</td><td class="cmd-col">protect</td><td class="desc-col">守る、保護する</td></tr>
+      <tr data-en="This factory produces cars." data-jp="この工場は車を生産しています。"><td class="check-col">☐</td><td class="cmd-col">produce</td><td class="desc-col">生産する、作り出す</td></tr>
+      <tr data-en="Scientists discovered a new star." data-jp="科学者たちは新しい星を発見しました。"><td class="check-col">☐</td><td class="cmd-col">discover</td><td class="desc-col">発見する</td></tr>
+      <tr data-en="My teacher encouraged me to try again." data-jp="先生は私にもう一度やってみるように励ましてくれました。"><td class="check-col">☐</td><td class="cmd-col">encourage</td><td class="desc-col">励ます、勇気づける</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="名詞">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">名詞</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 2</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="We must take care of the environment." data-jp="私たちは環境を大切にしなければなりません。"><td class="check-col">☐</td><td class="cmd-col">environment</td><td class="desc-col">環境 <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="This is a great opportunity for you." data-jp="これはあなたにとって素晴らしい機会です。"><td class="check-col">☐</td><td class="cmd-col">opportunity</td><td class="desc-col">機会、チャンス</td></tr>
+      <tr data-en="The situation is getting better." data-jp="状況は良くなってきています。"><td class="check-col">☐</td><td class="cmd-col">situation</td><td class="desc-col">状況、事態</td></tr>
+      <tr data-en="I need more information about the trip." data-jp="旅行についてもっと情報が必要です。"><td class="check-col">☐</td><td class="cmd-col">information</td><td class="desc-col">情報</td></tr>
+      <tr data-en="I'm interested in Japanese culture." data-jp="私は日本の文化に興味があります。"><td class="check-col">☐</td><td class="cmd-col">culture</td><td class="desc-col">文化</td></tr>
+      <tr data-en="Technology has changed our society." data-jp="テクノロジーは私たちの社会を変えました。"><td class="check-col">☐</td><td class="cmd-col">society</td><td class="desc-col">社会</td></tr>
+      <tr data-en="The government made a new law." data-jp="政府は新しい法律を作りました。"><td class="check-col">☐</td><td class="cmd-col">government</td><td class="desc-col">政府</td></tr>
+      <tr data-en="The population of this city is growing." data-jp="この都市の人口は増えています。"><td class="check-col">☐</td><td class="cmd-col">population</td><td class="desc-col">人口</td></tr>
+      <tr data-en="New technology helps our daily life." data-jp="新しい技術は私たちの生活を助けます。"><td class="check-col">☐</td><td class="cmd-col">technology</td><td class="desc-col">科学技術</td></tr>
+      <tr data-en="We need clean energy for the future." data-jp="私たちは未来のためにきれいなエネルギーが必要です。"><td class="check-col">☐</td><td class="cmd-col">energy</td><td class="desc-col">エネルギー</td></tr>
+      <tr data-en="They have a good relationship." data-jp="彼らは良い関係を持っています。"><td class="check-col">☐</td><td class="cmd-col">relationship</td><td class="desc-col">関係</td></tr>
+      <tr data-en="She has the ability to speak three languages." data-jp="彼女は3つの言語を話す能力があります。"><td class="check-col">☐</td><td class="cmd-col">ability</td><td class="desc-col">能力</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="形容詞">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">形容詞</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 3</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="Family is important to me." data-jp="家族は私にとって重要です。"><td class="check-col">☐</td><td class="cmd-col">important</td><td class="desc-col">重要な <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="Water is necessary for life." data-jp="水は生きるために必要です。"><td class="check-col">☐</td><td class="cmd-col">necessary</td><td class="desc-col">必要な</td></tr>
+      <tr data-en="This question is difficult." data-jp="この問題は難しいです。"><td class="check-col">☐</td><td class="cmd-col">difficult</td><td class="desc-col">難しい</td></tr>
+      <tr data-en="It is possible to finish today." data-jp="今日終わらせることは可能です。"><td class="check-col">☐</td><td class="cmd-col">possible</td><td class="desc-col">可能な</td></tr>
+      <tr data-en="There are various kinds of food." data-jp="様々な種類の食べ物があります。"><td class="check-col">☐</td><td class="cmd-col">various</td><td class="desc-col">様々な</td></tr>
+      <tr data-en="Our opinions are similar." data-jp="私たちの意見は似ています。"><td class="check-col">☐</td><td class="cmd-col">similar</td><td class="desc-col">似ている</td></tr>
+      <tr data-en="This is a serious problem." data-jp="これは深刻な問題です。"><td class="check-col">☐</td><td class="cmd-col">serious</td><td class="desc-col">深刻な、まじめな</td></tr>
+      <tr data-en="The event was successful." data-jp="そのイベントは成功しました。"><td class="check-col">☐</td><td class="cmd-col">successful</td><td class="desc-col">成功した</td></tr>
+      <tr data-en="This chair is very comfortable." data-jp="この椅子はとても心地よいです。"><td class="check-col">☐</td><td class="cmd-col">comfortable</td><td class="desc-col">心地よい</td></tr>
+      <tr data-en="Please think in a positive way." data-jp="前向きに考えてください。"><td class="check-col">☐</td><td class="cmd-col">positive</td><td class="desc-col">積極的な、肯定的な</td></tr>
+      <tr data-en="Don't be so negative." data-jp="そんなに消極的にならないで。"><td class="check-col">☐</td><td class="cmd-col">negative</td><td class="desc-col">消極的な、否定的な</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="副詞・接続詞">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">副詞・接続詞</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 4</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="I was tired. However, I finished my homework." data-jp="私は疲れていました。しかし、宿題を終えました。"><td class="check-col">☐</td><td class="cmd-col">however</td><td class="desc-col">しかしながら <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="Although it was raining, we went out." data-jp="雨が降っていましたが、私たちは外出しました。"><td class="check-col">☐</td><td class="cmd-col">although</td><td class="desc-col">〜だけれども</td></tr>
+      <tr data-en="I like fruits, especially apples." data-jp="私は果物が好きです、特にりんごが。"><td class="check-col">☐</td><td class="cmd-col">especially</td><td class="desc-col">特に</td></tr>
+      <tr data-en="He will probably come late." data-jp="彼はおそらく遅れて来るでしょう。"><td class="check-col">☐</td><td class="cmd-col">probably</td><td class="desc-col">おそらく</td></tr>
+      <tr data-en="I started running recently." data-jp="私は最近走り始めました。"><td class="check-col">☐</td><td class="cmd-col">recently</td><td class="desc-col">最近</td></tr>
+      <tr data-en="We finally arrived at the station." data-jp="私たちはついに駅に着きました。"><td class="check-col">☐</td><td class="cmd-col">finally</td><td class="desc-col">最終的に、ついに</td></tr>
+      <tr data-en="Suddenly, it started to rain." data-jp="突然、雨が降り始めました。"><td class="check-col">☐</td><td class="cmd-col">suddenly</td><td class="desc-col">突然</td></tr>
+      <tr data-en="Actually, I don't like coffee." data-jp="実は、私はコーヒーが好きではありません。"><td class="check-col">☐</td><td class="cmd-col">actually</td><td class="desc-col">実際には</td></tr>
+      <tr data-en="It was raining; therefore, we stayed home." data-jp="雨が降っていたので、私たちは家にいました。"><td class="check-col">☐</td><td class="cmd-col">therefore</td><td class="desc-col">それゆえに</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="熟語・表現">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">熟語・表現</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 5</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="I am able to swim fast." data-jp="私は速く泳ぐことができます。"><td class="check-col">☐</td><td class="cmd-col">be able to ~</td><td class="desc-col">〜できる <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="I study hard in order to pass the test." data-jp="私はテストに合格するために熱心に勉強します。"><td class="check-col">☐</td><td class="cmd-col">in order to ~</td><td class="desc-col">〜するために</td></tr>
+      <tr data-en="She can sing as well as dance." data-jp="彼女は踊るだけでなく歌うこともできます。"><td class="check-col">☐</td><td class="cmd-col">as well as ~</td><td class="desc-col">〜だけでなく</td></tr>
+      <tr data-en="I like sports, for example, soccer." data-jp="私はスポーツが好きです、例えばサッカーです。"><td class="check-col">☐</td><td class="cmd-col">for example</td><td class="desc-col">例えば</td></tr>
+      <tr data-en="I like fruits such as apples and bananas." data-jp="私はりんごやバナナのような果物が好きです。"><td class="check-col">☐</td><td class="cmd-col">such as ~</td><td class="desc-col">〜のような</td></tr>
+      <tr data-en="I take care of my little brother." data-jp="私は弟の世話をしています。"><td class="check-col">☐</td><td class="cmd-col">take care of ~</td><td class="desc-col">〜の世話をする</td></tr>
+      <tr data-en="Make sure that you lock the door." data-jp="ドアの鍵をかけたか確認してください。"><td class="check-col">☐</td><td class="cmd-col">make sure (that) ~</td><td class="desc-col">〜を確認する、確実にする</td></tr>
+      <tr data-en="I used to live in Osaka." data-jp="私は以前大阪に住んでいました。"><td class="check-col">☐</td><td class="cmd-col">used to ~</td><td class="desc-col">以前は〜した（今は違う） <span class="tag danger">注意</span></td></tr>
+      <tr data-en="I look forward to seeing you." data-jp="あなたに会えるのを楽しみにしています。"><td class="check-col">☐</td><td class="cmd-col">look forward to ~</td><td class="desc-col">〜を楽しみにする</td></tr>
+      <tr data-en="I am interested in music." data-jp="私は音楽に興味があります。"><td class="check-col">☐</td><td class="cmd-col">be interested in ~</td><td class="desc-col">〜に興味がある</td></tr>
+      <tr data-en="I had tea instead of coffee." data-jp="私はコーヒーの代わりにお茶を飲みました。"><td class="check-col">☐</td><td class="cmd-col">instead of ~</td><td class="desc-col">〜の代わりに</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="不規則動詞">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">不規則動詞</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 6</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="The movie began at seven." data-jp="映画は7時に始まりました。"><td class="check-col">☐</td><td class="cmd-col">begin - began - begun</td><td class="desc-col">始める <span class="tag danger">注意</span></td></tr>
+      <tr data-en="He broke the window." data-jp="彼は窓を壊しました。"><td class="check-col">☐</td><td class="cmd-col">break - broke - broken</td><td class="desc-col">壊す</td></tr>
+      <tr data-en="I chose this book." data-jp="私はこの本を選びました。"><td class="check-col">☐</td><td class="cmd-col">choose - chose - chosen</td><td class="desc-col">選ぶ</td></tr>
+      <tr data-en="The plant has grown a lot." data-jp="その植物はとても成長しました。"><td class="check-col">☐</td><td class="cmd-col">grow - grew - grown</td><td class="desc-col">成長する</td></tr>
+      <tr data-en="We lost the game." data-jp="私たちは試合に負けました。"><td class="check-col">☐</td><td class="cmd-col">lose - lost - lost</td><td class="desc-col">失う、負ける</td></tr>
+      <tr data-en="The sun rose early today." data-jp="今日は太陽が早く昇りました。"><td class="check-col">☐</td><td class="cmd-col">rise - rose - risen</td><td class="desc-col">上がる、昇る</td></tr>
+      <tr data-en="I sent a letter to my friend." data-jp="私は友達に手紙を送りました。"><td class="check-col">☐</td><td class="cmd-col">send - sent - sent</td><td class="desc-col">送る</td></tr>
+      <tr data-en="She wore a red dress yesterday." data-jp="彼女は昨日赤いドレスを着ていました。"><td class="check-col">☐</td><td class="cmd-col">wear - wore - worn</td><td class="desc-col">着ている</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="入試頻出フレーズ">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">入試頻出フレーズ</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">Lesson 7</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-en="It is important for students to study English." data-jp="学生にとって英語を勉強することは重要です。"><td class="check-col">☐</td><td class="cmd-col">It is ~ for someone to do</td><td class="desc-col">（誰かが）〜するのは…だ <span class="tag tip">頻出</span></td></tr>
+      <tr data-en="I have been to Okinawa twice." data-jp="私は沖縄に2回行ったことがあります。"><td class="check-col">☐</td><td class="cmd-col">have been to ~</td><td class="desc-col">〜に行ったことがある（現在完了）</td></tr>
+      <tr data-en="I have never seen snow." data-jp="私は雪を見たことがありません。"><td class="check-col">☐</td><td class="cmd-col">have never done</td><td class="desc-col">一度も〜したことがない</td></tr>
+      <tr data-en="My mother told me to clean my room." data-jp="母は私に部屋を掃除するように言いました。"><td class="check-col">☐</td><td class="cmd-col">tell someone to do</td><td class="desc-col">人に〜するように言う</td></tr>
+      <tr data-en="I asked him to help me." data-jp="私は彼に手伝ってくれるよう頼みました。"><td class="check-col">☐</td><td class="cmd-col">ask someone to do</td><td class="desc-col">人に〜するように頼む</td></tr>
+      <tr data-en="Can you tell me the way to get to the station?" data-jp="駅までの行き方を教えてもらえますか。"><td class="check-col">☐</td><td class="cmd-col">the way to do</td><td class="desc-col">〜する方法</td></tr>
+      <tr data-en="Do you want something to drink?" data-jp="何か飲み物はいかがですか。"><td class="check-col">☐</td><td class="cmd-col">something to drink/eat</td><td class="desc-col">飲む/食べるための何か <span class="tag danger">注意</span></td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="add-section">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left">
+      <span class="card-commit-dot" style="background:var(--green);"></span>
+      <span class="card-section-name" style="color:var(--green);">単語を追加</span>
+    </div>
+    <span class="card-hash">new entry</span>
+  </div>
+  <div class="add-form">
+    <div class="field">
+      <label>単語・熟語</label>
+      <input class="cmd-input" id="new-cmd" type="text" placeholder="例: opportunity">
+    </div>
+    <div class="field">
+      <label>意味</label>
+      <input class="desc-input" id="new-desc" type="text" placeholder="例: 機会、チャンス">
+    </div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="new-section">
+        <option value="動詞">動詞</option>
+        <option value="名詞">名詞</option>
+        <option value="形容詞">形容詞</option>
+        <option value="副詞・接続詞">副詞・接続詞</option>
+        <option value="熟語・表現">熟語・表現</option>
+        <option value="不規則動詞">不規則動詞</option>
+        <option value="入試頻出フレーズ">入試頻出フレーズ</option>
+        <option value="マイ単語">＋ 新しいカテゴリ「マイ単語」</option>
+      </select>
+    </div>
+    <button id="add-btn">+ 追加</button>
+  </div>
+</div>
+
+<footer>
+  <span>English Vocabulary Blackboard</span>
+  <span>2026</span>
+  <p>&copy;bombaycat0428</p>
+</footer>
+
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-word">
+    <button class="modal-close" id="modal-close" aria-label="閉じる">×</button>
+    <div class="modal-word" id="modal-word"></div>
+    <div class="modal-meaning" id="modal-meaning"></div>
+    <div class="modal-example">
+      <div class="modal-example-label">EXAMPLE / 例文</div>
+      <div class="modal-example-en" id="modal-example-en"></div>
+      <div class="modal-example-jp" id="modal-example-jp"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const CUSTOM_KEY  = 'eiken_vocab_cheatsheet_custom';
+const LEARNED_KEY = 'eiken_vocab_cheatsheet_learned';
+const ORDER_KEY   = 'eiken_vocab_cheatsheet_order';
+
+function lsGet(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch(e) { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+const learnedSet = new Set(lsGet(LEARNED_KEY, []));
+function saveLearnedSet() { lsSet(LEARNED_KEY, [...learnedSet]); }
+
+function applyLearned(tr, isLearned) {
+  const check = tr.querySelector('.check-col');
+  if (isLearned) { tr.classList.add('learned');   check.textContent = '✔'; }
+  else           { tr.classList.remove('learned'); check.textContent = '☐'; }
+}
+
+/* ── modal ── */
+const overlay = document.getElementById('modal-overlay');
+function openModal(tr) {
+  const word = tr.querySelector('.cmd-col').textContent.trim();
+  const meaning = tr.querySelector('.desc-col').textContent.trim();
+  const en = tr.dataset.en || '';
+  const jp = tr.dataset.jp || '';
+  document.getElementById('modal-word').textContent = word;
+  document.getElementById('modal-meaning').textContent = meaning;
+  document.getElementById('modal-example-en').textContent = en || 'この単語の例文はまだ登録されていません。';
+  document.getElementById('modal-example-jp').textContent = jp || '';
+  overlay.classList.add('open');
+}
+function closeModal() { overlay.classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function attachRowEvents(tr) {
+  const key = tr.querySelector('.cmd-col').textContent.trim();
+  applyLearned(tr, learnedSet.has(key));
+  tr.addEventListener('click', (e) => {
+    if (e.target.closest('.del-col')) return;
+    if (e.target.closest('.check-col')) {
+      learnedSet.has(key) ? learnedSet.delete(key) : learnedSet.add(key);
+      applyLearned(tr, learnedSet.has(key));
+      saveLearnedSet();
+      updateProgress();
+      return;
+    }
+    openModal(tr);
+  });
+}
+
+document.querySelectorAll('tr').forEach(tr => {
+  if (!tr.querySelector('.cmd-col')) return;
+  attachRowEvents(tr);
+});
+
+function getCustomRows() { return lsGet(CUSTOM_KEY, []); }
+function saveCustomRows(rows) { lsSet(CUSTOM_KEY, rows); }
+
+function addRowToDOM(section, cmd, desc, isCustom) {
+  let card = document.querySelector(`.card[data-section="${CSS.escape(section)}"]`);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.section = section;
+    const lessonNo = document.querySelectorAll('#grid .card').length + 1;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="card-commit-dot"></span>
+          <span class="card-section-name">${section}</span>
+        </div>
+        <div class="card-header-right">
+          <span class="card-hash">Lesson ${lessonNo}</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+      </div>
+      <table></table>`;
+    document.getElementById('grid').appendChild(card);
+    buildGraph();
+  }
+
+  const table = card.querySelector('table');
+  const tr = document.createElement('tr');
+  const delCell = isCustom ? `<td class="del-col" title="削除">✕</td>` : '';
+  tr.innerHTML = `<td class="check-col">☐</td><td class="cmd-col">${cmd}</td><td class="desc-col">${desc}</td>${delCell}`;
+
+  if (isCustom) {
+    tr.querySelector('.del-col').addEventListener('click', (e) => {
+      e.stopPropagation();
+      tr.style.transition = 'opacity 0.15s';
+      tr.style.opacity = '0';
+      setTimeout(() => {
+        tr.remove();
+        saveCustomRows(getCustomRows().filter(r => !(r.section === section && r.cmd === cmd)));
+        if (!table.querySelector('tr')) card.remove();
+        updateProgress();
+      }, 150);
+    });
+  }
+
+  table.appendChild(tr);
+  attachRowEvents(tr);
+  updateProgress();
+}
+
+getCustomRows().forEach(r => addRowToDOM(r.section, r.cmd, r.desc, true));
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  const cmd     = document.getElementById('new-cmd').value.trim();
+  const desc    = document.getElementById('new-desc').value.trim();
+  const section = document.getElementById('new-section').value;
+  if (!cmd || !desc) { alert('単語と意味を入力してください'); return; }
+  addRowToDOM(section, cmd, desc, true);
+  const rows = getCustomRows();
+  rows.push({ section, cmd, desc });
+  saveCustomRows(rows);
+  document.getElementById('new-cmd').value  = '';
+  document.getElementById('new-desc').value = '';
+});
+
+['new-cmd', 'new-desc'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-btn').click();
+  });
+});
+
+function saveOrder() {
+  lsSet(ORDER_KEY, [...document.querySelectorAll('#grid .card')].map(c => c.dataset.section));
+}
+function restoreOrder() {
+  const order = lsGet(ORDER_KEY, []);
+  const grid = document.getElementById('grid');
+  order.forEach(sec => {
+    const card = grid.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (card) grid.appendChild(card);
+  });
+}
+restoreOrder();
+
+function updateProgress() {
+  const allRows = [...document.querySelectorAll('#grid tr')].filter(tr => tr.querySelector('.cmd-col'));
+  const total   = allRows.length;
+  const learned = allRows.filter(tr => tr.classList.contains('learned')).length;
+
+  document.getElementById('stat-learned').textContent = learned;
+  document.getElementById('stat-total').textContent   = total;
+
+  document.querySelectorAll('#grid .card').forEach(card => {
+    const rows    = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal  = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct     = sTotal > 0 ? sLearned / sTotal : 0;
+    card.querySelector('.card-header').style.setProperty('--section-pct', pct);
+    card.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  const nodes = [...document.querySelectorAll('.graph-node')];
+  const lines = [...document.querySelectorAll('.graph-line')];
+
+  nodes.forEach(node => {
+    const sec  = node.dataset.section;
+    const card = document.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (!card) return;
+    const rows     = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal   = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct      = sTotal > 0 ? sLearned / sTotal : 0;
+    node.querySelector('.graph-dot').style.setProperty('--pct', pct);
+    node.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  lines.forEach((line, i) => {
+    const leftDot = nodes[i]?.querySelector('.graph-dot');
+    if (!leftDot) return;
+    const lp = parseFloat(leftDot.style.getPropertyValue('--pct')) || 0;
+    line.style.setProperty('--filled', lp);
+  });
+}
+
+function buildGraph() {
+  const graph = document.getElementById('git-graph');
+  graph.innerHTML = '';
+  const cards = [...document.querySelectorAll('#grid .card')];
+
+  cards.forEach((card, i) => {
+    const sec   = card.dataset.section;
+    const node  = document.createElement('div');
+    node.className   = 'graph-node';
+    node.dataset.section = sec;
+
+    const dot = document.createElement('div');
+    dot.className = 'graph-dot';
+
+    const label = document.createElement('div');
+    label.className = 'graph-label';
+    label.textContent = sec.replace('・', '·').slice(0, 9);
+    label.title = sec;
+
+    node.appendChild(dot);
+    node.appendChild(label);
+    graph.appendChild(node);
+
+    if (i < cards.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'graph-line';
+      line.style.setProperty('--filled', 0);
+      graph.appendChild(line);
+    }
+  });
+
+  updateProgress();
+}
+
+buildGraph();
+
+Sortable.create(document.getElementById('grid'), {
+  handle: '.card-header',
+  animation: 150,
+  ghostClass: 'sortable-ghost',
+  dragClass: 'sortable-drag',
+  onEnd: () => { saveOrder(); buildGraph(); },
+});
+</script>
+
+</body>
+</html>
