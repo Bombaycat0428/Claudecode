@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中学3年 英単語クイズ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --wood:    #6b4423;
+  --board:   #15281c;
+  --board-up:#1c3324;
+  --line:    rgba(255,255,255,0.35);
+  --line-soft: rgba(255,255,255,0.2);
+  --white:   #ffffff;
+  --yellow:  #ffd84d;
+  --pink:    #ff9eb5;
+  --blue:    #8ecae6;
+  --green:   #8ee06a;
+  --muted:   rgba(255,255,255,0.78);
+
+  --jp: 'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --en: 'Inter', sans-serif;
+  --r: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 112.5%; }
+
+body {
+  font-family: var(--jp);
+  background: #4a2f18;
+  color: var(--white);
+  min-height: 100vh;
+  padding: 24px 14px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  background-color: var(--board);
+  border: 12px solid var(--wood);
+  border-radius: 8px;
+  padding: 2rem 1.6rem;
+}
+
+h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.sub {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+/* ── start screen ── */
+.field { margin-bottom: 1.3rem; }
+.field label {
+  display: block;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+}
+select {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 2px solid var(--line);
+  border-radius: var(--r);
+  color: var(--white);
+  padding: 0.8rem 1rem;
+  font-size: 1.15rem;
+  font-family: var(--jp);
+  min-height: 52px;
+}
+select option { background: #1c3324; color: var(--white); }
+
+.btn {
+  display: inline-block;
+  background: var(--yellow);
+  color: #2a1f06;
+  border: none;
+  border-radius: var(--r);
+  padding: 0.9rem 1.8rem;
+  font-size: 1.2rem;
+  font-family: var(--jp);
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 54px;
+  width: 100%;
+}
+.btn:hover { background: #ffe27a; }
+.btn:active { transform: scale(0.98); }
+.btn.secondary { background: var(--board-up); color: var(--white); border: 2px solid var(--line); margin-top: 0.8rem; }
+.btn.secondary:hover { background: rgba(255,255,255,0.1); }
+
+/* ── quiz screen ── */
+.quiz-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+  font-family: var(--en);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+.quiz-top .score { color: var(--green); }
+
+.progress-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 5px;
+  margin-bottom: 1.6rem;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--yellow);
+  width: 0%;
+}
+
+.q-word {
+  font-family: var(--en);
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--yellow);
+  text-align: center;
+  padding: 1.4rem 0.5rem;
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  margin-bottom: 1.5rem;
+  word-break: break-word;
+}
+
+.choices { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.choice {
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  color: var(--white);
+  padding: 1rem 1.2rem;
+  font-size: 1.2rem;
+  font-family: var(--jp);
+  text-align: left;
+  cursor: pointer;
+  min-height: 56px;
+}
+.choice:hover:not(:disabled) { border-color: var(--blue); background: rgba(142,202,230,0.1); }
+.choice.correct { border-color: var(--green); background: rgba(142,224,106,0.25); color: var(--green); font-weight: 700; }
+.choice.wrong { border-color: var(--pink); background: rgba(255,158,181,0.2); color: var(--pink); font-weight: 700; }
+.choice:disabled { cursor: default; }
+
+.next-wrap { margin-top: 1.3rem; }
+
+/* ── result screen ── */
+.result-score {
+  font-family: var(--en);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--yellow);
+  text-align: center;
+}
+.result-score span { font-size: 1.6rem; color: var(--muted); }
+.result-label { text-align: center; color: var(--muted); margin-bottom: 1.6rem; font-size: 1.05rem; }
+
+.review-item {
+  background: var(--board-up);
+  border: 3px solid rgba(255,158,181,0.5);
+  border-radius: var(--r);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+.review-word {
+  font-family: var(--en);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--pink);
+}
+.review-meaning { font-size: 1.05rem; color: var(--muted); margin: 0.3rem 0 0.7rem; }
+.review-example-en { font-family: var(--en); font-size: 1.1rem; color: var(--white); margin-bottom: 0.2rem; }
+.review-example-jp { font-size: 1rem; color: var(--muted); }
+.review-empty { text-align: center; color: var(--green); font-size: 1.2rem; font-weight: 700; padding: 1rem 0; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 480px) {
+  .q-word { font-size: 1.8rem; }
+  .result-score { font-size: 2.2rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div id="screen-start">
+    <h1>中学3年 英単語クイズ</h1>
+    <div class="sub">カテゴリを選んでスタート！4つの中から正しい意味を選んでね。</div>
+    <div class="field">
+      <label for="category-select">カテゴリ</label>
+      <select id="category-select">
+        <option value="all">すべて（70問）</option>
+        <option value="動詞">動詞</option>
+        <option value="名詞">名詞</option>
+        <option value="形容詞">形容詞</option>
+        <option value="副詞・接続詞">副詞・接続詞</option>
+        <option value="熟語・表現">熟語・表現</option>
+        <option value="不規則動詞">不規則動詞</option>
+        <option value="入試頻出フレーズ">入試頻出フレーズ</option>
+      </select>
+    </div>
+    <button class="btn" id="start-btn">スタート</button>
+  </div>
+
+  <div id="screen-quiz" class="hidden">
+    <div class="quiz-top">
+      <span id="quiz-progress">1 / 10</span>
+      <span class="score">正解 <span id="quiz-score">0</span></span>
+    </div>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div class="q-word" id="q-word">word</div>
+    <div class="choices" id="choices"></div>
+    <div class="next-wrap">
+      <button class="btn hidden" id="next-btn">次へ</button>
+    </div>
+  </div>
+
+  <div id="screen-result" class="hidden">
+    <h1>結果</h1>
+    <div class="result-score"><span id="result-correct">0</span> / <span id="result-total">0</span> <span>正解</span></div>
+    <div class="result-label">間違えた問題はもう一度確認しよう</div>
+    <div id="review-list"></div>
+    <button class="btn" id="retry-btn">もう一度</button>
+    <button class="btn secondary" id="back-btn">カテゴリ選択にもどる</button>
+  </div>
+
+</div>
+
+<script>
+const WORDS = [
+  { cat: '動詞', word: 'decide', meaning: '決める', en: 'I decided to study English every day.', jp: '私は毎日英語を勉強することに決めました。' },
+  { cat: '動詞', word: 'develop', meaning: '発展させる、開発する', en: 'This country is developing quickly.', jp: 'この国は急速に発展しています。' },
+  { cat: '動詞', word: 'improve', meaning: '改善する、向上させる', en: 'I want to improve my English skills.', jp: '私は英語力を向上させたいです。' },
+  { cat: '動詞', word: 'achieve', meaning: '達成する', en: 'She achieved her goal.', jp: '彼女は自分の目標を達成しました。' },
+  { cat: '動詞', word: 'suggest', meaning: '提案する', en: 'He suggested a new idea.', jp: '彼は新しいアイデアを提案しました。' },
+  { cat: '動詞', word: 'communicate', meaning: '伝え合う、コミュニケーションをとる', en: 'We communicate with friends online.', jp: '私たちはオンラインで友達とコミュニケーションをとります。' },
+  { cat: '動詞', word: 'experience', meaning: '経験する', en: 'I experienced many things in Japan.', jp: '私は日本で多くのことを経験しました。' },
+  { cat: '動詞', word: 'realize', meaning: '気づく、実現する', en: 'I realized my mistake.', jp: '私は自分の間違いに気づきました。' },
+  { cat: '動詞', word: 'protect', meaning: '守る、保護する', en: 'We should protect the environment.', jp: '私たちは環境を守るべきです。' },
+  { cat: '動詞', word: 'produce', meaning: '生産する、作り出す', en: 'This factory produces cars.', jp: 'この工場は車を生産しています。' },
+  { cat: '動詞', word: 'discover', meaning: '発見する', en: 'Scientists discovered a new star.', jp: '科学者たちは新しい星を発見しました。' },
+  { cat: '動詞', word: 'encourage', meaning: '励ます、勇気づける', en: 'My teacher encouraged me to try again.', jp: '先生は私にもう一度やってみるように励ましてくれました。' },
+
+  { cat: '名詞', word: 'environment', meaning: '環境', en: 'We must take care of the environment.', jp: '私たちは環境を大切にしなければなりません。' },
+  { cat: '名詞', word: 'opportunity', meaning: '機会、チャンス', en: 'This is a great opportunity for you.', jp: 'これはあなたにとって素晴らしい機会です。' },
+  { cat: '名詞', word: 'situation', meaning: '状況、事態', en: 'The situation is getting better.', jp: '状況は良くなってきています。' },
+  { cat: '名詞', word: 'information', meaning: '情報', en: 'I need more information about the trip.', jp: '旅行についてもっと情報が必要です。' },
+  { cat: '名詞', word: 'culture', meaning: '文化', en: "I'm interested in Japanese culture.", jp: '私は日本の文化に興味があります。' },
+  { cat: '名詞', word: 'society', meaning: '社会', en: 'Technology has changed our society.', jp: 'テクノロジーは私たちの社会を変えました。' },
+  { cat: '名詞', word: 'government', meaning: '政府', en: 'The government made a new law.', jp: '政府は新しい法律を作りました。' },
+  { cat: '名詞', word: 'population', meaning: '人口', en: 'The population of this city is growing.', jp: 'この都市の人口は増えています。' },
+  { cat: '名詞', word: 'technology', meaning: '科学技術', en: 'New technology helps our daily life.', jp: '新しい技術は私たちの生活を助けます。' },
+  { cat: '名詞', word: 'energy', meaning: 'エネルギー', en: 'We need clean energy for the future.', jp: '私たちは未来のためにきれいなエネルギーが必要です。' },
+  { cat: '名詞', word: 'relationship', meaning: '関係', en: 'They have a good relationship.', jp: '彼らは良い関係を持っています。' },
+  { cat: '名詞', word: 'ability', meaning: '能力', en: 'She has the ability to speak three languages.', jp: '彼女は3つの言語を話す能力があります。' },
+
+  { cat: '形容詞', word: 'important', meaning: '重要な', en: 'Family is important to me.', jp: '家族は私にとって重要です。' },
+  { cat: '形容詞', word: 'necessary', meaning: '必要な', en: 'Water is necessary for life.', jp: '水は生きるために必要です。' },
+  { cat: '形容詞', word: 'difficult', meaning: '難しい', en: 'This question is difficult.', jp: 'この問題は難しいです。' },
+  { cat: '形容詞', word: 'possible', meaning: '可能な', en: 'It is possible to finish today.', jp: '今日終わらせることは可能です。' },
+  { cat: '形容詞', word: 'various', meaning: '様々な', en: 'There are various kinds of food.', jp: '様々な種類の食べ物があります。' },
+  { cat: '形容詞', word: 'similar', meaning: '似ている', en: 'Our opinions are similar.', jp: '私たちの意見は似ています。' },
+  { cat: '形容詞', word: 'serious', meaning: '深刻な、まじめな', en: 'This is a serious problem.', jp: 'これは深刻な問題です。' },
+  { cat: '形容詞', word: 'successful', meaning: '成功した', en: 'The event was successful.', jp: 'そのイベントは成功しました。' },
+  { cat: '形容詞', word: 'comfortable', meaning: '心地よい', en: 'This chair is very comfortable.', jp: 'この椅子はとても心地よいです。' },
+  { cat: '形容詞', word: 'positive', meaning: '積極的な、肯定的な', en: 'Please think in a positive way.', jp: '前向きに考えてください。' },
+  { cat: '形容詞', word: 'negative', meaning: '消極的な、否定的な', en: "Don't be so negative.", jp: 'そんなに消極的にならないで。' },
+
+  { cat: '副詞・接続詞', word: 'however', meaning: 'しかしながら', en: 'I was tired. However, I finished my homework.', jp: '私は疲れていました。しかし、宿題を終えました。' },
+  { cat: '副詞・接続詞', word: 'although', meaning: '〜だけれども', en: 'Although it was raining, we went out.', jp: '雨が降っていましたが、私たちは外出しました。' },
+  { cat: '副詞・接続詞', word: 'especially', meaning: '特に', en: 'I like fruits, especially apples.', jp: '私は果物が好きです、特にりんごが。' },
+  { cat: '副詞・接続詞', word: 'probably', meaning: 'おそらく', en: 'He will probably come late.', jp: '彼はおそらく遅れて来るでしょう。' },
+  { cat: '副詞・接続詞', word: 'recently', meaning: '最近', en: 'I started running recently.', jp: '私は最近走り始めました。' },
+  { cat: '副詞・接続詞', word: 'finally', meaning: '最終的に、ついに', en: 'We finally arrived at the station.', jp: '私たちはついに駅に着きました。' },
+  { cat: '副詞・接続詞', word: 'suddenly', meaning: '突然', en: 'Suddenly, it started to rain.', jp: '突然、雨が降り始めました。' },
+  { cat: '副詞・接続詞', word: 'actually', meaning: '実際には', en: "Actually, I don't like coffee.", jp: '実は、私はコーヒーが好きではありません。' },
+  { cat: '副詞・接続詞', word: 'therefore', meaning: 'それゆえに', en: 'It was raining; therefore, we stayed home.', jp: '雨が降っていたので、私たちは家にいました。' },
+
+  { cat: '熟語・表現', word: 'be able to ~', meaning: '〜できる', en: 'I am able to swim fast.', jp: '私は速く泳ぐことができます。' },
+  { cat: '熟語・表現', word: 'in order to ~', meaning: '〜するために', en: 'I study hard in order to pass the test.', jp: '私はテストに合格するために熱心に勉強します。' },
+  { cat: '熟語・表現', word: 'as well as ~', meaning: '〜だけでなく', en: 'She can sing as well as dance.', jp: '彼女は踊るだけでなく歌うこともできます。' },
+  { cat: '熟語・表現', word: 'for example', meaning: '例えば', en: 'I like sports, for example, soccer.', jp: '私はスポーツが好きです、例えばサッカーです。' },
+  { cat: '熟語・表現', word: 'such as ~', meaning: '〜のような', en: 'I like fruits such as apples and bananas.', jp: '私はりんごやバナナのような果物が好きです。' },
+  { cat: '熟語・表現', word: 'take care of ~', meaning: '〜の世話をする', en: 'I take care of my little brother.', jp: '私は弟の世話をしています。' },
+  { cat: '熟語・表現', word: 'make sure (that) ~', meaning: '〜を確認する、確実にする', en: 'Make sure that you lock the door.', jp: 'ドアの鍵をかけたか確認してください。' },
+  { cat: '熟語・表現', word: 'used to ~', meaning: '以前は〜した（今は違う）', en: 'I used to live in Osaka.', jp: '私は以前大阪に住んでいました。' },
+  { cat: '熟語・表現', word: 'look forward to ~', meaning: '〜を楽しみにする', en: 'I look forward to seeing you.', jp: 'あなたに会えるのを楽しみにしています。' },
+  { cat: '熟語・表現', word: 'be interested in ~', meaning: '〜に興味がある', en: 'I am interested in music.', jp: '私は音楽に興味があります。' },
+  { cat: '熟語・表現', word: 'instead of ~', meaning: '〜の代わりに', en: 'I had tea instead of coffee.', jp: '私はコーヒーの代わりにお茶を飲みました。' },
+
+  { cat: '不規則動詞', word: 'begin - began - begun', meaning: '始める', en: 'The movie began at seven.', jp: '映画は7時に始まりました。' },
+  { cat: '不規則動詞', word: 'break - broke - broken', meaning: '壊す', en: 'He broke the window.', jp: '彼は窓を壊しました。' },
+  { cat: '不規則動詞', word: 'choose - chose - chosen', meaning: '選ぶ', en: 'I chose this book.', jp: '私はこの本を選びました。' },
+  { cat: '不規則動詞', word: 'grow - grew - grown', meaning: '成長する', en: 'The plant has grown a lot.', jp: 'その植物はとても成長しました。' },
+  { cat: '不規則動詞', word: 'lose - lost - lost', meaning: '失う、負ける', en: 'We lost the game.', jp: '私たちは試合に負けました。' },
+  { cat: '不規則動詞', word: 'rise - rose - risen', meaning: '上がる、昇る', en: 'The sun rose early today.', jp: '今日は太陽が早く昇りました。' },
+  { cat: '不規則動詞', word: 'send - sent - sent', meaning: '送る', en: 'I sent a letter to my friend.', jp: '私は友達に手紙を送りました。' },
+  { cat: '不規則動詞', word: 'wear - wore - worn', meaning: '着ている', en: 'She wore a red dress yesterday.', jp: '彼女は昨日赤いドレスを着ていました。' },
+
+  { cat: '入試頻出フレーズ', word: 'It is ~ for someone to do', meaning: '（誰かが）〜するのは…だ', en: 'It is important for students to study English.', jp: '学生にとって英語を勉強することは重要です。' },
+  { cat: '入試頻出フレーズ', word: 'have been to ~', meaning: '〜に行ったことがある（現在完了）', en: 'I have been to Okinawa twice.', jp: '私は沖縄に2回行ったことがあります。' },
+  { cat: '入試頻出フレーズ', word: 'have never done', meaning: '一度も〜したことがない', en: 'I have never seen snow.', jp: '私は雪を見たことがありません。' },
+  { cat: '入試頻出フレーズ', word: 'tell someone to do', meaning: '人に〜するように言う', en: 'My mother told me to clean my room.', jp: '母は私に部屋を掃除するように言いました。' },
+  { cat: '入試頻出フレーズ', word: 'ask someone to do', meaning: '人に〜するように頼む', en: 'I asked him to help me.', jp: '私は彼に手伝ってくれるよう頼みました。' },
+  { cat: '入試頻出フレーズ', word: 'the way to do', meaning: '〜する方法', en: 'Can you tell me the way to get to the station?', jp: '駅までの行き方を教えてもらえますか。' },
+  { cat: '入試頻出フレーズ', word: 'something to drink/eat', meaning: '飲む/食べるための何か', en: 'Do you want something to drink?', jp: '何か飲み物はいかがですか。' },
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let quizItems = [];
+let currentIndex = 0;
+let score = 0;
+let wrongItems = [];
+
+const screenStart  = document.getElementById('screen-start');
+const screenQuiz   = document.getElementById('screen-quiz');
+const screenResult = document.getElementById('screen-result');
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  const cat = document.getElementById('category-select').value;
+  const pool = cat === 'all' ? WORDS : WORDS.filter(w => w.cat === cat);
+  quizItems = shuffle(pool);
+  currentIndex = 0;
+  score = 0;
+  wrongItems = [];
+  screenStart.classList.add('hidden');
+  screenResult.classList.add('hidden');
+  screenQuiz.classList.remove('hidden');
+  showQuestion();
+});
+
+function showQuestion() {
+  const item = quizItems[currentIndex];
+  document.getElementById('quiz-progress').textContent = `${currentIndex + 1} / ${quizItems.length}`;
+  document.getElementById('quiz-score').textContent = score;
+  document.getElementById('progress-fill').style.width = `${(currentIndex / quizItems.length) * 100}%`;
+  document.getElementById('q-word').textContent = item.word;
+
+  const others = WORDS.filter(w => w.word !== item.word);
+  const distractors = shuffle(others).slice(0, 3).map(w => w.meaning);
+  const options = shuffle([item.meaning, ...distractors]);
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.classList.add('hidden');
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => {
+      const isCorrect = opt === item.meaning;
+      [...choicesEl.children].forEach(c => c.disabled = true);
+      if (isCorrect) {
+        btn.classList.add('correct');
+        score++;
+      } else {
+        btn.classList.add('wrong');
+        wrongItems.push(item);
+        [...choicesEl.children].find(c => c.textContent === item.meaning)?.classList.add('correct');
+      }
+      document.getElementById('quiz-score').textContent = score;
+      nextBtn.classList.remove('hidden');
+      nextBtn.focus();
+    });
+    choicesEl.appendChild(btn);
+  });
+}
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  currentIndex++;
+  if (currentIndex >= quizItems.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+});
+
+function showResult() {
+  document.getElementById('progress-fill').style.width = '100%';
+  screenQuiz.classList.add('hidden');
+  screenResult.classList.remove('hidden');
+  document.getElementById('result-correct').textContent = score;
+  document.getElementById('result-total').textContent = quizItems.length;
+
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  if (wrongItems.length === 0) {
+    list.innerHTML = '<div class="review-empty">全問正解！すごい！</div>';
+  } else {
+    wrongItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'review-item';
+      div.innerHTML = `
+        <div class="review-word">${item.word}</div>
+        <div class="review-meaning">${item.meaning}</div>
+        <div class="review-example-en">${item.en}</div>
+        <div class="review-example-jp">${item.jp}</div>
+      `;
+      list.appendChild(div);
+    });
+  }
+}
+
+document.getElementById('retry-btn').addEventListener('click', () => {
+  document.getElementById('start-btn').click();
+});
+document.getElementById('back-btn').addEventListener('click', () => {
+  screenResult.classList.add('hidden');
+  screenStart.classList.remove('hidden');
+});
+</script>
+</body>
+</html>
