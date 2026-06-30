@@ -19,6 +19,7 @@
   --pink:    #ff9eb5;
   --blue:    #8ecae6;
   --green:   #8ee06a;
+  --purple:  #c08eff;
   --muted:   rgba(255,255,255,0.78);
 
   --jp: 'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', sans-serif;
@@ -200,9 +201,40 @@ select option { background: #1c3324; color: var(--white); }
   color: var(--pink);
 }
 .review-meaning { font-size: 1.05rem; color: var(--muted); margin: 0.3rem 0 0.7rem; }
+.review-example-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--blue);
+  margin-bottom: 0.2rem;
+}
 .review-example-en { font-family: var(--en); font-size: 1.1rem; color: var(--white); margin-bottom: 0.2rem; }
 .review-example-jp { font-size: 1rem; color: var(--muted); }
 .review-empty { text-align: center; color: var(--green); font-size: 1.2rem; font-weight: 700; padding: 1rem 0; }
+
+.review-pop {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.review-pop .review-example-label { color: var(--yellow); }
+.review-pop .review-example-en { color: var(--yellow); }
+.review-pop .review-example-jp { color: rgba(255,216,77,0.8); }
+
+.review-alt {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.review-alt-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--purple);
+  margin-bottom: 0.2rem;
+}
+.review-alt .review-example-en { color: var(--purple); }
+.review-alt .review-example-jp { color: rgba(192,142,255,0.8); }
 
 .hidden { display: none !important; }
 
@@ -262,82 +294,82 @@ select option { background: #1c3324; color: var(--white); }
 
 <script>
 const WORDS = [
-  { cat: '動詞', word: 'decide', meaning: '決める', en: 'I decided to study English every day.', jp: '私は毎日英語を勉強することに決めました。' },
-  { cat: '動詞', word: 'develop', meaning: '発展させる、開発する', en: 'This country is developing quickly.', jp: 'この国は急速に発展しています。' },
-  { cat: '動詞', word: 'improve', meaning: '改善する、向上させる', en: 'I want to improve my English skills.', jp: '私は英語力を向上させたいです。' },
-  { cat: '動詞', word: 'achieve', meaning: '達成する', en: 'She achieved her goal.', jp: '彼女は自分の目標を達成しました。' },
-  { cat: '動詞', word: 'suggest', meaning: '提案する', en: 'He suggested a new idea.', jp: '彼は新しいアイデアを提案しました。' },
-  { cat: '動詞', word: 'communicate', meaning: '伝え合う、コミュニケーションをとる', en: 'We communicate with friends online.', jp: '私たちはオンラインで友達とコミュニケーションをとります。' },
-  { cat: '動詞', word: 'experience', meaning: '経験する', en: 'I experienced many things in Japan.', jp: '私は日本で多くのことを経験しました。' },
-  { cat: '動詞', word: 'realize', meaning: '気づく、実現する', en: 'I realized my mistake.', jp: '私は自分の間違いに気づきました。' },
-  { cat: '動詞', word: 'protect', meaning: '守る、保護する', en: 'We should protect the environment.', jp: '私たちは環境を守るべきです。' },
-  { cat: '動詞', word: 'produce', meaning: '生産する、作り出す', en: 'This factory produces cars.', jp: 'この工場は車を生産しています。' },
-  { cat: '動詞', word: 'discover', meaning: '発見する', en: 'Scientists discovered a new star.', jp: '科学者たちは新しい星を発見しました。' },
-  { cat: '動詞', word: 'encourage', meaning: '励ます、勇気づける', en: 'My teacher encouraged me to try again.', jp: '先生は私にもう一度やってみるように励ましてくれました。' },
+  { cat: '動詞', word: 'decide', meaning: '決める', en0: 'I decided to study English every day.', jp0: '私は毎日英語を勉強することに決めました。', en: 'Tonight, I decide to chase my dreams.', jp: '今夜、僕は夢を追いかけることを決める。', en2: 'I have already decided my fate; there is no turning back.', jp2: '我が運命はすでに決定された、もう後には引けない。' },
+  { cat: '動詞', word: 'develop', meaning: '発展させる、開発する', en0: 'This country is developing quickly.', jp0: 'この国は急速に発展しています。', en: 'Step by step, we develop into stars.', jp: '一歩ずつ、僕らはスターへと成長していく。', en2: 'My powers are developing beyond human comprehension.', jp2: '我が力は人間の理解を超えて進化していく。' },
+  { cat: '動詞', word: 'improve', meaning: '改善する、向上させる', en0: 'I want to improve my English skills.', jp0: '私は英語力を向上させたいです。', en: 'Every day I improve, shining brighter than before.', jp: '毎日進化していく、前よりも輝いて。', en2: 'Every battle makes me improve, awakening my true power.', jp2: '戦うたびに我は進化し、真の力に目覚める。' },
+  { cat: '動詞', word: 'achieve', meaning: '達成する', en0: 'She achieved her goal.', jp0: '彼女は自分の目標を達成しました。', en: 'We can achieve anything under this sky.', jp: 'この空の下なら、僕らは何でも叶えられる。', en2: 'Only the chosen one can achieve this forbidden power.', jp2: '選ばれし者だけが、この禁断の力を手に入れられる。' },
+  { cat: '動詞', word: 'suggest', meaning: '提案する', en0: 'He suggested a new idea.', jp0: '彼は新しいアイデアを提案しました。', en: 'Baby, let me suggest a dance under the moonlight.', jp: 'ベイビー、月の光の下でダンスを提案するよ。', en2: 'The darkness suggests a path only I can see.', jp2: '闇は、我にしか見えぬ道を示す。' },
+  { cat: '動詞', word: 'communicate', meaning: '伝え合う、コミュニケーションをとる', en0: 'We communicate with friends online.', jp0: '私たちはオンラインで友達とコミュニケーションをとります。', en: "Let's communicate through the rhythm of the night.", jp: '夜のリズムで気持ちを伝え合おう。', en2: 'I communicate with the shadows that dwell within me.', jp2: '我は、我が内に潜む影と語り合う。' },
+  { cat: '動詞', word: 'experience', meaning: '経験する', en0: 'I experienced many things in Japan.', jp0: '私は日本で多くのことを経験しました。', en: 'I want to experience this moment forever.', jp: 'この瞬間をずっと経験していたい。', en2: 'I have experienced a power that mortals cannot imagine.', jp2: '我は人間には想像もできぬ力を経験してきた。' },
+  { cat: '動詞', word: 'realize', meaning: '気づく、実現する', en0: 'I realized my mistake.', jp0: '私は自分の間違いに気づきました。', en: 'Suddenly I realize, you were the one all along.', jp: '突然気づいたんだ、ずっと君だったって。', en2: 'At that moment, I realized my true name: the Destroyer.', jp2: 'その瞬間、我は真の名を知った——破壊者と。' },
+  { cat: '動詞', word: 'protect', meaning: '守る、保護する', en0: 'We should protect the environment.', jp0: '私たちは環境を守るべきです。', en: 'I will protect this love till the end of time.', jp: 'この愛を、時の終わりまで守り抜く。', en2: 'I will protect this world, even if it costs my soul.', jp2: '我が魂を捧げても、この世界を守り抜く。' },
+  { cat: '動詞', word: 'produce', meaning: '生産する、作り出す', en0: 'This factory produces cars.', jp0: 'この工場は車を生産しています。', en: 'We produce magic every time we sing.', jp: '僕らは歌うたびに魔法を生み出す。', en2: 'This forbidden ritual will produce a power beyond gods.', jp2: 'この禁断の儀式は、神を超える力を生み出す。' },
+  { cat: '動詞', word: 'discover', meaning: '発見する', en0: 'Scientists discovered a new star.', jp0: '科学者たちは新しい星を発見しました。', en: 'Dance with me and discover a brand new world.', jp: '一緒に踊って、新しい世界を見つけよう。', en2: 'I discovered the seal that binds my true power.', jp2: '我は、我が真の力を封じる印を見つけた。' },
+  { cat: '動詞', word: 'encourage', meaning: '励ます、勇気づける', en0: 'My teacher encouraged me to try again.', jp0: '先生は私にもう一度やってみるように励ましてくれました。', en: 'Your smile encourages me to keep on flying.', jp: '君の笑顔が、僕を飛び続けさせてくれる。', en2: 'The voice in my head encourages me to unleash my power.', jp2: '我の中の声が、力を解放せよと囃す。' },
 
-  { cat: '名詞', word: 'environment', meaning: '環境', en: 'We must take care of the environment.', jp: '私たちは環境を大切にしなければなりません。' },
-  { cat: '名詞', word: 'opportunity', meaning: '機会、チャンス', en: 'This is a great opportunity for you.', jp: 'これはあなたにとって素晴らしい機会です。' },
-  { cat: '名詞', word: 'situation', meaning: '状況、事態', en: 'The situation is getting better.', jp: '状況は良くなってきています。' },
-  { cat: '名詞', word: 'information', meaning: '情報', en: 'I need more information about the trip.', jp: '旅行についてもっと情報が必要です。' },
-  { cat: '名詞', word: 'culture', meaning: '文化', en: "I'm interested in Japanese culture.", jp: '私は日本の文化に興味があります。' },
-  { cat: '名詞', word: 'society', meaning: '社会', en: 'Technology has changed our society.', jp: 'テクノロジーは私たちの社会を変えました。' },
-  { cat: '名詞', word: 'government', meaning: '政府', en: 'The government made a new law.', jp: '政府は新しい法律を作りました。' },
-  { cat: '名詞', word: 'population', meaning: '人口', en: 'The population of this city is growing.', jp: 'この都市の人口は増えています。' },
-  { cat: '名詞', word: 'technology', meaning: '科学技術', en: 'New technology helps our daily life.', jp: '新しい技術は私たちの生活を助けます。' },
-  { cat: '名詞', word: 'energy', meaning: 'エネルギー', en: 'We need clean energy for the future.', jp: '私たちは未来のためにきれいなエネルギーが必要です。' },
-  { cat: '名詞', word: 'relationship', meaning: '関係', en: 'They have a good relationship.', jp: '彼らは良い関係を持っています。' },
-  { cat: '名詞', word: 'ability', meaning: '能力', en: 'She has the ability to speak three languages.', jp: '彼女は3つの言語を話す能力があります。' },
+  { cat: '名詞', word: 'environment', meaning: '環境', en0: 'We must take care of the environment.', jp0: '私たちは環境を大切にしなければなりません。', en: 'This city is our environment, our stage tonight.', jp: 'この街が僕らの舞台、今夜のステージ。', en2: 'This world is not my true environment; my home is the abyss.', jp2: 'この世界は我の本来の居場所ではない、我が故郷は深淵だ。' },
+  { cat: '名詞', word: 'opportunity', meaning: '機会、チャンス', en0: 'This is a great opportunity for you.', jp0: 'これはあなたにとって素晴らしい機会です。', en: "This is our opportunity, don't let it slip away.", jp: 'これが僕らのチャンス、逃すなよ。', en2: 'This is the opportunity my cursed blood has waited for.', jp2: 'これこそ、我が呪われた血が待ち望んだ機会。' },
+  { cat: '名詞', word: 'situation', meaning: '状況、事態', en0: 'The situation is getting better.', jp0: '状況は良くなってきています。', en: 'In this crazy situation, I just wanna dance with you.', jp: 'こんなクレイジーな状況でも、君と踊りたいんだ。', en2: 'In this situation, only my forbidden power can save us.', jp2: 'この状況を救えるのは、我が禁断の力のみ。' },
+  { cat: '名詞', word: 'information', meaning: '情報', en0: 'I need more information about the trip.', jp0: '旅行についてもっと情報が必要です。', en: 'Give me information, tell me where you are tonight.', jp: '教えて、今夜どこにいるのか。', en2: 'I possess information that mankind was never meant to know.', jp2: '我は、人類が知ってはならぬ情報を持っている。' },
+  { cat: '名詞', word: 'culture', meaning: '文化', en0: "I'm interested in Japanese culture.", jp0: '私は日本の文化に興味があります。', en: 'We come from different culture, but our hearts beat the same.', jp: '違う文化から来たけど、心は同じビート。', en2: 'I come from a culture sealed away by the gods themselves.', jp2: '我は神々自らが封印した文化の出身者。' },
+  { cat: '名詞', word: 'society', meaning: '社会', en0: 'Technology has changed our society.', jp0: 'テクノロジーは私たちの社会を変えました。', en: "We're breaking out of society's rules tonight.", jp: '今夜、社会のルールを飛び出していく。', en2: 'This society fears the power that sleeps within me.', jp2: 'この社会は、我に眠る力を恐れている。' },
+  { cat: '名詞', word: 'government', meaning: '政府', en0: 'The government made a new law.', jp0: '政府は新しい法律を作りました。', en: 'No government can stop the way I feel for you.', jp: 'どんな政府も、君への気持ちは止められない。', en2: 'No government on this earth can control what I am.', jp2: 'この地のどの政府も、我という存在を制御できぬ。' },
+  { cat: '名詞', word: 'population', meaning: '人口', en0: 'The population of this city is growing.', jp0: 'この都市の人口は増えています。', en: 'In a city of a million population, I found just you.', jp: '何百万もの人の中で、見つけたのは君だけ。', en2: 'Among the entire population, only I carry this curse.', jp2: '全人口の中で、この呪いを背負うのは我ひとり。' },
+  { cat: '名詞', word: 'technology', meaning: '科学技術', en0: 'New technology helps our daily life.', jp0: '新しい技術は私たちの生活を助けます。', en: "Technology can't replace this feeling in my heart.", jp: 'どんな技術も、この想いには代えられない。', en2: 'Their technology is nothing before my awakened eye.', jp2: '彼らの技術など、我が覚醒した眼の前では無に等しい。' },
+  { cat: '名詞', word: 'energy', meaning: 'エネルギー', en0: 'We need clean energy for the future.', jp0: '私たちは未来のためにきれいなエネルギーが必要です。', en: 'Feel the energy, let the music take control.', jp: 'エネルギーを感じて、音楽に身をまかせて。', en2: 'Dark energy flows through my veins like a second heartbeat.', jp2: '闇のエネルギーが、第二の心臓のように我が血管を流れる。' },
+  { cat: '名詞', word: 'relationship', meaning: '関係', en0: 'They have a good relationship.', jp0: '彼らは良い関係を持っています。', en: 'Our relationship is the rhythm of my life.', jp: '僕らの関係は、人生のリズムそのもの。', en2: 'My relationship with the darkness goes back to before my birth.', jp2: '我と闇との関係は、生まれる前から始まっていた。' },
+  { cat: '名詞', word: 'ability', meaning: '能力', en0: 'She has the ability to speak three languages.', jp0: '彼女は3つの言語を話す能力があります。', en: "I've got the ability to love you endlessly.", jp: '君を限りなく愛する力が、僕にはある。', en2: 'This ability was sealed within me long before I was born.', jp2: 'この力は、我が生まれる遥か前から封じられていた。' },
 
-  { cat: '形容詞', word: 'important', meaning: '重要な', en: 'Family is important to me.', jp: '家族は私にとって重要です。' },
-  { cat: '形容詞', word: 'necessary', meaning: '必要な', en: 'Water is necessary for life.', jp: '水は生きるために必要です。' },
-  { cat: '形容詞', word: 'difficult', meaning: '難しい', en: 'This question is difficult.', jp: 'この問題は難しいです。' },
-  { cat: '形容詞', word: 'possible', meaning: '可能な', en: 'It is possible to finish today.', jp: '今日終わらせることは可能です。' },
-  { cat: '形容詞', word: 'various', meaning: '様々な', en: 'There are various kinds of food.', jp: '様々な種類の食べ物があります。' },
-  { cat: '形容詞', word: 'similar', meaning: '似ている', en: 'Our opinions are similar.', jp: '私たちの意見は似ています。' },
-  { cat: '形容詞', word: 'serious', meaning: '深刻な、まじめな', en: 'This is a serious problem.', jp: 'これは深刻な問題です。' },
-  { cat: '形容詞', word: 'successful', meaning: '成功した', en: 'The event was successful.', jp: 'そのイベントは成功しました。' },
-  { cat: '形容詞', word: 'comfortable', meaning: '心地よい', en: 'This chair is very comfortable.', jp: 'この椅子はとても心地よいです。' },
-  { cat: '形容詞', word: 'positive', meaning: '積極的な、肯定的な', en: 'Please think in a positive way.', jp: '前向きに考えてください。' },
-  { cat: '形容詞', word: 'negative', meaning: '消極的な、否定的な', en: "Don't be so negative.", jp: 'そんなに消極的にならないで。' },
+  { cat: '形容詞', word: 'important', meaning: '重要な', en0: 'Family is important to me.', jp0: '家族は私にとって重要です。', en: "You're the most important star in my sky.", jp: '君は僕の空で一番大切な星。', en2: 'Nothing is more important than the seal upon my arm.', jp2: '我が右腕の封印より重要なものなど何もない。' },
+  { cat: '形容詞', word: 'necessary', meaning: '必要な', en0: 'Water is necessary for life.', jp0: '水は生きるために必要です。', en: 'Your love is necessary, like air to breathe.', jp: '君の愛は必要、息をするように。', en2: 'Pain is necessary to awaken my true form.', jp2: '痛みこそ、真の姿に目覚めるために必要なもの。' },
+  { cat: '形容詞', word: 'difficult', meaning: '難しい', en0: 'This question is difficult.', jp0: 'この問題は難しいです。', en: 'Loving you was never difficult at all.', jp: '君を愛することは、ちっとも難しくなかった。', en2: 'Controlling this cursed power is the most difficult battle of all.', jp2: 'この呪われし力を制御することこそ、最も困難な戦い。' },
+  { cat: '形容詞', word: 'possible', meaning: '可能な', en0: 'It is possible to finish today.', jp0: '今日終わらせることは可能です。', en: "Anything is possible when we're dancing tonight.", jp: '今夜踊っていれば、何でも可能になる。', en2: 'With this eye, anything becomes possible, even destroying fate.', jp2: 'この瞳があれば、運命を壊すことさえ可能になる。' },
+  { cat: '形容詞', word: 'various', meaning: '様々な', en0: 'There are various kinds of food.', jp0: '様々な種類の食べ物があります。', en: "We've been through various nights, but this one feels right.", jp: 'いろんな夜を越えてきたけど、今夜は特別な気がする。', en2: 'I have sealed away various powers too dangerous for this world.', jp2: '我はこの世には危険すぎる様々な力を封じてきた。' },
+  { cat: '形容詞', word: 'similar', meaning: '似ている', en0: 'Our opinions are similar.', jp0: '私たちの意見は似ています。', en: 'Our hearts are similar, beating to the same song.', jp: '僕らの心は似ている、同じ歌のリズムで。', en2: 'Your eyes are similar to the ones I see in my nightmares.', jp2: 'お前の瞳は、我が悪夢で見るそれと似ている。' },
+  { cat: '形容詞', word: 'serious', meaning: '深刻な、まじめな', en0: 'This is a serious problem.', jp0: 'これは深刻な問題です。', en: "Baby, I'm serious, you're the only one I need.", jp: 'ベイビー、本気だよ、必要なのは君だけ。', en2: 'This is no game; my curse is far more serious than you think.', jp2: 'これは遊びではない、我が呪いはお前が思うより遥かに深刻だ。' },
+  { cat: '形容詞', word: 'successful', meaning: '成功した', en0: 'The event was successful.', jp0: 'そのイベントは成功しました。', en: 'Tonight feels successful, just you and me.', jp: '今夜は上手くいってる、君と僕だけで。', en2: 'The ritual was successful; the seal has finally broken.', jp2: '儀式は成功した、封印はついに解かれた。' },
+  { cat: '形容詞', word: 'comfortable', meaning: '心地よい', en0: 'This chair is very comfortable.', jp0: 'この椅子はとても心地よいです。', en: "I feel so comfortable whenever you're near.", jp: '君が近くにいると、すごく心地いい。', en2: 'Only in darkness do I feel truly comfortable.', jp2: '闇の中でだけ、我は本当に心地よさを感じる。' },
+  { cat: '形容詞', word: 'positive', meaning: '積極的な、肯定的な', en0: 'Please think in a positive way.', jp0: '前向きに考えてください。', en: 'Stay positive, the night is still young.', jp: '前向きに、夜はまだ始まったばかり。', en2: 'Even cursed, I choose to walk this path in a positive light.', jp2: '呪われていても、我はこの道を前向きに歩むと決めた。' },
+  { cat: '形容詞', word: 'negative', meaning: '消極的な、否定的な', en0: "Don't be so negative.", jp0: 'そんなに消極的にならないで。', en: 'No negative vibes, just you, me, and the beat.', jp: 'ネガティブな空気なんていらない、君と僕とビートだけ。', en2: 'The negative energy around me grows stronger every night.', jp2: '我を取り巻く負のエネルギーは、夜ごとに強くなる。' },
 
-  { cat: '副詞・接続詞', word: 'however', meaning: 'しかしながら', en: 'I was tired. However, I finished my homework.', jp: '私は疲れていました。しかし、宿題を終えました。' },
-  { cat: '副詞・接続詞', word: 'although', meaning: '〜だけれども', en: 'Although it was raining, we went out.', jp: '雨が降っていましたが、私たちは外出しました。' },
-  { cat: '副詞・接続詞', word: 'especially', meaning: '特に', en: 'I like fruits, especially apples.', jp: '私は果物が好きです、特にりんごが。' },
-  { cat: '副詞・接続詞', word: 'probably', meaning: 'おそらく', en: 'He will probably come late.', jp: '彼はおそらく遅れて来るでしょう。' },
-  { cat: '副詞・接続詞', word: 'recently', meaning: '最近', en: 'I started running recently.', jp: '私は最近走り始めました。' },
-  { cat: '副詞・接続詞', word: 'finally', meaning: '最終的に、ついに', en: 'We finally arrived at the station.', jp: '私たちはついに駅に着きました。' },
-  { cat: '副詞・接続詞', word: 'suddenly', meaning: '突然', en: 'Suddenly, it started to rain.', jp: '突然、雨が降り始めました。' },
-  { cat: '副詞・接続詞', word: 'actually', meaning: '実際には', en: "Actually, I don't like coffee.", jp: '実は、私はコーヒーが好きではありません。' },
-  { cat: '副詞・接続詞', word: 'therefore', meaning: 'それゆえに', en: 'It was raining; therefore, we stayed home.', jp: '雨が降っていたので、私たちは家にいました。' },
+  { cat: '副詞・接続詞', word: 'however', meaning: 'しかしながら', en0: 'I was tired. However, I finished my homework.', jp0: '私は疲れていました。しかし、宿題を終えました。', en: 'I was scared. However, I sang my heart out.', jp: '怖かった。でも、心を込めて歌った。', en2: 'I was once human. However, that side of me died long ago.', jp2: '我もかつては人間だった。しかし、その我はすでに死んだ。' },
+  { cat: '副詞・接続詞', word: 'although', meaning: '〜だけれども', en0: 'Although it was raining, we went out.', jp0: '雨が降っていましたが、私たちは外出しました。', en: "Although it's late, let's dance till the morning light.", jp: 'もう遅いけど、夜明けまで踊ろう。', en2: 'Although the seal weakens, my resolve never wavers.', jp2: '封印が弱まろうとも、我が意志は決して揺らがない。' },
+  { cat: '副詞・接続詞', word: 'especially', meaning: '特に', en0: 'I like fruits, especially apples.', jp0: '私は果物が好きです、特にりんごが。', en: 'I love this city, especially at night.', jp: 'この街が好き、特に夜が。', en2: 'I fear nothing, especially not the darkness I was born from.', jp2: '我は何も恐れぬ、特に我が生まれた闇など。' },
+  { cat: '副詞・接続詞', word: 'probably', meaning: 'おそらく', en0: 'He will probably come late.', jp0: '彼はおそらく遅れて来るでしょう。', en: "You'll probably steal my heart again tonight.", jp: '今夜もきっと、また君に心を奪われる。', en2: 'You will probably regret awakening this power within me.', jp2: 'お前は、この力を我の中で目覚めさせたことを後悔するだろう。' },
+  { cat: '副詞・接続詞', word: 'recently', meaning: '最近', en0: 'I started running recently.', jp0: '私は最近走り始めました。', en: 'Recently, every song reminds me of you.', jp: '最近、どの曲も君を思い出させる。', en2: 'Recently, the voices in my head have grown louder.', jp2: '最近、我の中の声がより大きくなってきた。' },
+  { cat: '副詞・接続詞', word: 'finally', meaning: '最終的に、ついに', en0: 'We finally arrived at the station.', jp0: '私たちはついに駅に着きました。', en: 'Finally, I found the rhythm of my life.', jp: 'ついに、人生のリズムを見つけたんだ。', en2: 'Finally, the seal upon my soul has been broken.', jp2: 'ついに、我が魂を縛る封印が解かれた。' },
+  { cat: '副詞・接続詞', word: 'suddenly', meaning: '突然', en0: 'Suddenly, it started to rain.', jp0: '突然、雨が降り始めました。', en: 'Suddenly, the music stopped and I saw your eyes.', jp: '突然音楽が止んで、君の瞳が見えた。', en2: 'Suddenly, my right eye burned with forbidden power.', jp2: '突然、我が右眼が禁断の力で燃え上がった。' },
+  { cat: '副詞・接続詞', word: 'actually', meaning: '実際には', en0: "Actually, I don't like coffee.", jp0: '実は、私はコーヒーが好きではありません。', en: 'Actually, this is my favorite song of all time.', jp: '実は、これが僕の一番好きな曲なんだ。', en2: 'Actually, I was never meant to exist in this world.', jp2: '実のところ、我はこの世界に存在してはならぬ者。' },
+  { cat: '副詞・接続詞', word: 'therefore', meaning: 'それゆえに', en0: 'It was raining; therefore, we stayed home.', jp0: '雨が降っていたので、私たちは家にいました。', en: 'You make me smile; therefore, I sing all night.', jp: '君が僕を笑顔にする、だから一晩中歌うんだ。', en2: 'Darkness chose me; therefore, I am no longer human.', jp2: '闇が我を選んだ、ゆえに我はもう人間ではない。' },
 
-  { cat: '熟語・表現', word: 'be able to ~', meaning: '〜できる', en: 'I am able to swim fast.', jp: '私は速く泳ぐことができます。' },
-  { cat: '熟語・表現', word: 'in order to ~', meaning: '〜するために', en: 'I study hard in order to pass the test.', jp: '私はテストに合格するために熱心に勉強します。' },
-  { cat: '熟語・表現', word: 'as well as ~', meaning: '〜だけでなく', en: 'She can sing as well as dance.', jp: '彼女は踊るだけでなく歌うこともできます。' },
-  { cat: '熟語・表現', word: 'for example', meaning: '例えば', en: 'I like sports, for example, soccer.', jp: '私はスポーツが好きです、例えばサッカーです。' },
-  { cat: '熟語・表現', word: 'such as ~', meaning: '〜のような', en: 'I like fruits such as apples and bananas.', jp: '私はりんごやバナナのような果物が好きです。' },
-  { cat: '熟語・表現', word: 'take care of ~', meaning: '〜の世話をする', en: 'I take care of my little brother.', jp: '私は弟の世話をしています。' },
-  { cat: '熟語・表現', word: 'make sure (that) ~', meaning: '〜を確認する、確実にする', en: 'Make sure that you lock the door.', jp: 'ドアの鍵をかけたか確認してください。' },
-  { cat: '熟語・表現', word: 'used to ~', meaning: '以前は〜した（今は違う）', en: 'I used to live in Osaka.', jp: '私は以前大阪に住んでいました。' },
-  { cat: '熟語・表現', word: 'look forward to ~', meaning: '〜を楽しみにする', en: 'I look forward to seeing you.', jp: 'あなたに会えるのを楽しみにしています。' },
-  { cat: '熟語・表現', word: 'be interested in ~', meaning: '〜に興味がある', en: 'I am interested in music.', jp: '私は音楽に興味があります。' },
-  { cat: '熟語・表現', word: 'instead of ~', meaning: '〜の代わりに', en: 'I had tea instead of coffee.', jp: '私はコーヒーの代わりにお茶を飲みました。' },
+  { cat: '熟語・表現', word: 'be able to ~', meaning: '〜できる', en0: 'I am able to swim fast.', jp0: '私は速く泳ぐことができます。', en: "I am able to fly whenever you're by my side.", jp: '君がそばにいれば、僕は飛べるんだ。', en2: 'I am able to see the strings of fate that bind us all.', jp2: '我には、すべてを縛る運命の糸が見える。' },
+  { cat: '熟語・表現', word: 'in order to ~', meaning: '〜するために', en0: 'I study hard in order to pass the test.', jp0: '私はテストに合格するために熱心に勉強します。', en: 'I dance all night in order to feel alive.', jp: '生きてる実感を得るために、一晩中踊るんだ。', en2: 'I awakened this power in order to rewrite my fate.', jp2: '我が運命を書き換えるために、この力を覚醒させた。' },
+  { cat: '熟語・表現', word: 'as well as ~', meaning: '〜だけでなく', en0: 'She can sing as well as dance.', jp0: '彼女は踊るだけでなく歌うこともできます。', en: 'You make me laugh as well as make me dream.', jp: '君は僕を笑わせ、夢も見させてくれる。', en2: 'This curse brings power as well as eternal solitude.', jp2: 'この呪いは力だけでなく、永遠の孤独ももたらす。' },
+  { cat: '熟語・表現', word: 'for example', meaning: '例えば', en0: 'I like sports, for example, soccer.', jp0: '私はスポーツが好きです、例えばサッカーです。', en: 'I love many songs, for example, this one about you.', jp: 'たくさんの歌が好き、例えば君についてのこの曲。', en2: 'Many fear my power, for example, even the gods themselves.', jp2: '多くの者が我が力を恐れる、例えば神々自身さえも。' },
+  { cat: '熟語・表現', word: 'such as ~', meaning: '〜のような', en0: 'I like fruits such as apples and bananas.', jp0: '私はりんごやバナナのような果物が好きです。', en: 'Cities such as this one shine brighter with you.', jp: 'こんな街は、君がいるともっと輝く。', en2: 'Forces such as mine were never meant to walk among humans.', jp2: '我のような力は、人間の中を歩むべきではなかった。' },
+  { cat: '熟語・表現', word: 'take care of ~', meaning: '〜の世話をする', en0: 'I take care of my little brother.', jp0: '私は弟の世話をしています。', en: "I'll take care of your heart, I promise.", jp: '君の心を大切にするよ、約束する。', en2: 'I alone must take care of the darkness that lives inside me.', jp2: 'この内に住む闇を、我だけが管理しなければならぬ。' },
+  { cat: '熟語・表現', word: 'make sure (that) ~', meaning: '〜を確認する、確実にする', en0: 'Make sure that you lock the door.', jp0: 'ドアの鍵をかけたか確認してください。', en: 'Make sure that you save the last dance for me.', jp: '最後のダンスは僕のために残しておいてね。', en2: 'Make sure that you never look directly into my cursed eye.', jp2: '我が呪われた眼を、決して直視するな。' },
+  { cat: '熟語・表現', word: 'used to ~', meaning: '以前は〜した（今は違う）', en0: 'I used to live in Osaka.', jp0: '私は以前大阪に住んでいました。', en: 'I used to walk alone before I met you.', jp: '君に出会う前は、ひとりで歩いていた。', en2: 'I used to be just like you, before the seal awakened.', jp2: '封印が目覚める前は、我もお前と同じだった。' },
+  { cat: '熟語・表現', word: 'look forward to ~', meaning: '〜を楽しみにする', en0: 'I look forward to seeing you.', jp0: 'あなたに会えるのを楽しみにしています。', en: 'I look forward to every night we dance together.', jp: '一緒に踊る夜が来るのを、いつも楽しみにしている。', en2: 'I look forward to the day my true power is finally unleashed.', jp2: '我が真の力が解放される日を、心待ちにしている。' },
+  { cat: '熟語・表現', word: 'be interested in ~', meaning: '〜に興味がある', en0: 'I am interested in music.', jp0: '私は音楽に興味があります。', en: "I'm interested in nothing but this melody and you.", jp: 'このメロディーと君以外、何も興味がない。', en2: 'I am interested in nothing but the darkness that calls my name.', jp2: '我が名を呼ぶ闇以外、何にも興味はない。' },
+  { cat: '熟語・表現', word: 'instead of ~', meaning: '〜の代わりに', en0: 'I had tea instead of coffee.', jp0: '私はコーヒーの代わりにお茶を飲みました。', en: "Let's dance instead of just standing here.", jp: 'ここに立ってるだけじゃなくて、踊ろう。', en2: 'I chose this curse instead of a normal, meaningless life.', jp2: '我は、意味のない平凡な人生の代わりにこの呪いを選んだ。' },
 
-  { cat: '不規則動詞', word: 'begin - began - begun', meaning: '始める', en: 'The movie began at seven.', jp: '映画は7時に始まりました。' },
-  { cat: '不規則動詞', word: 'break - broke - broken', meaning: '壊す', en: 'He broke the window.', jp: '彼は窓を壊しました。' },
-  { cat: '不規則動詞', word: 'choose - chose - chosen', meaning: '選ぶ', en: 'I chose this book.', jp: '私はこの本を選びました。' },
-  { cat: '不規則動詞', word: 'grow - grew - grown', meaning: '成長する', en: 'The plant has grown a lot.', jp: 'その植物はとても成長しました。' },
-  { cat: '不規則動詞', word: 'lose - lost - lost', meaning: '失う、負ける', en: 'We lost the game.', jp: '私たちは試合に負けました。' },
-  { cat: '不規則動詞', word: 'rise - rose - risen', meaning: '上がる、昇る', en: 'The sun rose early today.', jp: '今日は太陽が早く昇りました。' },
-  { cat: '不規則動詞', word: 'send - sent - sent', meaning: '送る', en: 'I sent a letter to my friend.', jp: '私は友達に手紙を送りました。' },
-  { cat: '不規則動詞', word: 'wear - wore - worn', meaning: '着ている', en: 'She wore a red dress yesterday.', jp: '彼女は昨日赤いドレスを着ていました。' },
+  { cat: '不規則動詞', word: 'begin - began - begun', meaning: '始める', en0: 'The movie began at seven.', jp0: '映画は7時に始まりました。', en: 'The music began, and so did our story.', jp: '音楽が始まって、僕らの物語も始まった。', en2: 'The moment our eyes met, the prophecy began.', jp2: '我らの目が合った瞬間、予言は始まった。' },
+  { cat: '不規則動詞', word: 'break - broke - broken', meaning: '壊す', en0: 'He broke the window.', jp0: '彼は窓を壊しました。', en: 'You broke through my walls with just one song.', jp: '君はたった一曲で、僕の心の壁を壊した。', en2: 'The seal broke, and my true self awakened at last.', jp2: '封印が解け、我が真の姿がついに覚醒した。' },
+  { cat: '不規則動詞', word: 'choose - chose - chosen', meaning: '選ぶ', en0: 'I chose this book.', jp0: '私はこの本を選びました。', en: 'I chose this song to tell you how I feel.', jp: 'この歌を選んで、君に気持ちを伝えたんだ。', en2: 'Fate chose me before I ever chose it.', jp2: '我が運命を選ぶ前に、運命が我を選んでいた。' },
+  { cat: '不規則動詞', word: 'grow - grew - grown', meaning: '成長する', en0: 'The plant has grown a lot.', jp0: 'その植物はとても成長しました。', en: 'Our love has grown with every beat of the drum.', jp: 'ドラムのビートごとに、僕らの愛は育っていった。', en2: 'My power has grown beyond what even I can control.', jp2: '我が力は、我自身でも制御できぬほどに成長した。' },
+  { cat: '不規則動詞', word: 'lose - lost - lost', meaning: '失う、負ける', en0: 'We lost the game.', jp0: '私たちは試合に負けました。', en: 'I got lost in your eyes under the city lights.', jp: '街の光の下、君の瞳に迷い込んだ。', en2: 'I lost my humanity the night this curse was born.', jp2: 'この呪いが生まれた夜、我は人間性を失った。' },
+  { cat: '不規則動詞', word: 'rise - rose - risen', meaning: '上がる、昇る', en0: 'The sun rose early today.', jp0: '今日は太陽が早く昇りました。', en: 'The sun rose, but I was still dancing with you.', jp: '太陽が昇っても、僕はまだ君と踊っていた。', en2: 'From the depths of darkness, I have risen once more.', jp2: '闇の深淵より、我は再び立ち上がった。' },
+  { cat: '不規則動詞', word: 'send - sent - sent', meaning: '送る', en0: 'I sent a letter to my friend.', jp0: '私は友達に手紙を送りました。', en: 'I sent you a song instead of words.', jp: '言葉の代わりに、君に歌を送った。', en2: 'The darkness sent me a sign that my time has come.', jp2: '闇は、我が時が来たという徴を送ってきた。' },
+  { cat: '不規則動詞', word: 'wear - wore - worn', meaning: '着ている', en0: 'She wore a red dress yesterday.', jp0: '彼女は昨日赤いドレスを着ていました。', en: 'She wore the night like it was made for her.', jp: '彼女はその夜を、まるで自分のために作られたみたいに纏っていた。', en2: 'She wore the mark of the cursed bloodline on her hand.', jp2: '彼女は、呪われた血脈の印を手に纏っていた。' },
 
-  { cat: '入試頻出フレーズ', word: 'It is ~ for someone to do', meaning: '（誰かが）〜するのは…だ', en: 'It is important for students to study English.', jp: '学生にとって英語を勉強することは重要です。' },
-  { cat: '入試頻出フレーズ', word: 'have been to ~', meaning: '〜に行ったことがある（現在完了）', en: 'I have been to Okinawa twice.', jp: '私は沖縄に2回行ったことがあります。' },
-  { cat: '入試頻出フレーズ', word: 'have never done', meaning: '一度も〜したことがない', en: 'I have never seen snow.', jp: '私は雪を見たことがありません。' },
-  { cat: '入試頻出フレーズ', word: 'tell someone to do', meaning: '人に〜するように言う', en: 'My mother told me to clean my room.', jp: '母は私に部屋を掃除するように言いました。' },
-  { cat: '入試頻出フレーズ', word: 'ask someone to do', meaning: '人に〜するように頼む', en: 'I asked him to help me.', jp: '私は彼に手伝ってくれるよう頼みました。' },
-  { cat: '入試頻出フレーズ', word: 'the way to do', meaning: '〜する方法', en: 'Can you tell me the way to get to the station?', jp: '駅までの行き方を教えてもらえますか。' },
-  { cat: '入試頻出フレーズ', word: 'something to drink/eat', meaning: '飲む/食べるための何か', en: 'Do you want something to drink?', jp: '何か飲み物はいかがですか。' },
+  { cat: '入試頻出フレーズ', word: 'It is ~ for someone to do', meaning: '（誰かが）〜するのは…だ', en0: 'It is important for students to study English.', jp0: '学生にとって英語を勉強することは重要です。', en: 'It is easy for us to dance till dawn.', jp: '僕らにとって、夜明けまで踊るのは簡単なこと。', en2: 'It is impossible for ordinary humans to understand my power.', jp2: '凡人が我が力を理解することなど、不可能だ。' },
+  { cat: '入試頻出フレーズ', word: 'have been to ~', meaning: '〜に行ったことがある（現在完了）', en0: 'I have been to Okinawa twice.', jp0: '私は沖縄に2回行ったことがあります。', en: 'I have been to a thousand cities, but none like this with you.', jp: '千の街を訪れたけど、君とのこの場所みたいなのはない。', en2: 'I have been to the world beyond death and returned.', jp2: '我は死の向こうの世界へ行き、そして帰ってきた。' },
+  { cat: '入試頻出フレーズ', word: 'have never done', meaning: '一度も〜したことがない', en0: 'I have never seen snow.', jp0: '私は雪を見たことがありません。', en: 'I have never felt a beat like this before.', jp: 'こんなビートを感じたのは初めてだ。', en2: 'I have never feared anything, not even my own destruction.', jp2: '我は何も恐れたことがない、自らの破滅さえも。' },
+  { cat: '入試頻出フレーズ', word: 'tell someone to do', meaning: '人に〜するように言う', en0: 'My mother told me to clean my room.', jp0: '母は私に部屋を掃除するように言いました。', en: 'She told me to never stop singing.', jp: '彼女は僕に、歌い続けてって言った。', en2: 'The darkness told me to never reveal my true name.', jp2: '闇は我に、真の名を決して明かすなと告げた。' },
+  { cat: '入試頻出フレーズ', word: 'ask someone to do', meaning: '人に〜するように頼む', en0: 'I asked him to help me.', jp0: '私は彼に手伝ってくれるよう頼みました。', en: 'I asked the DJ to play our favorite song.', jp: 'DJに僕らの好きな曲を頼んだ。', en2: 'I asked the shadows to lend me their forbidden power.', jp2: '我は影に、その禁断の力を貸せと求めた。' },
+  { cat: '入試頻出フレーズ', word: 'the way to do', meaning: '〜する方法', en0: 'Can you tell me the way to get to the station?', jp0: '駅までの行き方を教えてもらえますか。', en: 'You showed me the way to feel alive again.', jp: '君は、もう一度生きる実感を得る方法を教えてくれた。', en2: 'Only I know the way to seal this power forever.', jp2: 'この力を永遠に封じる方法を知るのは、我だけだ。' },
+  { cat: '入試頻出フレーズ', word: 'something to drink/eat', meaning: '飲む/食べるための何か', en0: 'Do you want something to drink?', jp0: '何か飲み物はいかがですか。', en: 'Let\'s grab something to drink before the show starts.', jp: 'ショーが始まる前に、何か飲み物を買おう。', en2: 'Even a being like me needs something to drink to survive the night.', jp2: '我のような存在も、夜を生き延びるために何か飲むものを必要とする。' },
 ];
 
 function shuffle(arr) {
@@ -437,8 +469,19 @@ function showResult() {
       div.innerHTML = `
         <div class="review-word">${item.word}</div>
         <div class="review-meaning">${item.meaning}</div>
-        <div class="review-example-en">${item.en}</div>
-        <div class="review-example-jp">${item.jp}</div>
+        <div class="review-example-label">通常の例文</div>
+        <div class="review-example-en">${item.en0}</div>
+        <div class="review-example-jp">${item.jp0}</div>
+        <div class="review-pop">
+          <div class="review-example-label">洋楽バージョン（イメージ・フィクションです）</div>
+          <div class="review-example-en">${item.en}</div>
+          <div class="review-example-jp">${item.jp}</div>
+        </div>
+        <div class="review-alt">
+          <div class="review-alt-label">中二病バージョン</div>
+          <div class="review-example-en">${item.en2}</div>
+          <div class="review-example-jp">${item.jp2}</div>
+        </div>
       `;
       list.appendChild(div);
     });

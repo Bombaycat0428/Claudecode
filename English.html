@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中学3年 英単語 シート</title>
+<title>英単語シート</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
   --pink:       #ff9eb5;
   --blue:       #8ecae6;
   --green:      #8ee06a;
+  --purple:     #c08eff;
   --muted:      rgba(255,255,255,0.78);
 
   --jp: 'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', sans-serif;
@@ -501,7 +502,7 @@ tr:focus-visible {
   font-weight: 600;
   color: var(--white);
   line-height: 1.5;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.4rem;
 }
 .modal-example-jp {
   font-family: var(--jp);
@@ -509,6 +510,24 @@ tr:focus-visible {
   color: var(--muted);
   line-height: 1.6;
 }
+
+.modal-example.pop {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.modal-example.pop .modal-example-label { color: var(--yellow); }
+.modal-example.pop .modal-example-en { color: var(--yellow); }
+.modal-example.pop .modal-example-jp { color: rgba(255,216,77,0.8); }
+
+.modal-example.alt {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.modal-example.alt .modal-example-label { color: var(--purple); }
+.modal-example.alt .modal-example-en { color: var(--purple); }
+.modal-example.alt .modal-example-jp { color: rgba(192,142,255,0.8); }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
@@ -538,7 +557,7 @@ tr:focus-visible {
       </svg>
       <div>
         <div class="header-eyebrow">本日の授業：英単語</div>
-        <h1>中学3年 英単語 シート</h1>
+        <h1>英単語シート</h1>
         <div class="header-sub">単語をクリックすると例文が見られます。左の☐をクリックすると覚えたチェックがつきます</div>
       </div>
     </div>
@@ -567,18 +586,18 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="I decided to study English every day." data-jp="私は毎日英語を勉強することに決めました。"><td class="check-col">☐</td><td class="cmd-col">decide</td><td class="desc-col">決める <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="This country is developing quickly." data-jp="この国は急速に発展しています。"><td class="check-col">☐</td><td class="cmd-col">develop</td><td class="desc-col">発展させる、開発する</td></tr>
-      <tr data-en="I want to improve my English skills." data-jp="私は英語力を向上させたいです。"><td class="check-col">☐</td><td class="cmd-col">improve</td><td class="desc-col">改善する、向上させる</td></tr>
-      <tr data-en="She achieved her goal." data-jp="彼女は自分の目標を達成しました。"><td class="check-col">☐</td><td class="cmd-col">achieve</td><td class="desc-col">達成する</td></tr>
-      <tr data-en="He suggested a new idea." data-jp="彼は新しいアイデアを提案しました。"><td class="check-col">☐</td><td class="cmd-col">suggest</td><td class="desc-col">提案する</td></tr>
-      <tr data-en="We communicate with friends online." data-jp="私たちはオンラインで友達とコミュニケーションをとります。"><td class="check-col">☐</td><td class="cmd-col">communicate</td><td class="desc-col">伝え合う、コミュニケーションをとる</td></tr>
-      <tr data-en="I experienced many things in Japan." data-jp="私は日本で多くのことを経験しました。"><td class="check-col">☐</td><td class="cmd-col">experience</td><td class="desc-col">経験する</td></tr>
-      <tr data-en="I realized my mistake." data-jp="私は自分の間違いに気づきました。"><td class="check-col">☐</td><td class="cmd-col">realize</td><td class="desc-col">気づく、実現する</td></tr>
-      <tr data-en="We should protect the environment." data-jp="私たちは環境を守るべきです。"><td class="check-col">☐</td><td class="cmd-col">protect</td><td class="desc-col">守る、保護する</td></tr>
-      <tr data-en="This factory produces cars." data-jp="この工場は車を生産しています。"><td class="check-col">☐</td><td class="cmd-col">produce</td><td class="desc-col">生産する、作り出す</td></tr>
-      <tr data-en="Scientists discovered a new star." data-jp="科学者たちは新しい星を発見しました。"><td class="check-col">☐</td><td class="cmd-col">discover</td><td class="desc-col">発見する</td></tr>
-      <tr data-en="My teacher encouraged me to try again." data-jp="先生は私にもう一度やってみるように励ましてくれました。"><td class="check-col">☐</td><td class="cmd-col">encourage</td><td class="desc-col">励ます、勇気づける</td></tr>
+      <tr data-en0="I decided to study English every day." data-jp0="私は毎日英語を勉強することに決めました。" data-en="Tonight, I decide to chase my dreams." data-jp="今夜、僕は夢を追いかけることを決める。" data-en2="I have already decided my fate; there is no turning back." data-jp2="我が運命はすでに決定された、もう後には引けない。"><td class="check-col">☐</td><td class="cmd-col">decide</td><td class="desc-col">決める <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="This country is developing quickly." data-jp0="この国は急速に発展しています。" data-en="Step by step, we develop into stars." data-jp="一歩ずつ、僕らはスターへと成長していく。" data-en2="My powers are developing beyond human comprehension." data-jp2="我が力は人間の理解を超えて進化していく。"><td class="check-col">☐</td><td class="cmd-col">develop</td><td class="desc-col">発展させる、開発する</td></tr>
+      <tr data-en0="I want to improve my English skills." data-jp0="私は英語力を向上させたいです。" data-en="Every day I improve, shining brighter than before." data-jp="毎日進化していく、前よりも輝いて。" data-en2="Every battle makes me improve, awakening my true power." data-jp2="戦うたびに我は進化し、真の力に目覚める。"><td class="check-col">☐</td><td class="cmd-col">improve</td><td class="desc-col">改善する、向上させる</td></tr>
+      <tr data-en0="She achieved her goal." data-jp0="彼女は自分の目標を達成しました。" data-en="We can achieve anything under this sky." data-jp="この空の下なら、僕らは何でも叶えられる。" data-en2="Only the chosen one can achieve this forbidden power." data-jp2="選ばれし者だけが、この禁断の力を手に入れられる。"><td class="check-col">☐</td><td class="cmd-col">achieve</td><td class="desc-col">達成する</td></tr>
+      <tr data-en0="He suggested a new idea." data-jp0="彼は新しいアイデアを提案しました。" data-en="Baby, let me suggest a dance under the moonlight." data-jp="ベイビー、月の光の下でダンスを提案するよ。" data-en2="The darkness suggests a path only I can see." data-jp2="闇は、我にしか見えぬ道を示す。"><td class="check-col">☐</td><td class="cmd-col">suggest</td><td class="desc-col">提案する</td></tr>
+      <tr data-en0="We communicate with friends online." data-jp0="私たちはオンラインで友達とコミュニケーションをとります。" data-en="Let's communicate through the rhythm of the night." data-jp="夜のリズムで気持ちを伝え合おう。" data-en2="I communicate with the shadows that dwell within me." data-jp2="我は、我が内に潜む影と語り合う。"><td class="check-col">☐</td><td class="cmd-col">communicate</td><td class="desc-col">伝え合う、コミュニケーションをとる</td></tr>
+      <tr data-en0="I experienced many things in Japan." data-jp0="私は日本で多くのことを経験しました。" data-en="I want to experience this moment forever." data-jp="この瞬間をずっと経験していたい。" data-en2="I have experienced a power that mortals cannot imagine." data-jp2="我は人間には想像もできぬ力を経験してきた。"><td class="check-col">☐</td><td class="cmd-col">experience</td><td class="desc-col">経験する</td></tr>
+      <tr data-en0="I realized my mistake." data-jp0="私は自分の間違いに気づきました。" data-en="Suddenly I realize, you were the one all along." data-jp="突然気づいたんだ、ずっと君だったって。" data-en2="At that moment, I realized my true name: the Destroyer." data-jp2="その瞬間、我は真の名を知った——破壊者と。"><td class="check-col">☐</td><td class="cmd-col">realize</td><td class="desc-col">気づく、実現する</td></tr>
+      <tr data-en0="We should protect the environment." data-jp0="私たちは環境を守るべきです。" data-en="I will protect this love till the end of time." data-jp="この愛を、時の終わりまで守り抜く。" data-en2="I will protect this world, even if it costs my soul." data-jp2="我が魂を捧げても、この世界を守り抜く。"><td class="check-col">☐</td><td class="cmd-col">protect</td><td class="desc-col">守る、保護する</td></tr>
+      <tr data-en0="This factory produces cars." data-jp0="この工場は車を生産しています。" data-en="We produce magic every time we sing." data-jp="僕らは歌うたびに魔法を生み出す。" data-en2="This forbidden ritual will produce a power beyond gods." data-jp2="この禁断の儀式は、神を超える力を生み出す。"><td class="check-col">☐</td><td class="cmd-col">produce</td><td class="desc-col">生産する、作り出す</td></tr>
+      <tr data-en0="Scientists discovered a new star." data-jp0="科学者たちは新しい星を発見しました。" data-en="Dance with me and discover a brand new world." data-jp="一緒に踊って、新しい世界を見つけよう。" data-en2="I discovered the seal that binds my true power." data-jp2="我は、我が真の力を封じる印を見つけた。"><td class="check-col">☐</td><td class="cmd-col">discover</td><td class="desc-col">発見する</td></tr>
+      <tr data-en0="My teacher encouraged me to try again." data-jp0="先生は私にもう一度やってみるように励ましてくれました。" data-en="Your smile encourages me to keep on flying." data-jp="君の笑顔が、僕を飛び続けさせてくれる。" data-en2="The voice in my head encourages me to unleash my power." data-jp2="我の中の声が、力を解放せよと囃す。"><td class="check-col">☐</td><td class="cmd-col">encourage</td><td class="desc-col">励ます、勇気づける</td></tr>
     </table>
   </div>
 
@@ -594,18 +613,18 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="We must take care of the environment." data-jp="私たちは環境を大切にしなければなりません。"><td class="check-col">☐</td><td class="cmd-col">environment</td><td class="desc-col">環境 <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="This is a great opportunity for you." data-jp="これはあなたにとって素晴らしい機会です。"><td class="check-col">☐</td><td class="cmd-col">opportunity</td><td class="desc-col">機会、チャンス</td></tr>
-      <tr data-en="The situation is getting better." data-jp="状況は良くなってきています。"><td class="check-col">☐</td><td class="cmd-col">situation</td><td class="desc-col">状況、事態</td></tr>
-      <tr data-en="I need more information about the trip." data-jp="旅行についてもっと情報が必要です。"><td class="check-col">☐</td><td class="cmd-col">information</td><td class="desc-col">情報</td></tr>
-      <tr data-en="I'm interested in Japanese culture." data-jp="私は日本の文化に興味があります。"><td class="check-col">☐</td><td class="cmd-col">culture</td><td class="desc-col">文化</td></tr>
-      <tr data-en="Technology has changed our society." data-jp="テクノロジーは私たちの社会を変えました。"><td class="check-col">☐</td><td class="cmd-col">society</td><td class="desc-col">社会</td></tr>
-      <tr data-en="The government made a new law." data-jp="政府は新しい法律を作りました。"><td class="check-col">☐</td><td class="cmd-col">government</td><td class="desc-col">政府</td></tr>
-      <tr data-en="The population of this city is growing." data-jp="この都市の人口は増えています。"><td class="check-col">☐</td><td class="cmd-col">population</td><td class="desc-col">人口</td></tr>
-      <tr data-en="New technology helps our daily life." data-jp="新しい技術は私たちの生活を助けます。"><td class="check-col">☐</td><td class="cmd-col">technology</td><td class="desc-col">科学技術</td></tr>
-      <tr data-en="We need clean energy for the future." data-jp="私たちは未来のためにきれいなエネルギーが必要です。"><td class="check-col">☐</td><td class="cmd-col">energy</td><td class="desc-col">エネルギー</td></tr>
-      <tr data-en="They have a good relationship." data-jp="彼らは良い関係を持っています。"><td class="check-col">☐</td><td class="cmd-col">relationship</td><td class="desc-col">関係</td></tr>
-      <tr data-en="She has the ability to speak three languages." data-jp="彼女は3つの言語を話す能力があります。"><td class="check-col">☐</td><td class="cmd-col">ability</td><td class="desc-col">能力</td></tr>
+      <tr data-en0="We must take care of the environment." data-jp0="私たちは環境を大切にしなければなりません。" data-en="This city is our environment, our stage tonight." data-jp="この街が僕らの舞台、今夜のステージ。" data-en2="This world is not my true environment; my home is the abyss." data-jp2="この世界は我の本来の居場所ではない、我が故郷は深淵だ。"><td class="check-col">☐</td><td class="cmd-col">environment</td><td class="desc-col">環境 <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="This is a great opportunity for you." data-jp0="これはあなたにとって素晴らしい機会です。" data-en="This is our opportunity, don't let it slip away." data-jp="これが僕らのチャンス、逃すなよ。" data-en2="This is the opportunity my cursed blood has waited for." data-jp2="これこそ、我が呪われた血が待ち望んだ機会。"><td class="check-col">☐</td><td class="cmd-col">opportunity</td><td class="desc-col">機会、チャンス</td></tr>
+      <tr data-en0="The situation is getting better." data-jp0="状況は良くなってきています。" data-en="In this crazy situation, I just wanna dance with you." data-jp="こんなクレイジーな状況でも、君と踊りたいんだ。" data-en2="In this situation, only my forbidden power can save us." data-jp2="この状況を救えるのは、我が禁断の力のみ。"><td class="check-col">☐</td><td class="cmd-col">situation</td><td class="desc-col">状況、事態</td></tr>
+      <tr data-en0="I need more information about the trip." data-jp0="旅行についてもっと情報が必要です。" data-en="Give me information, tell me where you are tonight." data-jp="教えて、今夜どこにいるのか。" data-en2="I possess information that mankind was never meant to know." data-jp2="我は、人類が知ってはならぬ情報を持っている。"><td class="check-col">☐</td><td class="cmd-col">information</td><td class="desc-col">情報</td></tr>
+      <tr data-en0="I'm interested in Japanese culture." data-jp0="私は日本の文化に興味があります。" data-en="We come from different culture, but our hearts beat the same." data-jp="違う文化から来たけど、心は同じビート。" data-en2="I come from a culture sealed away by the gods themselves." data-jp2="我は神々自らが封印した文化の出身者。"><td class="check-col">☐</td><td class="cmd-col">culture</td><td class="desc-col">文化</td></tr>
+      <tr data-en0="Technology has changed our society." data-jp0="テクノロジーは私たちの社会を変えました。" data-en="We're breaking out of society's rules tonight." data-jp="今夜、社会のルールを飛び出していく。" data-en2="This society fears the power that sleeps within me." data-jp2="この社会は、我に眠る力を恐れている。"><td class="check-col">☐</td><td class="cmd-col">society</td><td class="desc-col">社会</td></tr>
+      <tr data-en0="The government made a new law." data-jp0="政府は新しい法律を作りました。" data-en="No government can stop the way I feel for you." data-jp="どんな政府も、君への気持ちは止められない。" data-en2="No government on this earth can control what I am." data-jp2="この地のどの政府も、我という存在を制御できぬ。"><td class="check-col">☐</td><td class="cmd-col">government</td><td class="desc-col">政府</td></tr>
+      <tr data-en0="The population of this city is growing." data-jp0="この都市の人口は増えています。" data-en="In a city of a million population, I found just you." data-jp="何百万もの人の中で、見つけたのは君だけ。" data-en2="Among the entire population, only I carry this curse." data-jp2="全人口の中で、この呪いを背負うのは我ひとり。"><td class="check-col">☐</td><td class="cmd-col">population</td><td class="desc-col">人口</td></tr>
+      <tr data-en0="New technology helps our daily life." data-jp0="新しい技術は私たちの生活を助けます。" data-en="Technology can't replace this feeling in my heart." data-jp="どんな技術も、この想いには代えられない。" data-en2="Their technology is nothing before my awakened eye." data-jp2="彼らの技術など、我が覚醒した眼の前では無に等しい。"><td class="check-col">☐</td><td class="cmd-col">technology</td><td class="desc-col">科学技術</td></tr>
+      <tr data-en0="We need clean energy for the future." data-jp0="私たちは未来のためにきれいなエネルギーが必要です。" data-en="Feel the energy, let the music take control." data-jp="エネルギーを感じて、音楽に身をまかせて。" data-en2="Dark energy flows through my veins like a second heartbeat." data-jp2="闇のエネルギーが、第二の心臓のように我が血管を流れる。"><td class="check-col">☐</td><td class="cmd-col">energy</td><td class="desc-col">エネルギー</td></tr>
+      <tr data-en0="They have a good relationship." data-jp0="彼らは良い関係を持っています。" data-en="Our relationship is the rhythm of my life." data-jp="僕らの関係は、人生のリズムそのもの。" data-en2="My relationship with the darkness goes back to before my birth." data-jp2="我と闇との関係は、生まれる前から始まっていた。"><td class="check-col">☐</td><td class="cmd-col">relationship</td><td class="desc-col">関係</td></tr>
+      <tr data-en0="She has the ability to speak three languages." data-jp0="彼女は3つの言語を話す能力があります。" data-en="I've got the ability to love you endlessly." data-jp="君を限りなく愛する力が、僕にはある。" data-en2="This ability was sealed within me long before I was born." data-jp2="この力は、我が生まれる遥か前から封じられていた。"><td class="check-col">☐</td><td class="cmd-col">ability</td><td class="desc-col">能力</td></tr>
     </table>
   </div>
 
@@ -621,17 +640,17 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="Family is important to me." data-jp="家族は私にとって重要です。"><td class="check-col">☐</td><td class="cmd-col">important</td><td class="desc-col">重要な <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="Water is necessary for life." data-jp="水は生きるために必要です。"><td class="check-col">☐</td><td class="cmd-col">necessary</td><td class="desc-col">必要な</td></tr>
-      <tr data-en="This question is difficult." data-jp="この問題は難しいです。"><td class="check-col">☐</td><td class="cmd-col">difficult</td><td class="desc-col">難しい</td></tr>
-      <tr data-en="It is possible to finish today." data-jp="今日終わらせることは可能です。"><td class="check-col">☐</td><td class="cmd-col">possible</td><td class="desc-col">可能な</td></tr>
-      <tr data-en="There are various kinds of food." data-jp="様々な種類の食べ物があります。"><td class="check-col">☐</td><td class="cmd-col">various</td><td class="desc-col">様々な</td></tr>
-      <tr data-en="Our opinions are similar." data-jp="私たちの意見は似ています。"><td class="check-col">☐</td><td class="cmd-col">similar</td><td class="desc-col">似ている</td></tr>
-      <tr data-en="This is a serious problem." data-jp="これは深刻な問題です。"><td class="check-col">☐</td><td class="cmd-col">serious</td><td class="desc-col">深刻な、まじめな</td></tr>
-      <tr data-en="The event was successful." data-jp="そのイベントは成功しました。"><td class="check-col">☐</td><td class="cmd-col">successful</td><td class="desc-col">成功した</td></tr>
-      <tr data-en="This chair is very comfortable." data-jp="この椅子はとても心地よいです。"><td class="check-col">☐</td><td class="cmd-col">comfortable</td><td class="desc-col">心地よい</td></tr>
-      <tr data-en="Please think in a positive way." data-jp="前向きに考えてください。"><td class="check-col">☐</td><td class="cmd-col">positive</td><td class="desc-col">積極的な、肯定的な</td></tr>
-      <tr data-en="Don't be so negative." data-jp="そんなに消極的にならないで。"><td class="check-col">☐</td><td class="cmd-col">negative</td><td class="desc-col">消極的な、否定的な</td></tr>
+      <tr data-en0="Family is important to me." data-jp0="家族は私にとって重要です。" data-en="You're the most important star in my sky." data-jp="君は僕の空で一番大切な星。" data-en2="Nothing is more important than the seal upon my arm." data-jp2="我が右腕の封印より重要なものなど何もない。"><td class="check-col">☐</td><td class="cmd-col">important</td><td class="desc-col">重要な <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="Water is necessary for life." data-jp0="水は生きるために必要です。" data-en="Your love is necessary, like air to breathe." data-jp="君の愛は必要、息をするように。" data-en2="Pain is necessary to awaken my true form." data-jp2="痛みこそ、真の姿に目覚めるために必要なもの。"><td class="check-col">☐</td><td class="cmd-col">necessary</td><td class="desc-col">必要な</td></tr>
+      <tr data-en0="This question is difficult." data-jp0="この問題は難しいです。" data-en="Loving you was never difficult at all." data-jp="君を愛することは、ちっとも難しくなかった。" data-en2="Controlling this cursed power is the most difficult battle of all." data-jp2="この呪われし力を制御することこそ、最も困難な戦い。"><td class="check-col">☐</td><td class="cmd-col">difficult</td><td class="desc-col">難しい</td></tr>
+      <tr data-en0="It is possible to finish today." data-jp0="今日終わらせることは可能です。" data-en="Anything is possible when we're dancing tonight." data-jp="今夜踊っていれば、何でも可能になる。" data-en2="With this eye, anything becomes possible, even destroying fate." data-jp2="この瞳があれば、運命を壊すことさえ可能になる。"><td class="check-col">☐</td><td class="cmd-col">possible</td><td class="desc-col">可能な</td></tr>
+      <tr data-en0="There are various kinds of food." data-jp0="様々な種類の食べ物があります。" data-en="We've been through various nights, but this one feels right." data-jp="いろんな夜を越えてきたけど、今夜は特別な気がする。" data-en2="I have sealed away various powers too dangerous for this world." data-jp2="我はこの世には危険すぎる様々な力を封じてきた。"><td class="check-col">☐</td><td class="cmd-col">various</td><td class="desc-col">様々な</td></tr>
+      <tr data-en0="Our opinions are similar." data-jp0="私たちの意見は似ています。" data-en="Our hearts are similar, beating to the same song." data-jp="僕らの心は似ている、同じ歌のリズムで。" data-en2="Your eyes are similar to the ones I see in my nightmares." data-jp2="お前の瞳は、我が悪夢で見るそれと似ている。"><td class="check-col">☐</td><td class="cmd-col">similar</td><td class="desc-col">似ている</td></tr>
+      <tr data-en0="This is a serious problem." data-jp0="これは深刻な問題です。" data-en="Baby, I'm serious, you're the only one I need." data-jp="ベイビー、本気だよ、必要なのは君だけ。" data-en2="This is no game; my curse is far more serious than you think." data-jp2="これは遊びではない、我が呪いはお前が思うより遥かに深刻だ。"><td class="check-col">☐</td><td class="cmd-col">serious</td><td class="desc-col">深刻な、まじめな</td></tr>
+      <tr data-en0="The event was successful." data-jp0="そのイベントは成功しました。" data-en="Tonight feels successful, just you and me." data-jp="今夜は上手くいってる、君と僕だけで。" data-en2="The ritual was successful; the seal has finally broken." data-jp2="儀式は成功した、封印はついに解かれた。"><td class="check-col">☐</td><td class="cmd-col">successful</td><td class="desc-col">成功した</td></tr>
+      <tr data-en0="This chair is very comfortable." data-jp0="この椅子はとても心地よいです。" data-en="I feel so comfortable whenever you're near." data-jp="君が近くにいると、すごく心地いい。" data-en2="Only in darkness do I feel truly comfortable." data-jp2="闇の中でだけ、我は本当に心地よさを感じる。"><td class="check-col">☐</td><td class="cmd-col">comfortable</td><td class="desc-col">心地よい</td></tr>
+      <tr data-en0="Please think in a positive way." data-jp0="前向きに考えてください。" data-en="Stay positive, the night is still young." data-jp="前向きに、夜はまだ始まったばかり。" data-en2="Even cursed, I choose to walk this path in a positive light." data-jp2="呪われていても、我はこの道を前向きに歩むと決めた。"><td class="check-col">☐</td><td class="cmd-col">positive</td><td class="desc-col">積極的な、肯定的な</td></tr>
+      <tr data-en0="Don't be so negative." data-jp0="そんなに消極的にならないで。" data-en="No negative vibes, just you, me, and the beat." data-jp="ネガティブな空気なんていらない、君と僕とビートだけ。" data-en2="The negative energy around me grows stronger every night." data-jp2="我を取り巻く負のエネルギーは、夜ごとに強くなる。"><td class="check-col">☐</td><td class="cmd-col">negative</td><td class="desc-col">消極的な、否定的な</td></tr>
     </table>
   </div>
 
@@ -647,15 +666,15 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="I was tired. However, I finished my homework." data-jp="私は疲れていました。しかし、宿題を終えました。"><td class="check-col">☐</td><td class="cmd-col">however</td><td class="desc-col">しかしながら <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="Although it was raining, we went out." data-jp="雨が降っていましたが、私たちは外出しました。"><td class="check-col">☐</td><td class="cmd-col">although</td><td class="desc-col">〜だけれども</td></tr>
-      <tr data-en="I like fruits, especially apples." data-jp="私は果物が好きです、特にりんごが。"><td class="check-col">☐</td><td class="cmd-col">especially</td><td class="desc-col">特に</td></tr>
-      <tr data-en="He will probably come late." data-jp="彼はおそらく遅れて来るでしょう。"><td class="check-col">☐</td><td class="cmd-col">probably</td><td class="desc-col">おそらく</td></tr>
-      <tr data-en="I started running recently." data-jp="私は最近走り始めました。"><td class="check-col">☐</td><td class="cmd-col">recently</td><td class="desc-col">最近</td></tr>
-      <tr data-en="We finally arrived at the station." data-jp="私たちはついに駅に着きました。"><td class="check-col">☐</td><td class="cmd-col">finally</td><td class="desc-col">最終的に、ついに</td></tr>
-      <tr data-en="Suddenly, it started to rain." data-jp="突然、雨が降り始めました。"><td class="check-col">☐</td><td class="cmd-col">suddenly</td><td class="desc-col">突然</td></tr>
-      <tr data-en="Actually, I don't like coffee." data-jp="実は、私はコーヒーが好きではありません。"><td class="check-col">☐</td><td class="cmd-col">actually</td><td class="desc-col">実際には</td></tr>
-      <tr data-en="It was raining; therefore, we stayed home." data-jp="雨が降っていたので、私たちは家にいました。"><td class="check-col">☐</td><td class="cmd-col">therefore</td><td class="desc-col">それゆえに</td></tr>
+      <tr data-en0="I was tired. However, I finished my homework." data-jp0="私は疲れていました。しかし、宿題を終えました。" data-en="I was scared. However, I sang my heart out." data-jp="怖かった。でも、心を込めて歌った。" data-en2="I was once human. However, that side of me died long ago." data-jp2="我もかつては人間だった。しかし、その我はすでに死んだ。"><td class="check-col">☐</td><td class="cmd-col">however</td><td class="desc-col">しかしながら <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="Although it was raining, we went out." data-jp0="雨が降っていましたが、私たちは外出しました。" data-en="Although it's late, let's dance till the morning light." data-jp="もう遅いけど、夜明けまで踊ろう。" data-en2="Although the seal weakens, my resolve never wavers." data-jp2="封印が弱まろうとも、我が意志は決して揺らがない。"><td class="check-col">☐</td><td class="cmd-col">although</td><td class="desc-col">〜だけれども</td></tr>
+      <tr data-en0="I like fruits, especially apples." data-jp0="私は果物が好きです、特にりんごが。" data-en="I love this city, especially at night." data-jp="この街が好き、特に夜が。" data-en2="I fear nothing, especially not the darkness I was born from." data-jp2="我は何も恐れぬ、特に我が生まれた闇など。"><td class="check-col">☐</td><td class="cmd-col">especially</td><td class="desc-col">特に</td></tr>
+      <tr data-en0="He will probably come late." data-jp0="彼はおそらく遅れて来るでしょう。" data-en="You'll probably steal my heart again tonight." data-jp="今夜もきっと、また君に心を奪われる。" data-en2="You will probably regret awakening this power within me." data-jp2="お前は、この力を我の中で目覚めさせたことを後悔するだろう。"><td class="check-col">☐</td><td class="cmd-col">probably</td><td class="desc-col">おそらく</td></tr>
+      <tr data-en0="I started running recently." data-jp0="私は最近走り始めました。" data-en="Recently, every song reminds me of you." data-jp="最近、どの曲も君を思い出させる。" data-en2="Recently, the voices in my head have grown louder." data-jp2="最近、我の中の声がより大きくなってきた。"><td class="check-col">☐</td><td class="cmd-col">recently</td><td class="desc-col">最近</td></tr>
+      <tr data-en0="We finally arrived at the station." data-jp0="私たちはついに駅に着きました。" data-en="Finally, I found the rhythm of my life." data-jp="ついに、人生のリズムを見つけたんだ。" data-en2="Finally, the seal upon my soul has been broken." data-jp2="ついに、我が魂を縛る封印が解かれた。"><td class="check-col">☐</td><td class="cmd-col">finally</td><td class="desc-col">最終的に、ついに</td></tr>
+      <tr data-en0="Suddenly, it started to rain." data-jp0="突然、雨が降り始めました。" data-en="Suddenly, the music stopped and I saw your eyes." data-jp="突然音楽が止んで、君の瞳が見えた。" data-en2="Suddenly, my right eye burned with forbidden power." data-jp2="突然、我が右眼が禁断の力で燃え上がった。"><td class="check-col">☐</td><td class="cmd-col">suddenly</td><td class="desc-col">突然</td></tr>
+      <tr data-en0="Actually, I don't like coffee." data-jp0="実は、私はコーヒーが好きではありません。" data-en="Actually, this is my favorite song of all time." data-jp="実は、これが僕の一番好きな曲なんだ。" data-en2="Actually, I was never meant to exist in this world." data-jp2="実のところ、我はこの世界に存在してはならぬ者。"><td class="check-col">☐</td><td class="cmd-col">actually</td><td class="desc-col">実際には</td></tr>
+      <tr data-en0="It was raining; therefore, we stayed home." data-jp0="雨が降っていたので、私たちは家にいました。" data-en="You make me smile; therefore, I sing all night." data-jp="君が僕を笑顔にする、だから一晩中歌うんだ。" data-en2="Darkness chose me; therefore, I am no longer human." data-jp2="闇が我を選んだ、ゆえに我はもう人間ではない。"><td class="check-col">☐</td><td class="cmd-col">therefore</td><td class="desc-col">それゆえに</td></tr>
     </table>
   </div>
 
@@ -671,17 +690,17 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="I am able to swim fast." data-jp="私は速く泳ぐことができます。"><td class="check-col">☐</td><td class="cmd-col">be able to ~</td><td class="desc-col">〜できる <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="I study hard in order to pass the test." data-jp="私はテストに合格するために熱心に勉強します。"><td class="check-col">☐</td><td class="cmd-col">in order to ~</td><td class="desc-col">〜するために</td></tr>
-      <tr data-en="She can sing as well as dance." data-jp="彼女は踊るだけでなく歌うこともできます。"><td class="check-col">☐</td><td class="cmd-col">as well as ~</td><td class="desc-col">〜だけでなく</td></tr>
-      <tr data-en="I like sports, for example, soccer." data-jp="私はスポーツが好きです、例えばサッカーです。"><td class="check-col">☐</td><td class="cmd-col">for example</td><td class="desc-col">例えば</td></tr>
-      <tr data-en="I like fruits such as apples and bananas." data-jp="私はりんごやバナナのような果物が好きです。"><td class="check-col">☐</td><td class="cmd-col">such as ~</td><td class="desc-col">〜のような</td></tr>
-      <tr data-en="I take care of my little brother." data-jp="私は弟の世話をしています。"><td class="check-col">☐</td><td class="cmd-col">take care of ~</td><td class="desc-col">〜の世話をする</td></tr>
-      <tr data-en="Make sure that you lock the door." data-jp="ドアの鍵をかけたか確認してください。"><td class="check-col">☐</td><td class="cmd-col">make sure (that) ~</td><td class="desc-col">〜を確認する、確実にする</td></tr>
-      <tr data-en="I used to live in Osaka." data-jp="私は以前大阪に住んでいました。"><td class="check-col">☐</td><td class="cmd-col">used to ~</td><td class="desc-col">以前は〜した（今は違う） <span class="tag danger">注意</span></td></tr>
-      <tr data-en="I look forward to seeing you." data-jp="あなたに会えるのを楽しみにしています。"><td class="check-col">☐</td><td class="cmd-col">look forward to ~</td><td class="desc-col">〜を楽しみにする</td></tr>
-      <tr data-en="I am interested in music." data-jp="私は音楽に興味があります。"><td class="check-col">☐</td><td class="cmd-col">be interested in ~</td><td class="desc-col">〜に興味がある</td></tr>
-      <tr data-en="I had tea instead of coffee." data-jp="私はコーヒーの代わりにお茶を飲みました。"><td class="check-col">☐</td><td class="cmd-col">instead of ~</td><td class="desc-col">〜の代わりに</td></tr>
+      <tr data-en0="I am able to swim fast." data-jp0="私は速く泳ぐことができます。" data-en="I am able to fly whenever you're by my side." data-jp="君がそばにいれば、僕は飛べるんだ。" data-en2="I am able to see the strings of fate that bind us all." data-jp2="我には、すべてを縛る運命の糸が見える。"><td class="check-col">☐</td><td class="cmd-col">be able to ~</td><td class="desc-col">〜できる <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="I study hard in order to pass the test." data-jp0="私はテストに合格するために熱心に勉強します。" data-en="I dance all night in order to feel alive." data-jp="生きてる実感を得るために、一晩中踊るんだ。" data-en2="I awakened this power in order to rewrite my fate." data-jp2="我が運命を書き換えるために、この力を覚醒させた。"><td class="check-col">☐</td><td class="cmd-col">in order to ~</td><td class="desc-col">〜するために</td></tr>
+      <tr data-en0="She can sing as well as dance." data-jp0="彼女は踊るだけでなく歌うこともできます。" data-en="You make me laugh as well as make me dream." data-jp="君は僕を笑わせ、夢も見させてくれる。" data-en2="This curse brings power as well as eternal solitude." data-jp2="この呪いは力だけでなく、永遠の孤独ももたらす。"><td class="check-col">☐</td><td class="cmd-col">as well as ~</td><td class="desc-col">〜だけでなく</td></tr>
+      <tr data-en0="I like sports, for example, soccer." data-jp0="私はスポーツが好きです、例えばサッカーです。" data-en="I love many songs, for example, this one about you." data-jp="たくさんの歌が好き、例えば君についてのこの曲。" data-en2="Many fear my power, for example, even the gods themselves." data-jp2="多くの者が我が力を恐れる、例えば神々自身さえも。"><td class="check-col">☐</td><td class="cmd-col">for example</td><td class="desc-col">例えば</td></tr>
+      <tr data-en0="I like fruits such as apples and bananas." data-jp0="私はりんごやバナナのような果物が好きです。" data-en="Cities such as this one shine brighter with you." data-jp="こんな街は、君がいるともっと輝く。" data-en2="Forces such as mine were never meant to walk among humans." data-jp2="我のような力は、人間の中を歩むべきではなかった。"><td class="check-col">☐</td><td class="cmd-col">such as ~</td><td class="desc-col">〜のような</td></tr>
+      <tr data-en0="I take care of my little brother." data-jp0="私は弟の世話をしています。" data-en="I'll take care of your heart, I promise." data-jp="君の心を大切にするよ、約束する。" data-en2="I alone must take care of the darkness that lives inside me." data-jp2="この内に住む闇を、我だけが管理しなければならぬ。"><td class="check-col">☐</td><td class="cmd-col">take care of ~</td><td class="desc-col">〜の世話をする</td></tr>
+      <tr data-en0="Make sure that you lock the door." data-jp0="ドアの鍵をかけたか確認してください。" data-en="Make sure that you save the last dance for me." data-jp="最後のダンスは僕のために残しておいてね。" data-en2="Make sure that you never look directly into my cursed eye." data-jp2="我が呪われた眼を、決して直視するな。"><td class="check-col">☐</td><td class="cmd-col">make sure (that) ~</td><td class="desc-col">〜を確認する、確実にする</td></tr>
+      <tr data-en0="I used to live in Osaka." data-jp0="私は以前大阪に住んでいました。" data-en="I used to walk alone before I met you." data-jp="君に出会う前は、ひとりで歩いていた。" data-en2="I used to be just like you, before the seal awakened." data-jp2="封印が目覚める前は、我もお前と同じだった。"><td class="check-col">☐</td><td class="cmd-col">used to ~</td><td class="desc-col">以前は〜した（今は違う） <span class="tag danger">注意</span></td></tr>
+      <tr data-en0="I look forward to seeing you." data-jp0="あなたに会えるのを楽しみにしています。" data-en="I look forward to every night we dance together." data-jp="一緒に踊る夜が来るのを、いつも楽しみにしている。" data-en2="I look forward to the day my true power is finally unleashed." data-jp2="我が真の力が解放される日を、心待ちにしている。"><td class="check-col">☐</td><td class="cmd-col">look forward to ~</td><td class="desc-col">〜を楽しみにする</td></tr>
+      <tr data-en0="I am interested in music." data-jp0="私は音楽に興味があります。" data-en="I'm interested in nothing but this melody and you." data-jp="このメロディーと君以外、何も興味がない。" data-en2="I am interested in nothing but the darkness that calls my name." data-jp2="我が名を呼ぶ闇以外、何にも興味はない。"><td class="check-col">☐</td><td class="cmd-col">be interested in ~</td><td class="desc-col">〜に興味がある</td></tr>
+      <tr data-en0="I had tea instead of coffee." data-jp0="私はコーヒーの代わりにお茶を飲みました。" data-en="Let's dance instead of just standing here." data-jp="ここに立ってるだけじゃなくて、踊ろう。" data-en2="I chose this curse instead of a normal, meaningless life." data-jp2="我は、意味のない平凡な人生の代わりにこの呪いを選んだ。"><td class="check-col">☐</td><td class="cmd-col">instead of ~</td><td class="desc-col">〜の代わりに</td></tr>
     </table>
   </div>
 
@@ -697,14 +716,14 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="The movie began at seven." data-jp="映画は7時に始まりました。"><td class="check-col">☐</td><td class="cmd-col">begin - began - begun</td><td class="desc-col">始める <span class="tag danger">注意</span></td></tr>
-      <tr data-en="He broke the window." data-jp="彼は窓を壊しました。"><td class="check-col">☐</td><td class="cmd-col">break - broke - broken</td><td class="desc-col">壊す</td></tr>
-      <tr data-en="I chose this book." data-jp="私はこの本を選びました。"><td class="check-col">☐</td><td class="cmd-col">choose - chose - chosen</td><td class="desc-col">選ぶ</td></tr>
-      <tr data-en="The plant has grown a lot." data-jp="その植物はとても成長しました。"><td class="check-col">☐</td><td class="cmd-col">grow - grew - grown</td><td class="desc-col">成長する</td></tr>
-      <tr data-en="We lost the game." data-jp="私たちは試合に負けました。"><td class="check-col">☐</td><td class="cmd-col">lose - lost - lost</td><td class="desc-col">失う、負ける</td></tr>
-      <tr data-en="The sun rose early today." data-jp="今日は太陽が早く昇りました。"><td class="check-col">☐</td><td class="cmd-col">rise - rose - risen</td><td class="desc-col">上がる、昇る</td></tr>
-      <tr data-en="I sent a letter to my friend." data-jp="私は友達に手紙を送りました。"><td class="check-col">☐</td><td class="cmd-col">send - sent - sent</td><td class="desc-col">送る</td></tr>
-      <tr data-en="She wore a red dress yesterday." data-jp="彼女は昨日赤いドレスを着ていました。"><td class="check-col">☐</td><td class="cmd-col">wear - wore - worn</td><td class="desc-col">着ている</td></tr>
+      <tr data-en0="The movie began at seven." data-jp0="映画は7時に始まりました。" data-en="The music began, and so did our story." data-jp="音楽が始まって、僕らの物語も始まった。" data-en2="The moment our eyes met, the prophecy began." data-jp2="我らの目が合った瞬間、予言は始まった。"><td class="check-col">☐</td><td class="cmd-col">begin - began - begun</td><td class="desc-col">始める <span class="tag danger">注意</span></td></tr>
+      <tr data-en0="He broke the window." data-jp0="彼は窓を壊しました。" data-en="You broke through my walls with just one song." data-jp="君はたった一曲で、僕の心の壁を壊した。" data-en2="The seal broke, and my true self awakened at last." data-jp2="封印が解け、我が真の姿がついに覚醒した。"><td class="check-col">☐</td><td class="cmd-col">break - broke - broken</td><td class="desc-col">壊す</td></tr>
+      <tr data-en0="I chose this book." data-jp0="私はこの本を選びました。" data-en="I chose this song to tell you how I feel." data-jp="この歌を選んで、君に気持ちを伝えたんだ。" data-en2="Fate chose me before I ever chose it." data-jp2="我が運命を選ぶ前に、運命が我を選んでいた。"><td class="check-col">☐</td><td class="cmd-col">choose - chose - chosen</td><td class="desc-col">選ぶ</td></tr>
+      <tr data-en0="The plant has grown a lot." data-jp0="その植物はとても成長しました。" data-en="Our love has grown with every beat of the drum." data-jp="ドラムのビートごとに、僕らの愛は育っていった。" data-en2="My power has grown beyond what even I can control." data-jp2="我が力は、我自身でも制御できぬほどに成長した。"><td class="check-col">☐</td><td class="cmd-col">grow - grew - grown</td><td class="desc-col">成長する</td></tr>
+      <tr data-en0="We lost the game." data-jp0="私たちは試合に負けました。" data-en="I got lost in your eyes under the city lights." data-jp="街の光の下、君の瞳に迷い込んだ。" data-en2="I lost my humanity the night this curse was born." data-jp2="この呪いが生まれた夜、我は人間性を失った。"><td class="check-col">☐</td><td class="cmd-col">lose - lost - lost</td><td class="desc-col">失う、負ける</td></tr>
+      <tr data-en0="The sun rose early today." data-jp0="今日は太陽が早く昇りました。" data-en="The sun rose, but I was still dancing with you." data-jp="太陽が昇っても、僕はまだ君と踊っていた。" data-en2="From the depths of darkness, I have risen once more." data-jp2="闇の深淵より、我は再び立ち上がった。"><td class="check-col">☐</td><td class="cmd-col">rise - rose - risen</td><td class="desc-col">上がる、昇る</td></tr>
+      <tr data-en0="I sent a letter to my friend." data-jp0="私は友達に手紙を送りました。" data-en="I sent you a song instead of words." data-jp="言葉の代わりに、君に歌を送った。" data-en2="The darkness sent me a sign that my time has come." data-jp2="闇は、我が時が来たという徴を送ってきた。"><td class="check-col">☐</td><td class="cmd-col">send - sent - sent</td><td class="desc-col">送る</td></tr>
+      <tr data-en0="She wore a red dress yesterday." data-jp0="彼女は昨日赤いドレスを着ていました。" data-en="She wore the night like it was made for her." data-jp="彼女はその夜を、まるで自分のために作られたみたいに纏っていた。" data-en2="She wore the mark of the cursed bloodline on her hand." data-jp2="彼女は、呪われた血脈の印を手に纏っていた。"><td class="check-col">☐</td><td class="cmd-col">wear - wore - worn</td><td class="desc-col">着ている</td></tr>
     </table>
   </div>
 
@@ -720,13 +739,13 @@ tr:focus-visible {
       </div>
     </div>
     <table>
-      <tr data-en="It is important for students to study English." data-jp="学生にとって英語を勉強することは重要です。"><td class="check-col">☐</td><td class="cmd-col">It is ~ for someone to do</td><td class="desc-col">（誰かが）〜するのは…だ <span class="tag tip">頻出</span></td></tr>
-      <tr data-en="I have been to Okinawa twice." data-jp="私は沖縄に2回行ったことがあります。"><td class="check-col">☐</td><td class="cmd-col">have been to ~</td><td class="desc-col">〜に行ったことがある（現在完了）</td></tr>
-      <tr data-en="I have never seen snow." data-jp="私は雪を見たことがありません。"><td class="check-col">☐</td><td class="cmd-col">have never done</td><td class="desc-col">一度も〜したことがない</td></tr>
-      <tr data-en="My mother told me to clean my room." data-jp="母は私に部屋を掃除するように言いました。"><td class="check-col">☐</td><td class="cmd-col">tell someone to do</td><td class="desc-col">人に〜するように言う</td></tr>
-      <tr data-en="I asked him to help me." data-jp="私は彼に手伝ってくれるよう頼みました。"><td class="check-col">☐</td><td class="cmd-col">ask someone to do</td><td class="desc-col">人に〜するように頼む</td></tr>
-      <tr data-en="Can you tell me the way to get to the station?" data-jp="駅までの行き方を教えてもらえますか。"><td class="check-col">☐</td><td class="cmd-col">the way to do</td><td class="desc-col">〜する方法</td></tr>
-      <tr data-en="Do you want something to drink?" data-jp="何か飲み物はいかがですか。"><td class="check-col">☐</td><td class="cmd-col">something to drink/eat</td><td class="desc-col">飲む/食べるための何か <span class="tag danger">注意</span></td></tr>
+      <tr data-en0="It is important for students to study English." data-jp0="学生にとって英語を勉強することは重要です。" data-en="It is easy for us to dance till dawn." data-jp="僕らにとって、夜明けまで踊るのは簡単なこと。" data-en2="It is impossible for ordinary humans to understand my power." data-jp2="凡人が我が力を理解することなど、不可能だ。"><td class="check-col">☐</td><td class="cmd-col">It is ~ for someone to do</td><td class="desc-col">（誰かが）〜するのは…だ <span class="tag tip">頻出</span></td></tr>
+      <tr data-en0="I have been to Okinawa twice." data-jp0="私は沖縄に2回行ったことがあります。" data-en="I have been to a thousand cities, but none like this with you." data-jp="千の街を訪れたけど、君とのこの場所みたいなのはない。" data-en2="I have been to the world beyond death and returned." data-jp2="我は死の向こうの世界へ行き、そして帰ってきた。"><td class="check-col">☐</td><td class="cmd-col">have been to ~</td><td class="desc-col">〜に行ったことがある（現在完了）</td></tr>
+      <tr data-en0="I have never seen snow." data-jp0="私は雪を見たことがありません。" data-en="I have never felt a beat like this before." data-jp="こんなビートを感じたのは初めてだ。" data-en2="I have never feared anything, not even my own destruction." data-jp2="我は何も恐れたことがない、自らの破滅さえも。"><td class="check-col">☐</td><td class="cmd-col">have never done</td><td class="desc-col">一度も〜したことがない</td></tr>
+      <tr data-en0="My mother told me to clean my room." data-jp0="母は私に部屋を掃除するように言いました。" data-en="She told me to never stop singing." data-jp="彼女は僕に、歌い続けてって言った。" data-en2="The darkness told me to never reveal my true name." data-jp2="闇は我に、真の名を決して明かすなと告げた。"><td class="check-col">☐</td><td class="cmd-col">tell someone to do</td><td class="desc-col">人に〜するように言う</td></tr>
+      <tr data-en0="I asked him to help me." data-jp0="私は彼に手伝ってくれるよう頼みました。" data-en="I asked the DJ to play our favorite song." data-jp="DJに僕らの好きな曲を頼んだ。" data-en2="I asked the shadows to lend me their forbidden power." data-jp2="我は影に、その禁断の力を貸せと求めた。"><td class="check-col">☐</td><td class="cmd-col">ask someone to do</td><td class="desc-col">人に〜するように頼む</td></tr>
+      <tr data-en0="Can you tell me the way to get to the station?" data-jp0="駅までの行き方を教えてもらえますか。" data-en="You showed me the way to feel alive again." data-jp="君は、もう一度生きる実感を得る方法を教えてくれた。" data-en2="Only I know the way to seal this power forever." data-jp2="この力を永遠に封じる方法を知るのは、我だけだ。"><td class="check-col">☐</td><td class="cmd-col">the way to do</td><td class="desc-col">〜する方法</td></tr>
+      <tr data-en0="Do you want something to drink?" data-jp0="何か飲み物はいかがですか。" data-en="Let's grab something to drink before the show starts." data-jp="ショーが始まる前に、何か飲み物を買おう。" data-en2="Even a being like me needs something to drink to survive the night." data-jp2="我のような存在も、夜を生き延びるために何か飲むものを必要とする。"><td class="check-col">☐</td><td class="cmd-col">something to drink/eat</td><td class="desc-col">飲む/食べるための何か <span class="tag danger">注意</span></td></tr>
     </table>
   </div>
 
@@ -780,9 +799,19 @@ tr:focus-visible {
     <div class="modal-word" id="modal-word"></div>
     <div class="modal-meaning" id="modal-meaning"></div>
     <div class="modal-example">
-      <div class="modal-example-label">EXAMPLE / 例文</div>
+      <div class="modal-example-label">通常の例文</div>
+      <div class="modal-example-en" id="modal-example-en0"></div>
+      <div class="modal-example-jp" id="modal-example-jp0"></div>
+    </div>
+    <div class="modal-example pop">
+      <div class="modal-example-label">洋楽バージョン（イメージ・フィクションです）</div>
       <div class="modal-example-en" id="modal-example-en"></div>
       <div class="modal-example-jp" id="modal-example-jp"></div>
+    </div>
+    <div class="modal-example alt">
+      <div class="modal-example-label">中二病バージョン</div>
+      <div class="modal-example-en" id="modal-example-en2"></div>
+      <div class="modal-example-jp" id="modal-example-jp2"></div>
     </div>
   </div>
 </div>
@@ -815,12 +844,20 @@ const overlay = document.getElementById('modal-overlay');
 function openModal(tr) {
   const word = tr.querySelector('.cmd-col').textContent.trim();
   const meaning = tr.querySelector('.desc-col').textContent.trim();
+  const en0 = tr.dataset.en0 || '';
+  const jp0 = tr.dataset.jp0 || '';
   const en = tr.dataset.en || '';
   const jp = tr.dataset.jp || '';
+  const en2 = tr.dataset.en2 || '';
+  const jp2 = tr.dataset.jp2 || '';
   document.getElementById('modal-word').textContent = word;
   document.getElementById('modal-meaning').textContent = meaning;
-  document.getElementById('modal-example-en').textContent = en || 'この単語の例文はまだ登録されていません。';
+  document.getElementById('modal-example-en0').textContent = en0 || 'この単語の例文はまだ登録されていません。';
+  document.getElementById('modal-example-jp0').textContent = jp0 || '';
+  document.getElementById('modal-example-en').textContent = en || 'この単語の洋楽バージョンはまだ登録されていません。';
   document.getElementById('modal-example-jp').textContent = jp || '';
+  document.getElementById('modal-example-en2').textContent = en2 || 'この単語の中二病バージョンはまだ登録されていません。';
+  document.getElementById('modal-example-jp2').textContent = jp2 || '';
   overlay.classList.add('open');
 }
 function closeModal() { overlay.classList.remove('open'); }
