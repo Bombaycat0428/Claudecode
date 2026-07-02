@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>電車運転シミュレーター</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #111;
+    color: #eee;
+    font-family: "Segoe UI", "Yu Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  h1 {
+    margin: 8px 0 4px;
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+  #stage {
+    position: relative;
+    width: 800px;
+    max-width: 96vw;
+  }
+  canvas {
+    width: 100%;
+    display: block;
+    background: #87ceeb;
+    border: 4px solid #333;
+    border-radius: 6px;
+  }
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    font-size: 14px;
+    text-shadow: 0 0 4px #000, 0 0 4px #000;
+  }
+  #hud .box {
+    background: rgba(0,0,0,0.45);
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+  #judgePopup {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    font-size: 40px;
+    font-weight: bold;
+    text-shadow: 0 0 10px #000, 0 0 20px #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  #judgePopup.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  #warn {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(200,0,0,0.85);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+    display: none;
+    animation: blink 0.5s infinite alternate;
+  }
+  @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+
+  #brakeAssist {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    color: #7CFC00;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 15px;
+    display: none;
+    text-shadow: 0 0 4px #000;
+  }
+  #brakeAssist.active {
+    display: block;
+    color: #ffd700;
+  }
+  #brakeAssist.late {
+    display: block;
+    color: #ff5050;
+  }
+
+  #panel {
+    width: 800px;
+    max-width: 96vw;
+    margin-top: 10px;
+    background: #1c1c1c;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+  }
+  .gauge .label {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+  .gauge .value {
+    font-size: 26px;
+    font-weight: bold;
+    font-family: "Consolas", monospace;
+  }
+  .notchbar {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .notchrow {
+    display: flex;
+    gap: 3px;
+  }
+  .notchcell {
+    width: 18px;
+    height: 14px;
+    background: #333;
+    border-radius: 2px;
+  }
+  .notchcell.on-power { background: #3ad13a; }
+  .notchcell.on-brake { background: #e04b4b; }
+
+  #instructions {
+    font-size: 13px;
+    color: #bbb;
+    margin-top: 10px;
+    line-height: 1.6;
+    text-align: center;
+  }
+  #instructions b { color: #fff; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 4px;
+  }
+  #overlay h2 { margin: 0 0 10px; font-size: 28px; }
+  #overlay p { margin: 4px 0; }
+  #overlay button {
+    margin-top: 16px;
+    padding: 10px 28px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #2e8b57;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #overlay button:hover { background: #37a468; }
+  #resultTable {
+    margin-top: 10px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  #resultTable td, #resultTable th {
+    padding: 3px 10px;
+    border-bottom: 1px solid #444;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>🚃 電車運転シミュレーター</h1>
+
+<div id="stage">
+  <canvas id="game" width="800" height="420"></canvas>
+  <div id="hud">
+    <div class="box">次の駅: <span id="nextStationName">-</span><br>残り距離: <span id="distToStation">-</span> m</div>
+    <div class="box">制限速度: <span id="speedLimit">-</span> km/h<span id="easyBadge" style="display:none;color:#7CFC00;margin-left:8px;">EASY</span></div>
+  </div>
+  <div id="brakeAssist"></div>
+  <div id="warn">⚠ 速度超過！ブレーキ！</div>
+  <div id="judgePopup"></div>
+
+  <div id="overlay">
+    <h2>電車運転シミュレーター</h2>
+    <p>各駅の停止目標にできるだけ正確に停めよう！</p>
+    <p style="font-size:12px;color:#aaa;">↑キー: 力行(加速) / ↓キー: ブレーキ / Space: 非常ブレーキ</p>
+    <div style="text-align:left;font-size:12px;color:#ddd;background:rgba(255,255,255,0.06);border-radius:6px;padding:10px 16px;margin-top:10px;max-width:480px;line-height:1.7;">
+      <b style="color:#ffd700;">攻略のコツ</b><br>
+      ・↓キーは<b>押しっぱなし</b>でOK。自動でどんどんブレーキが強くなる<br>
+      ・画面下に「⚠ ブレーキ5以上！」と出たら、すぐ↓キーを押しっぱなしにする<br>
+      ・6〜7段まで入れても手前で止まるだけ（減点は少なめ）なので強めで大丈夫<br>
+      ・駅間は500〜600mしかないので力行は3段もあれば十分<br>
+      ・停止目標から多少ズレてもGOOD以上になるので、こわがらず止まってみよう<br>
+      ・非常ブレーキ(Space)は微調整が効かないので基本使わない
+    </div>
+    <label style="margin-top:14px;font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+      <input type="checkbox" id="easyModeCheck" style="width:16px;height:16px;">
+      イージーモード（判定を甘く・最高速度も控えめに）
+    </label>
+    <button id="startBtn">スタート</button>
+  </div>
+</div>
+
+<div id="panel">
+  <div class="gauge">
+    <div class="label">速度 (km/h)</div>
+    <div class="value" id="speedVal">0</div>
+  </div>
+  <div class="gauge">
+    <div class="label">位置 (m)</div>
+    <div class="value" id="posVal">0</div>
+  </div>
+  <div class="gauge">
+    <div class="label">力行ノッチ</div>
+    <div class="notchbar" id="powerBar"></div>
+  </div>
+  <div class="gauge">
+    <div class="label">ブレーキノッチ</div>
+    <div class="notchbar" id="brakeBar"></div>
+  </div>
+  <div class="gauge">
+    <div class="label">スコア</div>
+    <div class="value" id="scoreVal">0</div>
+  </div>
+</div>
+
+<div id="instructions">
+  <b>↑</b> 力行ノッチアップ（ブレーキ中なら先に緩める） / <b>↓</b> ブレーキノッチアップ（力行中なら先に緩める） / <b>Space</b> 非常ブレーキ<br>
+  停止目標（黄色い看板）にできるだけ近い位置で速度0にしよう。行き過ぎ注意！
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const HORIZON_Y = 170;
+
+  // ---- ゲームパラメータ ----
+  const MAX_POWER = 5;
+  const MAX_BRAKE = 7;
+  const ACCEL_PER_NOTCH = 2.2;   // km/h per s
+  const BRAKE_PER_NOTCH = 3.2;   // km/h per s
+  const EB_DECEL = 9.0;          // 非常ブレーキ減速度
+  const RESISTANCE = 0.8;        // 惰行時の自然減速
+  const TOP_SPEED_NORMAL = 100;
+  const TOP_SPEED_EASY = 75;     // イージーモードは最高速度も抑えて余裕を作る
+  const JERK_LIMIT = 50.0;       // 加減速の変化率の上限(km/h/s^2) ノッチを入れても効きは瞬時ではなく一瞬で立ち上がる
+
+  function topSpeed() {
+    return state && state.easyMode ? TOP_SPEED_EASY : TOP_SPEED_NORMAL;
+  }
+
+  const STATIONS = [
+    { name: '始発駅',     pos: 0,    limit: 100 },
+    { name: '桜台駅',     pos: 600,  limit: 90 },
+    { name: '緑山駅',     pos: 1150, limit: 85 },
+    { name: '海浜公園駅', pos: 1700, limit: 90 },
+    { name: '中央駅(終点)', pos: 2300, limit: 75 },
+  ];
+
+  // 海浜公園駅の周辺は、進行方向右側(side=1)が海になる区間
+  const SEA_STATION_POS = 1700;
+  const SEA_HALF_RANGE = 380;
+  function seaFactorAt(pos) {
+    const d = Math.abs(pos - SEA_STATION_POS);
+    if (d >= SEA_HALF_RANGE) return 0;
+    if (d <= SEA_HALF_RANGE - 80) return 1;
+    return (SEA_HALF_RANGE - d) / 80; // 端は徐々にフェード
+  }
+
+  // ---- 沿線の風景（家・木）----
+  const HOUSE_PALETTE = [
+    { wall: '#e8c39e', roof: '#a83232' },
+    { wall: '#f2e2b6', roof: '#4a6b8a' },
+    { wall: '#d9c7a3', roof: '#7a4a3a' },
+    { wall: '#eeeeee', roof: '#4a6741' },
+    { wall: '#f0d9c0', roof: '#8a3b3b' },
+  ];
+  const WORLD_OBJECTS = [];
+  (function buildScenery() {
+    let paletteIdx = 0;
+    for (let d = -40; d < 2380; d += 22 + Math.random() * 20) {
+      const sea = seaFactorAt(d);
+      for (const side of [-1, 1]) {
+        // 海側(side=-1)は海になるので建物・木は置かない
+        if (side === -1 && sea > 0.3) continue;
+
+        const roll = Math.random();
+        if (sea > 0.3) {
+          // 海浜公園：陸側はヤシの木中心の公園にする
+          if (roll < 0.7) {
+            WORLD_OBJECTS.push({
+              type: 'palm',
+              pos: d + (Math.random() * 8 - 4),
+              side,
+              offset: 8 + Math.random() * 10,
+              trunkHeight: 4 + Math.random() * 2,
+              crownSize: 2.5 + Math.random() * 1.5,
+            });
+          }
+          continue;
+        }
+
+        if (roll < 0.55) {
+          const c = HOUSE_PALETTE[paletteIdx++ % HOUSE_PALETTE.length];
+          WORLD_OBJECTS.push({
+            type: 'house',
+            pos: d + (Math.random() * 8 - 4),
+            side,
+            offset: 15 + Math.random() * 12,
+            width: 8 + Math.random() * 5,
+            height: 5 + Math.random() * 3.5,
+            roofHeight: 3 + Math.random() * 2,
+            wallColor: c.wall,
+            roofColor: c.roof,
+          });
+        } else if (roll < 0.85) {
+          WORLD_OBJECTS.push({
+            type: 'tree',
+            pos: d + (Math.random() * 8 - 4),
+            side,
+            offset: 10 + Math.random() * 8,
+            trunkHeight: 2 + Math.random(),
+            crownSize: 3 + Math.random() * 2.5,
+          });
+        }
+      }
+    }
+  })();
+
+  let state = null;
+
+  function resetState(easyMode) {
+    state = {
+      running: true,
+      easyMode: !!easyMode,
+      pos: 0,
+      speed: 0,
+      currentAccel: 0,
+      power: 0,
+      brake: 0,
+      eb: false,
+      upHoldTimer: 0,
+      downHoldTimer: 0,
+      departed: false,
+      stationIndex: 1, // 次に目指す駅(0は始発なので1から)
+      stopped: false,
+      stopTimer: 0,
+      score: 0,
+      results: [],
+      overSpeedTimer: 0,
+      finished: false,
+      popupTimer: 0,
+      popupText: '',
+      popupColor: '#fff',
+    };
+  }
+
+  // ---- 入力 ----
+  const keys = {};
+  const KEY_REPEAT_INTERVAL = 0.15; // ↑↓キーを押しっぱなしにした時、1段変化させる間隔(秒)
+
+  function applyPowerUp() {
+    if (state.brake > 0) state.brake--;
+    else state.power = Math.min(MAX_POWER, state.power + 1);
+  }
+  function applyBrakeUp() {
+    if (state.power > 0) state.power--;
+    else state.brake = Math.min(MAX_BRAKE, state.brake + 1);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (!state || !state.running) return;
+    if (e.code === 'ArrowUp' && !keys['ArrowUp']) {
+      applyPowerUp();
+      state.upHoldTimer = 0;
+    }
+    if (e.code === 'ArrowDown' && !keys['ArrowDown']) {
+      applyBrakeUp();
+      state.downHoldTimer = 0;
+    }
+    if (e.code === 'Space') {
+      state.eb = true;
+      state.power = 0;
+      state.brake = MAX_BRAKE;
+      e.preventDefault();
+    }
+    keys[e.code] = true;
+  });
+  window.addEventListener('keyup', (e) => {
+    keys[e.code] = false;
+    if (e.code === 'Space' && state) state.eb = false;
+  });
+
+  // ---- UI更新 ----
+  const speedVal = document.getElementById('speedVal');
+  const posVal = document.getElementById('posVal');
+  const scoreVal = document.getElementById('scoreVal');
+  const powerBar = document.getElementById('powerBar');
+  const brakeBar = document.getElementById('brakeBar');
+  const nextStationName = document.getElementById('nextStationName');
+  const distToStation = document.getElementById('distToStation');
+  const brakeAssist = document.getElementById('brakeAssist');
+  const easyModeCheck = document.getElementById('easyModeCheck');
+  const easyBadge = document.getElementById('easyBadge');
+  const speedLimitEl = document.getElementById('speedLimit');
+  const warnEl = document.getElementById('warn');
+  const popupEl = document.getElementById('judgePopup');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+
+  function buildNotchBar(el, max, cls) {
+    el.innerHTML = '';
+    for (let i = max; i >= 1; i--) {
+      const d = document.createElement('div');
+      d.className = 'notchcell';
+      d.dataset.n = i;
+      el.appendChild(d);
+    }
+  }
+  buildNotchBar(powerBar, MAX_POWER);
+  buildNotchBar(brakeBar, MAX_BRAKE);
+
+  function updateNotchBar(el, current, cls) {
+    [...el.children].forEach(cell => {
+      const n = Number(cell.dataset.n);
+      cell.classList.toggle(cls, n <= current);
+    });
+  }
+
+  function showPopup(text, color) {
+    state.popupText = text;
+    state.popupColor = color;
+    popupEl.textContent = text;
+    popupEl.style.color = color;
+    popupEl.classList.add('show');
+    state.popupTimer = 2.2;
+  }
+
+  function judgeStop(diff) {
+    // diff = pos - target (正: 行き過ぎ, 負: 手前)（イージーモードはさらに許容範囲を広げる）
+    const a = Math.abs(diff);
+    const t = state.easyMode ? { perfect: 3.0, great: 8.0, good: 18.0 } : { perfect: 1.0, great: 3.0, good: 7.0 };
+    if (a <= t.perfect) return { text: 'PERFECT STOP!', color: '#ffd700', pts: 100 };
+    if (a <= t.great) return { text: 'GREAT!', color: '#7CFC00', pts: 85 };
+    if (a <= t.good) return { text: 'GOOD', color: '#5cc8ff', pts: 65 };
+    if (diff > t.good) return { text: 'OVER RUN...', color: '#ff5050', pts: 35 };
+    return { text: 'STOP SHORT', color: '#ff9d3a', pts: 45 };
+  }
+
+  // ---- メインループ ----
+  let lastTime = null;
+  function loop(t) {
+    if (lastTime === null) lastTime = t;
+    let dt = (t - lastTime) / 1000;
+    dt = Math.min(dt, 0.05);
+    lastTime = t;
+
+    if (state && state.running) update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt) {
+    if (state.finished) return;
+
+    // ↑↓キーを押しっぱなしにしている間、一定間隔で自動的にノッチを進める
+    if (keys['ArrowDown']) {
+      state.downHoldTimer += dt;
+      while (state.downHoldTimer >= KEY_REPEAT_INTERVAL) {
+        applyBrakeUp();
+        state.downHoldTimer -= KEY_REPEAT_INTERVAL;
+      }
+    } else {
+      state.downHoldTimer = 0;
+    }
+    if (keys['ArrowUp']) {
+      state.upHoldTimer += dt;
+      while (state.upHoldTimer >= KEY_REPEAT_INTERVAL) {
+        applyPowerUp();
+        state.upHoldTimer -= KEY_REPEAT_INTERVAL;
+      }
+    } else {
+      state.upHoldTimer = 0;
+    }
+
+    const station = STATIONS[state.stationIndex];
+    const distRemain = station.pos - state.pos;
+
+    if (!state.stopped) {
+      // 加減速計算（ノッチを入れても効きは瞬時ではなく徐々に立ち上がる）
+      let targetAccel = 0;
+      if (state.eb) {
+        targetAccel = -EB_DECEL;
+      } else {
+        targetAccel += state.power * ACCEL_PER_NOTCH;
+        targetAccel -= state.brake * BRAKE_PER_NOTCH;
+        if (state.power === 0 && state.brake === 0) targetAccel -= RESISTANCE;
+      }
+      const maxDelta = JERK_LIMIT * dt;
+      const diff = Math.max(-maxDelta, Math.min(maxDelta, targetAccel - state.currentAccel));
+      state.currentAccel += diff;
+
+      state.speed += state.currentAccel * dt;
+      state.speed = Math.max(0, Math.min(topSpeed(), state.speed));
+      state.pos += state.speed * (1000 / 3600) * dt;
+
+      // 速度超過チェック（駅の制限速度に対してのみ判定。最高速度に近いだけでは超過扱いにしない）
+      const overSpeedMargin = state.easyMode ? 15 : 8;
+      if (state.speed > station.limit + overSpeedMargin && distRemain < 400 && distRemain > -20) {
+        state.overSpeedTimer += dt;
+        warnEl.style.display = 'block';
+      } else {
+        state.overSpeedTimer = Math.max(0, state.overSpeedTimer - dt * 2);
+        if (state.overSpeedTimer <= 0) warnEl.style.display = 'none';
+      }
+      if (state.overSpeedTimer > 6.0) {
+        // 自動ブレーキ（強制的にブレーキを入れるが、eb扱いにはせず
+        // 速度が落ちればプレイヤーが↑キーですぐ操作を取り戻せるようにする）
+        state.power = 0;
+        state.brake = Math.max(state.brake, MAX_BRAKE - 2);
+      }
+
+      // 発車したかどうか（加速中に一瞬速度が0付近を通るのを「停止」と誤判定しないため）
+      if (state.speed > 3) state.departed = true;
+
+      // 駅通過チェック（ほぼ止まっている状態で通過した場合はMISS扱いにせず、
+      // そのまま減速を続けさせてOVER RUNとして正しく判定する）
+      if (state.pos >= station.pos && state.speed > 20) {
+        finishStation(station, state.pos - station.pos, true);
+      } else if (state.departed && state.speed <= 0.01) {
+        // 停止した
+        state.speed = 0;
+        finishStation(station, state.pos - station.pos, false);
+      }
+    } else {
+      // 駅停車中
+      state.stopTimer -= dt;
+      if (state.stopTimer <= 0) {
+        state.stopped = false;
+        state.power = 0;
+        state.brake = 0;
+        state.eb = false;
+        state.departed = false;
+        state.stationIndex++;
+        if (state.stationIndex >= STATIONS.length) {
+          state.finished = true;
+          state.running = false;
+          showFinalResult();
+        }
+      }
+    }
+
+    if (state.popupTimer > 0) {
+      state.popupTimer -= dt;
+      if (state.popupTimer <= 0) popupEl.classList.remove('show');
+    }
+
+    // HUD更新
+    speedVal.textContent = state.speed.toFixed(0);
+    posVal.textContent = state.pos.toFixed(0);
+    scoreVal.textContent = state.score;
+    updateNotchBar(powerBar, state.power, 'on-power');
+    updateNotchBar(brakeBar, state.brake, 'on-brake');
+    const st = STATIONS[Math.min(state.stationIndex, STATIONS.length - 1)];
+    nextStationName.textContent = st.name;
+    const remainToStation = st.pos - state.pos;
+    distToStation.textContent = Math.max(0, remainToStation).toFixed(0);
+    speedLimitEl.textContent = st.limit;
+
+    // ブレーキアシスト表示（初心者向け：ブレーキ5段を使う前提での目安距離。イージーは余裕を多めに）
+    const brakeDist = (state.speed * state.speed) / 105 * (state.easyMode ? 1.3 : 1.0);
+    const headsUpMargin = state.easyMode ? 1.8 : 1.4;
+    if (state.stopped || state.speed < 8 || remainToStation > brakeDist * headsUpMargin || remainToStation < -5) {
+      brakeAssist.classList.remove('active', 'late');
+    } else if (remainToStation < brakeDist) {
+      brakeAssist.textContent = '⚠ ブレーキ5以上！ (残り' + Math.max(0, remainToStation).toFixed(0) + 'm)';
+      brakeAssist.classList.add('late');
+      brakeAssist.classList.remove('active');
+    } else {
+      brakeAssist.textContent = 'そろそろブレーキ (残り' + remainToStation.toFixed(0) + 'm)';
+      brakeAssist.classList.add('active');
+      brakeAssist.classList.remove('late');
+    }
+  }
+
+  function finishStation(station, diff, passedThrough) {
+    let judge;
+    if (passedThrough) {
+      judge = { text: 'MISS! 通過してしまった', color: '#ff2020', pts: 0 };
+    } else {
+      judge = judgeStop(diff);
+    }
+    state.score += judge.pts;
+    state.results.push({ name: station.name, diff: diff, judge });
+    showPopup(judge.text, judge.color);
+    state.stopped = true;
+    state.stopTimer = 2.5;
+    warnEl.style.display = 'none';
+    state.overSpeedTimer = 0;
+  }
+
+  function showFinalResult() {
+    const total = state.results.reduce((s, r) => s + r.judge.pts, 0);
+    const maxTotal = STATIONS.length * 100;
+    const pct = total / maxTotal;
+    let rank = 'D';
+    if (pct >= 0.85) rank = 'S';
+    else if (pct >= 0.7) rank = 'A';
+    else if (pct >= 0.5) rank = 'B';
+    else if (pct >= 0.3) rank = 'C';
+
+    let rows = state.results.map(r =>
+      `<tr><td>${r.name}</td><td>${r.diff.toFixed(1)} m</td><td>${r.judge.text}</td><td>${r.judge.pts}</td></tr>`
+    ).join('');
+
+    overlay.innerHTML = `
+      <h2>運行終了</h2>
+      <p>総合スコア: <b>${state.score}</b> / ランク: <b style="font-size:22px;color:#ffd700;">${rank}</b></p>
+      <table id="resultTable">
+        <tr><th>駅</th><th>誤差</th><th>判定</th><th>点</th></tr>
+        ${rows}
+      </table>
+      <button id="retryBtn">もう一度プレイ</button>
+    `;
+    overlay.classList.remove('hidden');
+    document.getElementById('retryBtn').addEventListener('click', startGame);
+  }
+
+  // ---- 描画 ----
+  function project(dist) {
+    // dist: 自車位置からの前方距離(m)
+    const focal = 90;
+    const scale = focal / (focal + dist);
+    const y = HORIZON_Y + (H - HORIZON_Y) * scale;
+    return { scale, y };
+  }
+
+  function drawScenery() {
+    const visible = [];
+    for (const o of WORLD_OBJECTS) {
+      const dist = o.pos - state.pos;
+      if (dist > -15 && dist < 260) visible.push({ o, dist });
+    }
+    visible.sort((a, b) => b.dist - a.dist); // 奥から手前へ
+
+    for (const { o, dist } of visible) {
+      const p = project(Math.max(0.1, dist));
+      const scale = p.scale;
+      const xCenter = W / 2 + o.side * o.offset * scale * 20;
+      const groundY = p.y;
+
+      if (o.type === 'house') {
+        const halfW = (o.width / 2) * scale * 20;
+        if (halfW < 1.2) continue;
+        const wallH = o.height * scale * 20;
+        const roofH = o.roofHeight * scale * 20;
+        const wallTopY = groundY - wallH;
+        const roofTopY = wallTopY - roofH;
+
+        ctx.fillStyle = o.wallColor;
+        ctx.fillRect(xCenter - halfW, wallTopY, halfW * 2, wallH);
+
+        ctx.fillStyle = o.roofColor;
+        ctx.beginPath();
+        ctx.moveTo(xCenter - halfW * 1.15, wallTopY);
+        ctx.lineTo(xCenter + halfW * 1.15, wallTopY);
+        ctx.lineTo(xCenter, roofTopY);
+        ctx.closePath();
+        ctx.fill();
+
+        if (halfW > 3) {
+          const doorW = halfW * 0.5, doorH = wallH * 0.55;
+          ctx.fillStyle = '#5a3a24';
+          ctx.fillRect(xCenter - doorW / 2, groundY - doorH, doorW, doorH);
+
+          const winSize = halfW * 0.4;
+          ctx.fillStyle = '#bfe6ff';
+          ctx.fillRect(xCenter - halfW * 0.75, wallTopY + wallH * 0.15, winSize, winSize);
+          ctx.fillRect(xCenter + halfW * 0.75 - winSize, wallTopY + wallH * 0.15, winSize, winSize);
+        }
+      } else if (o.type === 'tree') {
+        const trunkW = Math.max(1, 0.6 * scale * 20);
+        const trunkH = o.trunkHeight * scale * 20;
+        const crownR = o.crownSize * scale * 20;
+        if (crownR < 1.5) continue;
+
+        ctx.fillStyle = '#6b4a2a';
+        ctx.fillRect(xCenter - trunkW / 2, groundY - trunkH, trunkW, trunkH);
+
+        ctx.fillStyle = '#3f7a3a';
+        ctx.beginPath();
+        ctx.arc(xCenter, groundY - trunkH - crownR * 0.6, crownR, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (o.type === 'palm') {
+        const trunkW = Math.max(1, 0.5 * scale * 20);
+        const trunkH = o.trunkHeight * scale * 20;
+        const leafLen = o.crownSize * scale * 20;
+        if (leafLen < 1.5) continue;
+
+        // 少し曲がった幹
+        ctx.strokeStyle = '#8a6b3f';
+        ctx.lineWidth = trunkW;
+        ctx.beginPath();
+        ctx.moveTo(xCenter, groundY);
+        ctx.quadraticCurveTo(xCenter + trunkW * 1.5, groundY - trunkH * 0.6, xCenter + trunkW, groundY - trunkH);
+        ctx.stroke();
+
+        // 葉(放射状に数枚)
+        const topX = xCenter + trunkW, topY = groundY - trunkH;
+        ctx.strokeStyle = '#2f7a3f';
+        ctx.lineWidth = Math.max(1, trunkW * 0.8);
+        for (let a = -1; a <= 1; a++) {
+          ctx.beginPath();
+          ctx.moveTo(topX, topY);
+          ctx.quadraticCurveTo(topX + a * leafLen * 0.6, topY - leafLen * 0.3, topX + a * leafLen, topY + leafLen * 0.35);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 空
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
+    skyGrad.addColorStop(0, '#4a90d9');
+    skyGrad.addColorStop(1, '#bfe3ff');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, HORIZON_Y);
+
+    // 地面
+    const groundGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, H);
+    groundGrad.addColorStop(0, '#8fbf5f');
+    groundGrad.addColorStop(1, '#4f7a34');
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, HORIZON_Y, W, H - HORIZON_Y);
+
+    if (!state) return;
+
+    // 海浜公園駅付近：ホームと反対側(進行方向左側)を海にする
+    // 奥行きごとに実際のワールド座標での海判定をして塗るので、
+    // ゾーンの外(家がある場所)まで海色が被らない
+    const GROUND_DEPTH_STEPS = 24;
+    const GROUND_DEPTH_MAX = 300;
+    for (let i = 0; i < GROUND_DEPTH_STEPS; i++) {
+      const d0 = GROUND_DEPTH_MAX * i / GROUND_DEPTH_STEPS;
+      const d1 = GROUND_DEPTH_MAX * (i + 1) / GROUND_DEPTH_STEPS;
+      const sea = seaFactorAt(state.pos + (d0 + d1) / 2);
+      // 建物の生成判定(sea > 0.3で陸側の建物を除外)と同じ閾値に揃え、
+      // 海と建物の境界がずれて「海の中に家」が見えないようにする
+      if (sea <= 0.3) continue;
+      const pNear = project(Math.max(0.1, d0));
+      const pFar = project(Math.max(0.1, d1));
+      ctx.save();
+      ctx.globalAlpha = sea;
+      ctx.fillStyle = '#1c6a95';
+      ctx.fillRect(0, pFar.y, W / 2, (pNear.y - pFar.y) + 1);
+      ctx.restore();
+
+      // 波の線
+      if (sea > 0.4 && pNear.y - pFar.y > 3) {
+        ctx.save();
+        ctx.globalAlpha = sea;
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1;
+        const waveOffset = (state.pos * 3 + d0 * 5) % 14;
+        for (let wy = pFar.y + waveOffset; wy < pNear.y; wy += 14) {
+          ctx.beginPath();
+          ctx.moveTo(6, wy);
+          ctx.lineTo(W / 2 - 6, wy + 3);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    drawScenery();
+
+    const RAIL_GAUGE = 6; // レール幅(m)
+    const BALLAST_WIDTH = 14;
+
+    // 遠くから手前へ、バラスト(道床)を台形で描画
+    ctx.fillStyle = '#7a7368';
+    ctx.beginPath();
+    const far = project(300);
+    const near = project(0.1);
+    ctx.moveTo(W/2 - BALLAST_WIDTH*far.scale*20, far.y);
+    ctx.lineTo(W/2 + BALLAST_WIDTH*far.scale*20, far.y);
+    ctx.lineTo(W/2 + BALLAST_WIDTH*near.scale*20, near.y);
+    ctx.lineTo(W/2 - BALLAST_WIDTH*near.scale*20, near.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // 枕木
+    ctx.fillStyle = '#3b2a20';
+    for (let d = 0; d < 300; d += 6) {
+      const p = project(d);
+      const width = RAIL_GAUGE * p.scale * 22;
+      const h = Math.max(1, 3 * p.scale);
+      ctx.fillRect(W/2 - width/2, p.y - h/2, width, h);
+    }
+
+    // レール(2本)
+    ctx.strokeStyle = '#d8d8d8';
+    ctx.lineWidth = 2;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      for (let d = 0; d <= 300; d += 5) {
+        const p = project(d);
+        const x = W/2 + side * (RAIL_GAUGE/2) * p.scale * 22;
+        if (d === 0) ctx.moveTo(x, p.y); else ctx.lineTo(x, p.y);
+      }
+      ctx.stroke();
+    }
+
+    // 駅・停止目標の描画
+    const station = STATIONS[Math.min(state.stationIndex, STATIONS.length - 1)];
+    const stationDist = station.pos - state.pos;
+    if (stationDist < 320 && stationDist > -30) {
+      // ホーム
+      const platformNear = project(Math.max(0.1, stationDist + 5));
+      const platformFar = project(Math.max(0.1, stationDist - 60));
+      ctx.fillStyle = '#c9a25a';
+      ctx.beginPath();
+      ctx.moveTo(W/2 + 12*platformFar.scale*22, platformFar.y);
+      ctx.lineTo(W/2 + 30*platformFar.scale*22, platformFar.y);
+      ctx.lineTo(W/2 + 30*platformNear.scale*22, platformNear.y);
+      ctx.lineTo(W/2 + 12*platformNear.scale*22, platformNear.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // 停止目標標識
+      if (stationDist > -10) {
+        const p = project(Math.max(0.1, stationDist));
+        const size = 40 * p.scale;
+        const closeUp = stationDist < 40;
+        ctx.fillStyle = closeUp ? '#ffd700' : '#fff';
+        ctx.fillRect(W/2 - size/2, p.y - size, size, size*0.6);
+        ctx.strokeStyle = '#c00';
+        ctx.lineWidth = Math.max(1, 3*p.scale);
+        ctx.strokeRect(W/2 - size/2, p.y - size, size, size*0.6);
+        ctx.fillStyle = '#c00';
+        ctx.font = `bold ${Math.max(8, 14*p.scale)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('停止', W/2, p.y - size*0.35);
+      }
+
+      // 駅名標
+      const nameP = project(Math.max(0.1, stationDist + 40));
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.max(8, 16*nameP.scale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(station.name, W/2 + 60*nameP.scale*22, nameP.y - 10*nameP.scale*22);
+    }
+
+    // 運転台(下部シルエット)
+    ctx.fillStyle = '#20242b';
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    ctx.lineTo(0, H - 60);
+    ctx.lineTo(120, H - 100);
+    ctx.lineTo(W - 120, H - 100);
+    ctx.lineTo(W, H - 60);
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function startGame() {
+    const easyMode = easyModeCheck.checked;
+    resetState(easyMode);
+    overlay.classList.add('hidden');
+    warnEl.style.display = 'none';
+    popupEl.classList.remove('show');
+    brakeAssist.classList.remove('active', 'late');
+    easyBadge.style.display = easyMode ? 'inline' : 'none';
+  }
+
+  startBtn.addEventListener('click', startGame);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
