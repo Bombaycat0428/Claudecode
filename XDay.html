@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #090806;
+    --card:     #131110;
+    --flap:     #1C1A14;
+    --gap:      #09080600;
+    --amber:    #E8A020;
+    --amber-hi: #FFD060;
+    --text:     #D0C6B0;
+    --muted:    #52493A;
+    --border:   rgba(232,160,32,0.10);
+    --gold-dim: #B07818;
+  }
+
+  html { min-height: 100%; background: var(--bg); }
+
+  body {
+    min-height: 100vh;
+    font-family: "Noto Sans JP", sans-serif;
+    color: var(--text);
+    padding: 0 0 108px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+  }
+
+  /* ── ヘッダー ─────────────────────────────────────── */
+  header {
+    width: 100%;
+    max-width: 1180px;
+    padding: 44px 28px 28px;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+
+  .logo {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 52px;
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding-bottom: 7px;
+  }
+
+  /* ── 2カラムレイアウト ──────────────────────────────── */
+  .content-row {
+    width: 100%;
+    max-width: 1180px;
+    padding: 0 28px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  /* ── カードリスト ─────────────────────────────────── */
+  #cardList {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #emptyMsg {
+    padding: 56px 0;
+    text-align: center;
+    font-family: "Space Mono", monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    line-height: 2.2;
+  }
+
+  /* ── カード ──────────────────────────────────────── */
+  .cd-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 20px 20px 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    animation: cardIn 0.4s cubic-bezier(0.2,0,0,1) both;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* amber left accent bar */
+  .cd-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 2px;
+    background: var(--amber);
+    border-radius: 0 2px 2px 0;
+    opacity: 0.55;
+  }
+
+  .cd-card.done::before { background: var(--gold-dim); opacity: 0.35; }
+
+  /* ── カード左：テキスト ── */
+  .cd-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cd-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+  }
+
+  .cd-date-lbl {
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── カード右：フラップ ── */
+  .cd-flaps {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .flap-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ── split-flap 1ユニット ── */
+  .flap-digit {
+    position: relative;
+    width: 54px;
+    height: 68px;
+    perspective: 350px;
+  }
+
+  .flap-digit--wide {
+    width: 78px;
+  }
+
+  /* 上半分（静的） */
+  .flap-upper {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 50%;
+    overflow: hidden;
+    background: var(--flap);
+    border-radius: 3px 3px 0 0;
+    border-bottom: 1.5px solid var(--bg);
+    z-index: 2;
+  }
+
+  .flap-upper .ft {
+    display: block;
+    height: 200%;          /* full digit height */
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 56px;
+    line-height: 68px;
+    text-align: center;
+    color: var(--amber);
+    letter-spacing: -0.01em;
+    user-select: none;
+  }
+
+  .flap-digit--wide .flap-upper .ft {
+    font-size: 52px;
+    line-height: 68px;
+  }
+
+  /* 下フラップ（回転する） */
+  .flap-lower {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 50%;
+    transform-origin: 50% 0%;
+    transform-style: preserve-3d;
+    z-index: 1;
+  }
+
+  .flap-lower.is-flipping {
+    animation: splitFlap 0.30s cubic-bezier(0.45,0,0.55,1) forwards;
+  }
+
+  @keyframes splitFlap {
+    from { transform: rotateX(0deg); }
+    to   { transform: rotateX(-180deg); }
+  }
+
+  /* 下フラップの表裏 */
+  .flap-face {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--flap);
+    border-radius: 0 0 3px 3px;
+    backface-visibility: hidden;
+  }
+
+  .flap-face .ft {
+    display: block;
+    height: 200%;
+    transform: translateY(-50%);   /* 下半分を表示 */
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 56px;
+    line-height: 68px;
+    text-align: center;
+    color: var(--amber);
+    letter-spacing: -0.01em;
+    user-select: none;
+  }
+
+  .flap-digit--wide .flap-face .ft {
+    font-size: 52px;
+    line-height: 68px;
+  }
+
+  .flap-face--back {
+    transform: rotateX(180deg);    /* 裏面: 親と合わせて累計0°になる */
+  }
+
+  /* ラベル */
+  .flap-lbl {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* : セパレーター */
+  .flap-sep {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 38px;
+    color: var(--muted);
+    padding-bottom: 20px;
+    opacity: 0.35;
+    flex-shrink: 0;
+  }
+
+  /* ── カード画像スロット ─────────────────────────── */
+  .cd-img-slot {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border: 1px dashed rgba(232,160,32,0.22);
+    border-radius: 3px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: border-color 0.15s;
+    background: rgba(255,255,255,0.015);
+  }
+  .cd-img-slot:hover { border-color: rgba(232,160,32,0.6); }
+  .cd-img-slot img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .cd-img-add {
+    font-size: 22px;
+    color: var(--muted);
+    user-select: none;
+    opacity: 0.5;
+  }
+  .cd-img-del {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 16px; height: 16px;
+    background: rgba(0,0,0,0.65);
+    border: none;
+    border-radius: 2px;
+    color: rgba(255,255,255,0.85);
+    font-size: 9px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+  }
+  .cd-img-slot:hover .cd-img-del { display: flex; }
+
+  /* 完了バナー */
+  .done-banner {
+    font-family: "Space Mono", monospace;
+    font-size: 13px;
+    color: var(--gold-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 10px 0;
+  }
+
+  /* 削除ボタン */
+  .btn-del {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 26px; height: 26px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 2px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn-del:hover {
+    background: rgba(220,50,50,0.18);
+    border-color: rgba(220,50,50,0.35);
+    color: #e07070;
+  }
+
+  /* ── フォームバー（固定下部） ───────────────────────── */
+  #formBar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(7, 6, 4, 0.96);
+    backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(232,160,32,0.13);
+    padding: 10px 20px 12px;
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  #addForm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    width: 100%;
+    max-width: 820px;
+  }
+
+  .ff {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ff label {
+    font-family: "Space Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ff input {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: "Space Mono", monospace;
+    font-size: 14px;
+    padding: 8px 12px;
+    height: 38px;
+    outline: none;
+    transition: border-color 0.15s;
+    color-scheme: dark;
+  }
+
+  .ff input:focus { border-color: rgba(232,160,32,0.5); }
+
+  .ff-name { flex: 1 1 180px; }
+  .ff-name input { width: 100%; }
+  .ff-date input { width: 138px; }
+  .ff-time input { width: 96px; }
+
+  #btnAdd {
+    height: 38px;
+    padding: 0 24px;
+    background: var(--amber);
+    border: none;
+    border-radius: 2px;
+    color: #080704;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  #btnAdd:hover { background: var(--amber-hi); }
+
+  #errMsg {
+    flex: 0 0 100%;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    color: #d06060;
+    letter-spacing: 0.06em;
+    min-height: 12px;
+  }
+
+  /* ── ヘッダーツール ─────────────────────────────── */
+  .header-tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 7px;
+  }
+
+  .tool-btn {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s;
+    padding: 0;
+    user-select: none;
+  }
+  .tool-btn:hover { color: var(--amber); }
+
+  .tool-sep {
+    color: var(--muted);
+    opacity: 0.25;
+    font-size: 10px;
+    user-select: none;
+  }
+
+  /* トースト通知 */
+  #toast {
+    position: fixed;
+    bottom: 84px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--flap);
+    border: 1px solid rgba(232,160,32,0.25);
+    border-radius: 3px;
+    padding: 8px 18px;
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 300;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── カレンダー ──────────────────────────────────── */
+  #calWidget {
+    width: 248px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 12px 16px;
+  }
+
+  #calHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  #calTitle {
+    font-family: "Space Mono", monospace;
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: 0.1em;
+  }
+
+  .cal-nav {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 2px;
+    transition: color 0.15s;
+  }
+  .cal-nav:hover { color: var(--amber); }
+
+  #calGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .cal-dow {
+    font-family: "Space Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding: 3px 0 5px;
+    letter-spacing: 0.03em;
+  }
+  /* 日・土に色味 */
+  .cal-dow:first-child { color: rgba(220,100,80,0.55); }
+  .cal-dow:last-child  { color: rgba(100,160,220,0.55); }
+
+  .cal-cell {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    cursor: default;
+    transition: background 0.12s;
+  }
+  .cal-cell.cal-has-event { cursor: pointer; }
+  .cal-cell.cal-has-event:hover { background: rgba(232,160,32,0.07); }
+
+  .cal-cell.cal-today { background: rgba(232,160,32,0.10); }
+
+  .cal-cell.cal-other-month .cal-num { opacity: 0.18; }
+
+  .cal-num {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1;
+    user-select: none;
+  }
+  .cal-cell.cal-today .cal-num {
+    color: var(--amber);
+    font-weight: 700;
+  }
+  .cal-cell.cal-has-event .cal-num { color: var(--text); }
+
+  .cal-dot {
+    width: 3px; height: 3px;
+    background: var(--amber);
+    border-radius: 50%;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ツールチップ */
+  .cal-tip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--flap);
+    border: 1px solid rgba(232,160,32,0.25);
+    border-radius: 3px;
+    padding: 5px 9px;
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+    z-index: 20;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cal-cell:hover .cal-tip { opacity: 1; }
+
+  /* ── ドラッグ＆ドロップ ─────────────────────────── */
+  .cd-drag-handle {
+    display: grid;
+    grid-template-columns: repeat(2, 4px);
+    grid-template-rows: repeat(3, 4px);
+    gap: 3px;
+    flex-shrink: 0;
+    cursor: grab;
+    padding: 0 10px 0 0;
+    opacity: 0.22;
+    transition: opacity 0.15s;
+    align-self: center;
+  }
+  .cd-drag-handle span {
+    width: 4px; height: 4px;
+    background: var(--muted);
+    border-radius: 50%;
+    display: block;
+  }
+  .cd-card:hover .cd-drag-handle { opacity: 0.65; }
+  .cd-card.dragging { opacity: 0.28; }
+  .cd-card.drag-over {
+    border-color: rgba(232,160,32,0.55);
+    box-shadow: inset 0 0 0 1px rgba(232,160,32,0.18);
+  }
+
+  /* ── お祝い：コンフェッティ ─────────────────────── */
+  #confettiCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 650;
+    display: none;
+  }
+
+  /* ── お祝い：モーダル ────────────────────────────── */
+  #celebModal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 600;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  #celebModal.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .celeb-box {
+    background: #18160F;
+    border: 1px solid rgba(232,160,32,0.45);
+    border-radius: 4px;
+    padding: 48px 56px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: min(480px, 90vw);
+    box-shadow: 0 0 80px rgba(232,160,32,0.18), 0 0 160px rgba(232,160,32,0.08);
+    animation: celebPop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes celebPop {
+    from { transform: scale(0.65); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  .celeb-star {
+    font-size: 36px;
+    line-height: 1;
+    animation: celebSpin 3s linear infinite;
+  }
+  @keyframes celebSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .celeb-title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 52px;
+    letter-spacing: 0.22em;
+    color: var(--amber);
+    line-height: 1;
+    text-shadow:
+      0 0 30px rgba(232,160,32,0.8),
+      0 0 70px rgba(232,160,32,0.4);
+  }
+
+  .celeb-name {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.4;
+    word-break: break-all;
+    max-width: 360px;
+  }
+
+  .celeb-msg {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: rgba(208,198,176,0.65);
+    line-height: 2;
+    letter-spacing: 0.08em;
+  }
+
+  .celeb-close {
+    margin-top: 10px;
+    padding: 10px 36px;
+    background: var(--amber);
+    border: none;
+    border-radius: 3px;
+    color: #080704;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 19px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .celeb-close:hover { background: var(--amber-hi); }
+  .celeb-close:active { transform: scale(0.97); }
+
+  /* ── モバイル ────────────────────────────────────── */
+  @media (max-width: 720px) {
+    header { padding: 32px 18px 22px; max-width: 100%; }
+    .content-row { flex-direction: column-reverse; padding: 0 14px; }
+    #calWidget { width: 100%; position: static; }
+    .cd-card { flex-direction: column; align-items: flex-start; padding: 18px 16px 16px 20px; }
+    .cd-flaps { align-self: center; }
+    .flap-digit { width: 44px; height: 58px; }
+    .flap-digit--wide { width: 64px; }
+    .flap-upper .ft, .flap-face .ft { font-size: 46px; line-height: 58px; }
+    .flap-digit--wide .flap-upper .ft,
+    .flap-digit--wide .flap-face .ft { font-size: 42px; line-height: 58px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flap-lower.is-flipping { animation: none; }
+    .cd-card { animation: none; }
+  }
+
+  /* ── HOWTO モーダル ──────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-box {
+    background: #1A1812;
+    border: 1px solid rgba(232,160,32,0.2);
+    border-radius: 4px;
+    width: min(560px, 92vw);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(12px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal-box { transform: translateY(0); }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 16px;
+    border-bottom: 1px solid rgba(232,160,32,0.12);
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.16em;
+    color: var(--amber);
+  }
+
+  .modal-close {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 2px;
+    color: var(--muted);
+    font-size: 14px;
+    width: 28px; height: 28px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .modal-body {
+    overflow-y: auto;
+    padding: 20px 22px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .modal-body::-webkit-scrollbar { width: 4px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+
+  .howto-section { display: flex; flex-direction: column; gap: 8px; }
+
+  .howto-heading {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .howto-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(232,160,32,0.15);
+  }
+
+  .howto-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .howto-list li {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.65;
+    padding-left: 18px;
+    position: relative;
+  }
+  .howto-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--amber);
+    opacity: 0.7;
+    font-family: "Space Mono", monospace;
+  }
+
+  .howto-note {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    background: rgba(232,160,32,0.05);
+    border-left: 2px solid rgba(232,160,32,0.3);
+    padding: 7px 10px;
+    border-radius: 0 2px 2px 0;
+    line-height: 1.6;
+  }
+
+  .howto-key {
+    display: inline-block;
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    color: var(--amber);
+    background: rgba(232,160,32,0.08);
+    border: 1px solid rgba(232,160,32,0.2);
+    border-radius: 2px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">X DAY</div>
+  <div class="logo-sub">Countdown</div>
+  <div class="header-tools">
+    <button class="tool-btn" id="btnHowto">How to use</button>
+    <span class="tool-sep">|</span>
+    <button class="tool-btn" id="btnExport">Export</button>
+    <span class="tool-sep">|</span>
+    <label class="tool-btn" for="importInput">Import</label>
+    <input type="file" id="importInput" accept=".json" style="display:none">
+    <span class="tool-sep">|</span>
+    <button class="tool-btn" id="btnCopyUrl">Share URL</button>
+  </div>
+</header>
+<div id="toast"></div>
+
+<!-- HOW TO USE モーダル -->
+<div class="modal-overlay" id="howtoModal" role="dialog" aria-modal="true" aria-label="使い方">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">How to Use</span>
+      <button class="modal-close" id="modalClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="howto-section">
+        <div class="howto-heading">カウントダウンを追加する</div>
+        <ul class="howto-list">
+          <li>画面の一番下のフォームに<strong>イベント名</strong>・<strong>日付</strong>・<strong>時刻</strong>を入力する。</li>
+          <li><span class="howto-key">追加</span> ボタンを押すとカードが追加され、カウントダウンが始まる。</li>
+          <li>日・時・分・秒がリアルタイムで自動更新される。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">画像を登録する</div>
+        <ul class="howto-list">
+          <li>カード右端の <span class="howto-key">+</span> をクリックすると画像を選択できる。</li>
+          <li>画像の上にカーソルを当てると <span class="howto-key">✕</span> が出て、削除できる。</li>
+          <li>画像はブラウザ内に保存され、リロードしても残る。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">順番を変える（ドラッグ＆ドロップ）</div>
+        <ul class="howto-list">
+          <li>カードの左端にある <strong>点々（⠿）</strong> にカーソルを合わせる。</li>
+          <li>そのままドラッグして好きな位置に移動する。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">カレンダーの使い方</div>
+        <ul class="howto-list">
+          <li>右側のカレンダーでイベントのある日にオレンジの点（●）が表示される。</li>
+          <li>その日付にカーソルを当てるとイベント名が表示される。</li>
+          <li><span class="howto-key">‹</span> <span class="howto-key">›</span> で前後の月に移動できる。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">イベントを削除する</div>
+        <ul class="howto-list">
+          <li>カードの右上にある <span class="howto-key">✕</span> を押すと削除できる。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">データの保存について</div>
+        <ul class="howto-list">
+          <li>データは<strong>ブラウザ内部（localStorage）</strong>に自動保存される。リロードしても消えない。</li>
+          <li>ただし、ブラウザの <strong>「Cookieとサイトデータをクリア」</strong> を行うと消える。</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <div class="howto-heading">バックアップと共有</div>
+        <ul class="howto-list">
+          <li><span class="howto-key">Export</span> → 予定と画像をまとめてJSONファイルに保存できる。</li>
+          <li><span class="howto-key">Import</span> → 保存したJSONファイルを読み込んで復元できる（現在の予定は置き換わる）。</li>
+          <li><span class="howto-key">Share URL</span> → 予定データ入りのURLをクリップボードにコピーする。別の端末やブラウザで開くと同じ予定を復元できる（画像は含まれない）。</li>
+        </ul>
+        <div class="howto-note">
+          データが消えると困る場合は定期的に <span class="howto-key">Export</span> しておくのが最も安全。画像も含めて完全バックアップできる。
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="content-row">
+  <div id="cardList">
+    <p id="emptyMsg">— NO EVENTS —<br>下のフォームからカウントダウンを追加</p>
+  </div>
+
+  <div id="calWidget">
+    <div id="calHeader">
+      <button class="cal-nav" id="calPrev" aria-label="前の月">‹</button>
+      <span id="calTitle"></span>
+      <button class="cal-nav" id="calNext" aria-label="次の月">›</button>
+    </div>
+    <div id="calGrid"></div>
+  </div>
+</div>
+
+<!-- 画像アップロード用 hidden input -->
+<input type="file" id="imgInput" accept="image/*" style="display:none">
+
+<!-- コンフェッティ -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- お祝いモーダル -->
+<div id="celebModal">
+  <div class="celeb-box">
+    <div class="celeb-star">✦</div>
+    <div class="celeb-title">ARRIVED</div>
+    <div class="celeb-name" id="celebName"></div>
+    <div class="celeb-msg">
+      The day is here!<br>
+      Congratulations
+    </div>
+    <button class="celeb-close" id="celebClose">とじる</button>
+  </div>
+</div>
+
+<div id="formBar">
+  <form id="addForm" autocomplete="off">
+    <div class="ff ff-name">
+      <label>イベント名</label>
+      <input type="text" id="inName" placeholder="旅行、誕生日、締め切り…" maxlength="30" required>
+    </div>
+    <div class="ff ff-date">
+      <label>日付</label>
+      <input type="date" id="inDate" required>
+    </div>
+    <div class="ff ff-time">
+      <label>時刻</label>
+      <input type="time" id="inTime" value="00:00">
+    </div>
+    <button type="submit" id="btnAdd">追加</button>
+    <span id="errMsg"></span>
+  </form>
+</div>
+
+<script>
+  // ── split-flap 1ユニット制御 ─────────────────────────
+  class FlapUnit {
+    constructor(el) {
+      this.upperTxt = el.querySelector('.flap-upper .ft');
+      this.frontTxt = el.querySelector('.flap-face--front .ft');
+      this.backTxt  = el.querySelector('.flap-face--back .ft');
+      this.lower    = el.querySelector('.flap-lower');
+      this.cur      = null;
+      this.busy     = false;
+      this.next     = null;
+    }
+
+    init(val) {
+      [this.upperTxt, this.frontTxt, this.backTxt].forEach(el => el.textContent = val);
+      this.cur = val;
+    }
+
+    set(val) {
+      if (val === this.cur) return;
+      if (this.busy) { this.next = val; return; }
+      this._flip(val);
+    }
+
+    _flip(val) {
+      this.busy = true;
+      this.backTxt.textContent = val;
+      this.lower.classList.add('is-flipping');
+
+      // 上半分をアニメーション中間点で切り替え（エッジオン付近）
+      setTimeout(() => { this.upperTxt.textContent = val; }, 150);
+
+      this.lower.addEventListener('animationend', () => {
+        this.frontTxt.textContent = val;   // 先に front を更新
+        this.lower.classList.remove('is-flipping'); // その後クラス除去（snapは1フレーム内）
+        this.cur  = val;
+        this.busy = false;
+        if (this.next !== null && this.next !== val) {
+          const q = this.next; this.next = null; this._flip(q);
+        } else {
+          this.next = null;
+        }
+      }, { once: true });
+    }
+  }
+
+  // ── フラップ DOM 生成 ────────────────────────────────
+  function makeFlapEl(label, wide) {
+    const g = document.createElement('div');
+    g.className = 'flap-group';
+    const init = wide ? '---' : '--';
+    const cls  = wide ? 'flap-digit flap-digit--wide' : 'flap-digit';
+    g.innerHTML = `
+      <div class="${cls}">
+        <div class="flap-upper"><span class="ft">${init}</span></div>
+        <div class="flap-lower">
+          <div class="flap-face flap-face--front"><span class="ft">${init}</span></div>
+          <div class="flap-face flap-face--back"><span class="ft">${init}</span></div>
+        </div>
+      </div>
+      <span class="flap-lbl">${label}</span>
+    `;
+    return { el: g, unit: new FlapUnit(g.querySelector('.flap-digit')) };
+  }
+
+  // ── LocalStorage ─────────────────────────────────────
+  const KEY = 'xday_v2';
+  let events = [];
+  const flapMap = {};
+  let dragSrcId = null;
+
+  function load() {
+    try {
+      const r = JSON.parse(localStorage.getItem(KEY));
+      if (Array.isArray(r)) events = r;
+    } catch (_) {}
+  }
+
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify(events));
+  }
+
+  // ── ユーティリティ ──────────────────────────────────
+  const pad  = n => String(n).padStart(2, '0');
+  const pad3 = n => String(Math.min(n, 999)).padStart(3, '0');
+  const esc  = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // ── 画像ユーティリティ ────────────────────────────────
+  let currentImgId = null;
+
+  function resizeImage(file, maxPx, callback) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio  = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        callback(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renderImgSlot(slot) {
+    const evId  = slot.dataset.imgId;
+    const evObj = events.find(x => x.id === evId);
+    const src   = evObj && evObj.img ? evObj.img : null;
+    slot.innerHTML = '';
+    if (src) {
+      const imgEl  = document.createElement('img');
+      imgEl.src = src; imgEl.alt = '';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'cd-img-del';
+      delBtn.setAttribute('aria-label', '画像を削除');
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const ev = events.find(x => x.id === evId);
+        if (ev) { delete ev.img; save(); }
+        renderImgSlot(slot);
+      });
+      slot.append(imgEl, delBtn);
+    } else {
+      const plus = document.createElement('span');
+      plus.className = 'cd-img-add';
+      plus.textContent = '+';
+      slot.appendChild(plus);
+    }
+  }
+
+  function buildImgSlot(evId) {
+    const slot = document.createElement('div');
+    slot.className = 'cd-img-slot';
+    slot.dataset.imgId = evId;
+    renderImgSlot(slot);
+    slot.addEventListener('click', () => {
+      currentImgId = evId;
+      document.getElementById('imgInput').click();
+    });
+    return slot;
+  }
+
+  document.getElementById('imgInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    const id   = currentImgId;
+    currentImgId   = null;
+    e.target.value = '';
+    if (!file || !id) return;
+    resizeImage(file, 200, dataUrl => {
+      const evObj = events.find(x => x.id === id);
+      if (!evObj) return;
+      evObj.img = dataUrl;
+      save();
+      const slot = document.querySelector(`.cd-img-slot[data-img-id="${id}"]`);
+      if (slot) renderImgSlot(slot);
+    });
+  });
+
+  // ── カード生成 ───────────────────────────────────────
+  function createCard(ev, delay) {
+    const card = document.createElement('div');
+    card.className = 'cd-card';
+    card.dataset.id = ev.id;
+    if (delay) card.style.animationDelay = delay + 'ms';
+
+    const past = new Date(ev.iso) <= new Date();
+    if (past) card.classList.add('done');
+
+    // 左：情報
+    const info = document.createElement('div');
+    info.className = 'cd-info';
+    info.innerHTML = `<div class="cd-name">${esc(ev.name)}</div><div class="cd-date-lbl">${fmtDate(ev.iso)}</div>`;
+
+    // 右：フラップ or 完了
+    let right;
+    if (past) {
+      right = document.createElement('div');
+      right.className = 'done-banner';
+      right.textContent = '— ARRIVED —';
+    } else {
+      right = document.createElement('div');
+      right.className = 'cd-flaps';
+
+      const dF = makeFlapEl('DAY', true);
+      const hF = makeFlapEl('HRS', false);
+      const mF = makeFlapEl('MIN', false);
+      const sF = makeFlapEl('SEC', false);
+
+      const sep = () => { const s = document.createElement('div'); s.className = 'flap-sep'; s.textContent = ':'; return s; };
+      right.append(dF.el, sep(), hF.el, sep(), mF.el, sep(), sF.el);
+      flapMap[ev.id] = { d: dF.unit, h: hF.unit, m: mF.unit, s: sF.unit };
+    }
+
+    // 削除
+    const del = document.createElement('button');
+    del.className = 'btn-del';
+    del.setAttribute('aria-label', '削除');
+    del.textContent = '✕';
+    del.addEventListener('click', () => delEvent(ev.id));
+
+    // ドラッグハンドル（6ドットグリッド）
+    const handle = document.createElement('div');
+    handle.className = 'cd-drag-handle';
+    handle.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 6; i++) handle.appendChild(document.createElement('span'));
+
+    card.setAttribute('draggable', 'true');
+    del.addEventListener('mousedown', e => e.stopPropagation());
+
+    card.append(handle, info, right, buildImgSlot(ev.id), del);
+    setupDrag(card);
+    return card;
+  }
+
+  // ── フラップ初期化（アニメーションなし） ────────────
+  function initFlaps() {
+    const now = Date.now();
+    events.forEach(ev => {
+      const u = flapMap[ev.id];
+      if (!u) return;
+      const diff = new Date(ev.iso) - now;
+      if (diff <= 0) return;
+      u.d.init(pad3(Math.floor(diff / 86400000)));
+      u.h.init(pad(Math.floor((diff % 86400000) / 3600000)));
+      u.m.init(pad(Math.floor((diff % 3600000) / 60000)));
+      u.s.init(pad(Math.floor((diff % 60000) / 1000)));
+    });
+  }
+
+  // ── カウントダウン更新（毎秒） ────────────────────────
+  function tick() {
+    const now = Date.now();
+    events.forEach(ev => {
+      const u = flapMap[ev.id];
+      if (!u) return;
+
+      const diff = new Date(ev.iso) - now;
+      if (diff <= 0) {
+        const card = document.querySelector(`.cd-card[data-id="${ev.id}"]`);
+        if (card && !card.classList.contains('done')) {
+          card.classList.add('done');
+          const flaps = card.querySelector('.cd-flaps');
+          if (flaps) {
+            const b = document.createElement('div');
+            b.className = 'done-banner'; b.textContent = '— ARRIVED —';
+            flaps.replaceWith(b);
+          }
+          delete flapMap[ev.id];
+          celebrate(ev.name);
+        }
+        return;
+      }
+
+      u.d.set(pad3(Math.floor(diff / 86400000)));
+      u.h.set(pad(Math.floor((diff % 86400000) / 3600000)));
+      u.m.set(pad(Math.floor((diff % 3600000) / 60000)));
+      u.s.set(pad(Math.floor((diff % 60000) / 1000)));
+    });
+  }
+
+  // ── レンダリング ─────────────────────────────────────
+  function render(newId) {
+    const list  = document.getElementById('cardList');
+    const empty = document.getElementById('emptyMsg');
+    const existing = new Set([...list.querySelectorAll('.cd-card')].map(c => c.dataset.id));
+    const current  = new Set(events.map(e => String(e.id)));
+
+    list.querySelectorAll('.cd-card').forEach(c => {
+      if (!current.has(c.dataset.id)) { delete flapMap[c.dataset.id]; c.remove(); }
+    });
+
+    events.forEach((ev, i) => {
+      if (!existing.has(String(ev.id))) {
+        const delay = (newId === ev.id) ? 0 : i * 55;
+        list.appendChild(createCard(ev, delay));
+      }
+    });
+
+    empty.style.display = events.length ? 'none' : 'block';
+  }
+
+  function delEvent(id) {
+    events = events.filter(e => e.id !== id);
+    delete flapMap[id];
+    save();
+    render();
+    renderCalendar();
+  }
+
+  // ── フォーム ─────────────────────────────────────────
+  document.getElementById('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const err  = document.getElementById('errMsg');
+    const name = document.getElementById('inName').value.trim();
+    const date = document.getElementById('inDate').value;
+    const time = document.getElementById('inTime').value || '00:00';
+
+    if (!name || !date) { err.textContent = '名前と日付を入力してください。'; return; }
+
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    events.push({ id, name, iso: `${date}T${time}:00` });
+    save();
+    render(id);
+    initFlaps();
+    tick();
+    renderCalendar();
+
+    document.getElementById('inName').value = '';
+    document.getElementById('inDate').value = '';
+    document.getElementById('inTime').value = '00:00';
+    err.textContent = '';
+    document.getElementById('inName').focus();
+  });
+
+  // ── D&D ──────────────────────────────────────────────
+  function reorderCards() {
+    const list  = document.getElementById('cardList');
+    const empty = document.getElementById('emptyMsg');
+    // events 配列の順番に DOM ノードを移動（再生成しないのでフラップ状態を保持）
+    events.forEach(ev => {
+      const card = list.querySelector(`.cd-card[data-id="${ev.id}"]`);
+      if (card) list.appendChild(card);
+    });
+    if (empty) list.appendChild(empty);
+  }
+
+  function setupDrag(card) {
+    card.addEventListener('dragstart', e => {
+      dragSrcId = card.dataset.id;
+      e.dataTransfer.effectAllowed = 'move';
+      // ゴースト画像にクラスが反映されないよう rAF で遅らせる
+      requestAnimationFrame(() => card.classList.add('dragging'));
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.cd-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+      dragSrcId = null;
+    });
+
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (card.dataset.id !== dragSrcId) card.classList.add('drag-over');
+    });
+
+    card.addEventListener('dragleave', e => {
+      // 子要素へ移動した場合の誤発火を除外
+      if (!card.contains(e.relatedTarget)) card.classList.remove('drag-over');
+    });
+
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if (!dragSrcId || dragSrcId === card.dataset.id) return;
+      const si = events.findIndex(ev => ev.id === dragSrcId);
+      const ti = events.findIndex(ev => ev.id === card.dataset.id);
+      if (si === -1 || ti === -1) return;
+      const [moved] = events.splice(si, 1);
+      events.splice(ti, 0, moved);
+      save();
+      reorderCards();
+    });
+  }
+
+  // ── お祝い演出 ────────────────────────────────────────
+  (function () {
+    const modal     = document.getElementById('celebModal');
+    const nameEl    = document.getElementById('celebName');
+    const closeBtn  = document.getElementById('celebClose');
+    const canvas    = document.getElementById('confettiCanvas');
+    const ctx       = canvas.getContext('2d');
+    let   rafId     = null;
+
+    // モーダル開閉
+    function openCeleb(name) {
+      nameEl.textContent = name;
+      modal.classList.add('open');
+    }
+    function closeCeleb() {
+      modal.classList.remove('open');
+    }
+    closeBtn.addEventListener('click', closeCeleb);
+    modal.addEventListener('click', e => { if (e.target === modal) closeCeleb(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCeleb(); });
+
+    // コンフェッティ
+    const COLORS = [
+      '#E8A020','#FFD060','#FFE080',   // アンバー系
+      '#FF6B8A','#FF9EFF','#FFB347',   // ピンク・オレンジ
+      '#6BFFD3','#8AB4FF','#B8FFA0',   // 寒色系
+      '#FFFFFF','#FFF8DC',             // 白・クリーム
+    ];
+
+    function launchConfetti() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = 'block';
+      if (rafId) cancelAnimationFrame(rafId);
+
+      const particles = [];
+      for (let i = 0; i < 200; i++) {
+        const circle = Math.random() < 0.25;
+        particles.push({
+          x:      Math.random() * canvas.width,
+          y:      -20 - Math.random() * 350,
+          w:      circle ? 0 : 7 + Math.random() * 11,
+          h:      circle ? 0 : 3 + Math.random() * 5,
+          r:      circle ? 3 + Math.random() * 6 : 0,
+          color:  COLORS[Math.floor(Math.random() * COLORS.length)],
+          vx:     (Math.random() - 0.5) * 4,
+          vy:     1.2 + Math.random() * 3.8,
+          rot:    Math.random() * Math.PI * 2,
+          vrot:   (Math.random() - 0.5) * 0.2,
+          alpha:  1,
+        });
+      }
+
+      let frame = 0;
+      const TOTAL      = 300;
+      const FADE_START = TOTAL * 0.62;
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+
+        particles.forEach(p => {
+          p.x   += p.vx;
+          p.y   += p.vy;
+          p.vy  += 0.045;                       // 重力
+          p.vx  *= 0.999;                       // 空気抵抗
+          p.rot += p.vrot;
+          if (frame > FADE_START) p.alpha -= 1.4 / (TOTAL - FADE_START);
+          if (p.alpha <= 0) return;
+          alive = true;
+
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.fillStyle   = p.color;
+          if (p.r > 0) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          }
+          ctx.restore();
+        });
+
+        frame++;
+        if (alive) {
+          rafId = requestAnimationFrame(loop);
+        } else {
+          canvas.style.display = 'none';
+          rafId = null;
+        }
+      }
+      loop();
+    }
+
+    // 外部から呼び出せるよう window に公開
+    window.celebrate = function (name) {
+      launchConfetti();
+      // コンフェッティが少し降ってからモーダルを出す
+      setTimeout(() => openCeleb(name), 300);
+    };
+  })();
+
+  // ── カレンダー ───────────────────────────────────────
+  let calYear  = new Date().getFullYear();
+  let calMonth = new Date().getMonth(); // 0-indexed
+
+  function renderCalendar() {
+    const grid    = document.getElementById('calGrid');
+    const titleEl = document.getElementById('calTitle');
+    if (!grid || !titleEl) return;
+
+    titleEl.textContent = `${calYear}.${String(calMonth + 1).padStart(2, '0')}`;
+
+    const firstDay  = new Date(calYear, calMonth, 1);
+    const lastDay   = new Date(calYear, calMonth + 1, 0);
+    const startDow  = firstDay.getDay(); // 0=日
+
+    // この月のイベント日 → { date: [name, ...] }
+    const evMap = {};
+    events.forEach(ev => {
+      const d = new Date(ev.iso);
+      if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
+        const k = d.getDate();
+        (evMap[k] = evMap[k] || []).push(ev.name);
+      }
+    });
+
+    const today    = new Date();
+    const todayKey = (today.getFullYear() === calYear && today.getMonth() === calMonth)
+      ? today.getDate() : -1;
+
+    grid.innerHTML = '';
+
+    // 曜日ヘッダー
+    ['日','月','火','水','木','金','土'].forEach(d => {
+      const th = document.createElement('div');
+      th.className = 'cal-dow';
+      th.textContent = d;
+      grid.appendChild(th);
+    });
+
+    // 前月の空白セル
+    for (let i = 0; i < startDow; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'cal-cell cal-other-month';
+      // 前月の末日から逆算
+      const prevDate = new Date(calYear, calMonth, -startDow + i + 1);
+      const n = document.createElement('span');
+      n.className = 'cal-num';
+      n.textContent = prevDate.getDate();
+      blank.appendChild(n);
+      grid.appendChild(blank);
+    }
+
+    // 当月の日付セル
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      if (d === todayKey) cell.classList.add('cal-today');
+
+      const num = document.createElement('span');
+      num.className = 'cal-num';
+      num.textContent = d;
+      cell.appendChild(num);
+
+      if (evMap[d]) {
+        cell.classList.add('cal-has-event');
+        const dot = document.createElement('div');
+        dot.className = 'cal-dot';
+        cell.appendChild(dot);
+
+        const tip = document.createElement('div');
+        tip.className = 'cal-tip';
+        tip.textContent = evMap[d].join(' / ');
+        cell.appendChild(tip);
+      }
+
+      grid.appendChild(cell);
+    }
+
+    // 翌月の空白（6行になる場合のみ補完しない — 自然に終わる）
+  }
+
+  document.getElementById('calPrev').addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+
+  document.getElementById('calNext').addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  // ── Base64 ヘルパー（日本語対応） ────────────────────
+  function toBase64(obj) {
+    const json  = JSON.stringify(obj);
+    const bytes = new TextEncoder().encode(json);
+    let bin = '';
+    bytes.forEach(b => (bin += String.fromCharCode(b)));
+    return btoa(bin);
+  }
+
+  function fromBase64(str) {
+    const bin   = atob(str);
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  // ── URLハッシュ同期 ──────────────────────────────────
+  function updateHash() {
+    try {
+      if (!events.length) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        return;
+      }
+      const lean = events.map(({ img, ...rest }) => rest);
+      history.replaceState(null, '', '#' + toBase64(lean));
+    } catch (_) {}
+  }
+
+  function loadFromHash() {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return false;
+    try {
+      const data = fromBase64(hash);
+      if (Array.isArray(data) && data.length) {
+        events = data;
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // ── エクスポート ─────────────────────────────────────
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `xday_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ── インポート ───────────────────────────────────────
+  function importJSON(file) {
+    const reader = new FileReader();
+
+    reader.onerror = () => showToast('ファイルの読み込みに失敗しました');
+
+    reader.onload = e => {
+      // ① JSONパースだけを try-catch（ここだけがフォーマットエラー）
+      let data;
+      try {
+        data = JSON.parse(e.target.result);
+      } catch (_) {
+        showToast('読み込み失敗：JSONファイルではありません');
+        return;
+      }
+
+      // ② 構造チェック
+      if (!Array.isArray(data)) {
+        showToast('読み込み失敗：正しいエクスポートファイルを選択してください');
+        return;
+      }
+      const valid = data.filter(ev => ev.id && ev.name && ev.iso);
+      if (!valid.length) {
+        showToast('読み込み失敗：イベントデータが見つかりませんでした');
+        return;
+      }
+
+      // ③ 確認ダイアログ → 置き換え（ここでエラーが出ても別メッセージにならない）
+      if (events.length > 0) {
+        const ok = confirm(`現在の ${events.length} 件を削除して\nインポートした ${valid.length} 件に置き換えますか？`);
+        if (!ok) return;
+      }
+
+      events = valid;
+      save();
+      fullRender();
+      showToast(`${valid.length} 件をインポートしました`);
+    };
+
+    reader.readAsText(file);
+  }
+
+  // ── 全再描画（インポート後など） ────────────────────
+  function fullRender() {
+    Object.keys(flapMap).forEach(k => delete flapMap[k]);
+    document.querySelectorAll('#cardList .cd-card').forEach(c => c.remove());
+    render();
+    initFlaps();
+    renderCalendar();
+  }
+
+  // ── トースト表示 ─────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // ── ボタンイベント ───────────────────────────────────
+  // ── HOW TO USE モーダル ──────────────────────────────
+  const modal = document.getElementById('howtoModal');
+
+  function openModal()  { modal.classList.add('open');    document.body.style.overflow = 'hidden'; }
+  function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+
+  document.getElementById('btnHowto').addEventListener('click', openModal);
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // ── Export / Import / Share ──────────────────────────
+  document.getElementById('btnExport').addEventListener('click', () => {
+    if (!events.length) { showToast('エクスポートするイベントがありません'); return; }
+    exportJSON();
+    showToast('JSONファイルをダウンロードしました');
+  });
+
+  document.getElementById('importInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) importJSON(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('btnCopyUrl').addEventListener('click', async () => {
+    if (!events.length) { showToast('イベントを追加してからURLを共有してください'); return; }
+    try {
+      const lean     = events.map(({ img, ...rest }) => rest);
+      const shareUrl = `${location.origin}${location.pathname}${location.search}#${toBase64(lean)}`;
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('URLをコピーしました — ブックマークまたは共有に使えます');
+    } catch (_) {
+      showToast('コピーできませんでした：手動でURLをコピーしてください');
+    }
+  });
+
+  // ── 起動 ─────────────────────────────────────────────
+  load();
+  if (!events.length) {
+    // localStorageにデータがない場合だけハッシュから復元（ハッシュで上書きしない）
+    const restoredFromHash = loadFromHash();
+    if (restoredFromHash) save();
+  }
+  render();
+  initFlaps();
+  renderCalendar();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
