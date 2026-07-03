@@ -218,9 +218,9 @@
     <div style="text-align:left;font-size:12px;color:#ddd;background:rgba(255,255,255,0.06);border-radius:6px;padding:10px 16px;margin-top:10px;max-width:480px;line-height:1.7;">
       <b style="color:#ffd700;">攻略のコツ</b><br>
       ・↓キーは<b>押しっぱなし</b>でOK。自動でどんどんブレーキが強くなる<br>
-      ・画面下に「⚠ ブレーキ5以上！」と出たら、すぐ↓キーを押しっぱなしにする<br>
-      ・6〜7段まで入れても手前で止まるだけ（減点は少なめ）なので強めで大丈夫<br>
-      ・駅間は500〜600mしかないので力行は3段もあれば十分<br>
+      ・画面下に「⚠ ブレーキ4以上！」と出たら、すぐ↓キーを押しっぱなしにする<br>
+      ・5〜6段まで入れても手前で止まるだけ（減点は少なめ）なので強めで大丈夫<br>
+      ・駅間は1.1〜1.2kmほどあるので力行は5段まで使って加速しよう<br>
       ・停止目標から多少ズレてもGOOD以上になるので、こわがらず止まってみよう<br>
       ・非常ブレーキ(Space)は微調整が効かないので基本使わない
     </div>
@@ -269,14 +269,14 @@
 
   // ---- ゲームパラメータ ----
   const MAX_POWER = 5;
-  const MAX_BRAKE = 7;
-  const ACCEL_PER_NOTCH = 2.2;   // km/h per s
-  const BRAKE_PER_NOTCH = 3.2;   // km/h per s
-  const EB_DECEL = 9.0;          // 非常ブレーキ減速度
-  const RESISTANCE = 0.8;        // 惰行時の自然減速
+  const MAX_BRAKE = 6;
+  const ACCEL_PER_NOTCH = 2.6 / MAX_POWER; // km/h per s (力行5段で起動加速度2.6km/h/s相当)
+  const BRAKE_PER_NOTCH = 3.7 / MAX_BRAKE; // km/h per s (常用6段で常用減速度3.7km/h/s相当)
+  const EB_DECEL = 4.2;          // 非常ブレーキ減速度(km/h/s)
+  const RESISTANCE = 0.3;        // 惰行時の自然減速(走行抵抗相当)
   const TOP_SPEED_NORMAL = 100;
   const TOP_SPEED_EASY = 75;     // イージーモードは最高速度も抑えて余裕を作る
-  const JERK_LIMIT = 50.0;       // 加減速の変化率の上限(km/h/s^2) ノッチを入れても効きは瞬時ではなく一瞬で立ち上がる
+  const JERK_LIMIT = 10.0;       // 加減速の変化率の上限(km/h/s^2) ノッチを入れても効きは瞬時ではなく一瞬で立ち上がる
 
   function topSpeed() {
     return state && state.easyMode ? TOP_SPEED_EASY : TOP_SPEED_NORMAL;
@@ -284,15 +284,15 @@
 
   const STATIONS = [
     { name: '始発駅',     pos: 0,    limit: 100 },
-    { name: '桜台駅',     pos: 600,  limit: 90 },
-    { name: '緑山駅',     pos: 1150, limit: 85 },
-    { name: '海浜公園駅', pos: 1700, limit: 90 },
-    { name: '中央駅(終点)', pos: 2300, limit: 75 },
+    { name: '桜台駅',     pos: 1200, limit: 90 },
+    { name: '緑山駅',     pos: 2300, limit: 85 },
+    { name: '海浜公園駅', pos: 3400, limit: 90 },
+    { name: '中央駅(終点)', pos: 4500, limit: 75 },
   ];
 
   // 海浜公園駅の周辺は、進行方向右側(side=1)が海になる区間
-  const SEA_STATION_POS = 1700;
-  const SEA_HALF_RANGE = 380;
+  const SEA_STATION_POS = 3400;
+  const SEA_HALF_RANGE = 700;
   function seaFactorAt(pos) {
     const d = Math.abs(pos - SEA_STATION_POS);
     if (d >= SEA_HALF_RANGE) return 0;
@@ -311,7 +311,7 @@
   const WORLD_OBJECTS = [];
   (function buildScenery() {
     let paletteIdx = 0;
-    for (let d = -40; d < 2380; d += 22 + Math.random() * 20) {
+    for (let d = -40; d < 4580; d += 22 + Math.random() * 20) {
       const sea = seaFactorAt(d);
       for (const side of [-1, 1]) {
         // 海側(side=-1)は海になるので建物・木は置かない
@@ -550,7 +550,7 @@
         // 自動ブレーキ（強制的にブレーキを入れるが、eb扱いにはせず
         // 速度が落ちればプレイヤーが↑キーですぐ操作を取り戻せるようにする）
         state.power = 0;
-        state.brake = Math.max(state.brake, MAX_BRAKE - 2);
+        state.brake = MAX_BRAKE;
       }
 
       // 発車したかどうか（加速中に一瞬速度が0付近を通るのを「停止」と誤判定しないため）
@@ -600,13 +600,13 @@
     distToStation.textContent = Math.max(0, remainToStation).toFixed(0);
     speedLimitEl.textContent = st.limit;
 
-    // ブレーキアシスト表示（初心者向け：ブレーキ5段を使う前提での目安距離。イージーは余裕を多めに）
-    const brakeDist = (state.speed * state.speed) / 105 * (state.easyMode ? 1.3 : 1.0);
+    // ブレーキアシスト表示（初心者向け：ブレーキ4段を使う前提での目安距離。イージーは余裕を多めに）
+    const brakeDist = (state.speed * state.speed) / 16.2 * (state.easyMode ? 1.3 : 1.0);
     const headsUpMargin = state.easyMode ? 1.8 : 1.4;
     if (state.stopped || state.speed < 8 || remainToStation > brakeDist * headsUpMargin || remainToStation < -5) {
       brakeAssist.classList.remove('active', 'late');
     } else if (remainToStation < brakeDist) {
-      brakeAssist.textContent = '⚠ ブレーキ5以上！ (残り' + Math.max(0, remainToStation).toFixed(0) + 'm)';
+      brakeAssist.textContent = '⚠ ブレーキ4以上！ (残り' + Math.max(0, remainToStation).toFixed(0) + 'm)';
       brakeAssist.classList.add('late');
       brakeAssist.classList.remove('active');
     } else {
@@ -679,7 +679,10 @@
     for (const { o, dist } of visible) {
       const p = project(Math.max(0.1, dist));
       const scale = p.scale;
-      const xCenter = W / 2 + o.side * o.offset * scale * 20;
+      // 至近距離では横方向の見かけの動きを加速させ、画面端へ自然に流れて消えるようにする
+      // (これがないと真横に来ても画面内に残り続け、通過の瞬間に突然消えて「電車にぶつかって消えた」ように見えてしまう)
+      const nearSweep = Math.max(1, 6 / Math.max(dist, 0.1));
+      const xCenter = W / 2 + o.side * o.offset * scale * 20 * nearSweep;
       const groundY = p.y;
 
       if (o.type === 'house') {
