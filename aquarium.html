@@ -79,6 +79,11 @@
     font-family:"Segoe UI","Yu Gothic UI",sans-serif;color:#5a6b78;font-size:15px;
     text-align:center;line-height:2;
   }
+  #copyright{
+    position:fixed;right:10px;bottom:8px;z-index:4;
+    font-family:"Segoe UI","Yu Gothic UI",sans-serif;font-size:11px;
+    color:rgba(80,100,115,.55);pointer-events:none;
+  }
 </style>
 </head>
 <body>
@@ -106,6 +111,7 @@
 <input type="file" id="fPhoto" accept="image/*" hidden>
 <div id="wtoast" role="status"></div>
 <div id="err">このブラウザではWebGLが利用できないため表示できません。<br>別のブラウザでお試しください。</div>
+<div id="copyright">&copy; 2026 bombaycat0428</div>
 
 <script>
 'use strict';
