@@ -7,7 +7,7 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: #111;
+    background: linear-gradient(#0e1116, #16191f);
     color: #eee;
     font-family: "Segoe UI", "Yu Gothic", sans-serif;
     display: flex;
@@ -30,8 +30,9 @@
     width: 100%;
     display: block;
     background: #87ceeb;
-    border: 4px solid #333;
-    border-radius: 6px;
+    border: 1px solid #38404c;
+    border-radius: 10px;
+    box-shadow: 0 12px 44px rgba(0,0,0,.55);
   }
   #hud {
     position: absolute;
@@ -199,10 +200,10 @@
 </head>
 <body>
 
-<h1>🚃 電車運転シミュレーター</h1>
+<h1>🚃 電車運転シミュレーター <button id="bgmToggleBtn" style="font-size:13px;vertical-align:middle;margin-left:10px;padding:4px 10px;border-radius:4px;border:1px solid #555;background:#222;color:#eee;cursor:pointer;">🔊 走行音 ON</button></h1>
 
 <div id="stage">
-  <canvas id="game" width="800" height="420"></canvas>
+  <canvas id="game" width="1600" height="840"></canvas>
   <div id="hud">
     <div class="box">次の駅: <span id="nextStationName">-</span><br>残り距離: <span id="distToStation">-</span> m</div>
     <div class="box">制限速度: <span id="speedLimit">-</span> km/h<span id="easyBadge" style="display:none;color:#7CFC00;margin-left:8px;">EASY</span></div>
@@ -264,7 +265,7 @@
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const W = 800, H = 420;   // 論理座標（実キャンバスは2倍解像度で、描画時に2倍スケールする）
   const HORIZON_Y = 170;
 
   // ---- ゲームパラメータ ----
@@ -308,14 +309,32 @@
     { wall: '#eeeeee', roof: '#4a6741' },
     { wall: '#f0d9c0', roof: '#8a3b3b' },
   ];
+  // ビル: [壁色, 窓ガラス色]
+  const BUILDING_PALETTE = [
+    ['#c9cdd3', 'rgba(120,170,210,0.85)'],
+    ['#d8cfc0', 'rgba(255,240,185,0.8)'],
+    ['#aebdc8', 'rgba(150,200,230,0.9)'],
+    ['#cfc4b4', 'rgba(255,225,165,0.8)'],
+  ];
   const WORLD_OBJECTS = [];
   (function buildScenery() {
     let paletteIdx = 0;
     for (let d = -40; d < 4580; d += 22 + Math.random() * 20) {
       const sea = seaFactorAt(d);
       for (const side of [-1, 1]) {
-        // 海側(side=-1)は海になるので建物・木は置かない
-        if (side === -1 && sea > 0.3) continue;
+        // 海側(side=-1)は海になるので建物・木は置かない（かわりに時々ヨットを浮かべる）
+        if (side === -1 && sea > 0.3) {
+          if (Math.random() < 0.10) {
+            WORLD_OBJECTS.push({
+              type: 'boat',
+              pos: d + (Math.random() * 10 - 5),
+              side: -1,
+              offset: 28 + Math.random() * 45,
+              size: 2.2 + Math.random() * 2,
+            });
+          }
+          continue;
+        }
 
         const roll = Math.random();
         if (sea > 0.3) {
@@ -333,7 +352,24 @@
           continue;
         }
 
-        if (roll < 0.55) {
+        // 駅の周辺は「町」としてビルを混ぜ、郊外は家・木・公園を混ぜる
+        const townDist = Math.min(Math.abs(d - 1200), Math.abs(d - 2300), Math.abs(d - 4500));
+        const isTown = townDist < 260;
+        if (isTown && roll < 0.38) {
+          const bc = BUILDING_PALETTE[paletteIdx++ % BUILDING_PALETTE.length];
+          WORLD_OBJECTS.push({
+            type: 'building',
+            pos: d + (Math.random() * 8 - 4),
+            side,
+            offset: 20 + Math.random() * 16,
+            width: 9 + Math.random() * 8,
+            height: 10 + Math.random() * 16,
+            wallColor: bc[0],
+            glass: bc[1],
+            winCols: 3 + Math.floor(Math.random() * 3),
+            winRows: 4 + Math.floor(Math.random() * 5),
+          });
+        } else if (roll < (isTown ? 0.62 : 0.5)) {
           const c = HOUSE_PALETTE[paletteIdx++ % HOUSE_PALETTE.length];
           WORLD_OBJECTS.push({
             type: 'house',
@@ -346,7 +382,7 @@
             wallColor: c.wall,
             roofColor: c.roof,
           });
-        } else if (roll < 0.85) {
+        } else if (roll < (isTown ? 0.85 : 0.78)) {
           WORLD_OBJECTS.push({
             type: 'tree',
             pos: d + (Math.random() * 8 - 4),
@@ -355,10 +391,36 @@
             trunkHeight: 2 + Math.random(),
             crownSize: 3 + Math.random() * 2.5,
           });
+        } else if (!isTown && roll < 0.86) {
+          WORLD_OBJECTS.push({
+            type: 'park',
+            pos: d + (Math.random() * 8 - 4),
+            side,
+            offset: 16 + Math.random() * 8,
+            width: 16 + Math.random() * 10,
+          });
         }
       }
     }
+    // 架線柱（35mごと・進行方向右側）と信号機（各駅の手前）
+    for (let d = 20; d < 4580; d += 35) {
+      WORLD_OBJECTS.push({ type: 'pole', pos: d, side: 1, offset: 8.5 });
+    }
+    for (const st of STATIONS) {
+      if (st.pos === 0) continue;
+      WORLD_OBJECTS.push({ type: 'signal', pos: st.pos - 110, side: 1, offset: 6.5, stationPos: st.pos });
+    }
   })();
+
+  // ---- 環境ビジュアル（描画専用の状態）----
+  const CLOUDS = [];
+  for (let i = 0; i < 7; i++) {
+    CLOUDS.push({ x: Math.random() * 900 - 50, y: 16 + Math.random() * 92, s: .6 + Math.random() * 1.1, v: 2.5 + Math.random() * 4 });
+  }
+  function ridgeY(x, seed, amp) {  // 山並みの稜線
+    return Math.sin(x * .011 + seed) * amp + Math.sin(x * .027 + seed * 2.7) * amp * .4 + Math.sin(x * .005 + seed * 1.3) * amp * .7;
+  }
+  let animT = 0;
 
   let state = null;
 
@@ -435,6 +497,7 @@
   const brakeAssist = document.getElementById('brakeAssist');
   const easyModeCheck = document.getElementById('easyModeCheck');
   const easyBadge = document.getElementById('easyBadge');
+  const bgmToggleBtn = document.getElementById('bgmToggleBtn');
   const speedLimitEl = document.getElementById('speedLimit');
   const warnEl = document.getElementById('warn');
   const popupEl = document.getElementById('judgePopup');
@@ -489,6 +552,7 @@
     lastTime = t;
 
     if (state && state.running) update(dt);
+    animT = t / 1000;
     render();
     requestAnimationFrame(loop);
   }
@@ -535,7 +599,9 @@
 
       state.speed += state.currentAccel * dt;
       state.speed = Math.max(0, Math.min(topSpeed(), state.speed));
+      const prevPosSnd = state.pos;
       state.pos += state.speed * (1000 / 3600) * dt;
+      scheduleJointSounds(prevPosSnd, state.pos, state.speed);   // レール継ぎ目「タタン…タタン」
 
       // 速度超過チェック（駅の制限速度に対してのみ判定。最高速度に近いだけでは超過扱いにしない）
       const overSpeedMargin = state.easyMode ? 15 : 8;
@@ -587,6 +653,8 @@
       state.popupTimer -= dt;
       if (state.popupTimer <= 0) popupEl.classList.remove('show');
     }
+
+    updateRollingSound(state.speed);
 
     // HUD更新
     speedVal.textContent = state.speed.toFixed(0);
@@ -661,48 +729,73 @@
 
   // ---- 描画 ----
   function project(dist) {
-    // dist: 自車位置からの前方距離(m)
-    const focal = 90;
-    const scale = focal / (focal + dist);
-    const y = HORIZON_Y + (H - HORIZON_Y) * scale;
-    return { scale, y };
+    // dist: 自車位置からの前方距離(m)。ピンホールカメラの透視投影。
+    // s = 1mが画面上で何ピクセルに見えるか。近づくほど急激に大きくなるため、
+    // 線路脇の物は本物の車窓と同じように画面端へ加速しながら流れ去る
+    const FOCAL = 300;   // 焦点距離(px)
+    const CAM_H = 3.5;   // 運転台カメラの高さ(m)
+    const d = Math.max(dist, 0.9);
+    return {
+      s: FOCAL / d,
+      y: HORIZON_Y + FOCAL * CAM_H / d,
+      scale: 90 / (90 + Math.max(0, dist)),  // 旧式の縮尺(標識など「読ませる」要素のサイズ用)
+    };
   }
 
+  // この1フレームで見えた架線柱の頭の位置（電線を引くために使う）
+  const polePts = [];
+
   function drawScenery() {
+    polePts.length = 0;
     const visible = [];
     for (const o of WORLD_OBJECTS) {
       const dist = o.pos - state.pos;
-      if (dist > -15 && dist < 260) visible.push({ o, dist });
+      // カメラ(dist<1)を過ぎた物は前方視界には映らないので描かない。
+      // 透視投影のおかげで、通過する頃には自然に画面端の外へ流れ去っている
+      if (dist > 1.0 && dist < 300) visible.push({ o, dist });
     }
     visible.sort((a, b) => b.dist - a.dist); // 奥から手前へ
 
     for (const { o, dist } of visible) {
-      const p = project(Math.max(0.1, dist));
-      const scale = p.scale;
-      // 至近距離では横方向の見かけの動きを加速させ、画面端へ自然に流れて消えるようにする
-      // (これがないと真横に来ても画面内に残り続け、通過の瞬間に突然消えて「電車にぶつかって消えた」ように見えてしまう)
-      const nearSweep = Math.max(1, 6 / Math.max(dist, 0.1));
-      const xCenter = W / 2 + o.side * o.offset * scale * 20 * nearSweep;
+      const p = project(dist);
+      const u = p.s;          // 1mあたりの表示ピクセル
+      const xCenter = W / 2 + o.side * o.offset * u;
       const groundY = p.y;
 
+      // 接地影（共通・遠すぎるものは省略）
+      const shadowW = { house: (o.width || 6), building: (o.width || 10), tree: (o.crownSize || 3) * 1.5,
+                        palm: (o.crownSize || 3) * 1.3, pole: 1.8, signal: 1.5 }[o.type] || 0;
+      if (shadowW * u > 2.5) {
+        ctx.fillStyle = 'rgba(25,45,25,0.16)';
+        ctx.beginPath();
+        ctx.ellipse(xCenter + shadowW * u * 0.15, groundY + 1, shadowW * u * .8, Math.max(1.2, shadowW * u * .15), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       if (o.type === 'house') {
-        const halfW = (o.width / 2) * scale * 20;
+        const halfW = (o.width / 2) * u;
         if (halfW < 1.2) continue;
-        const wallH = o.height * scale * 20;
-        const roofH = o.roofHeight * scale * 20;
+        const wallH = o.height * u;
+        const roofH = o.roofHeight * u;
         const wallTopY = groundY - wallH;
         const roofTopY = wallTopY - roofH;
 
+        // 壁 + 右側面の陰
         ctx.fillStyle = o.wallColor;
         ctx.fillRect(xCenter - halfW, wallTopY, halfW * 2, wallH);
+        ctx.fillStyle = 'rgba(60,40,30,0.18)';
+        ctx.fillRect(xCenter + halfW * 0.38, wallTopY, halfW * 0.62, wallH);
 
+        // 屋根（本体 + 軒先の陰）
         ctx.fillStyle = o.roofColor;
         ctx.beginPath();
-        ctx.moveTo(xCenter - halfW * 1.15, wallTopY);
-        ctx.lineTo(xCenter + halfW * 1.15, wallTopY);
+        ctx.moveTo(xCenter - halfW * 1.18, wallTopY);
+        ctx.lineTo(xCenter + halfW * 1.18, wallTopY);
         ctx.lineTo(xCenter, roofTopY);
         ctx.closePath();
         ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.fillRect(xCenter - halfW * 1.18, wallTopY, halfW * 2.36, Math.max(1, roofH * 0.09));
 
         if (halfW > 3) {
           const doorW = halfW * 0.5, doorH = wallH * 0.55;
@@ -710,27 +803,112 @@
           ctx.fillRect(xCenter - doorW / 2, groundY - doorH, doorW, doorH);
 
           const winSize = halfW * 0.4;
-          ctx.fillStyle = '#bfe6ff';
-          ctx.fillRect(xCenter - halfW * 0.75, wallTopY + wallH * 0.15, winSize, winSize);
-          ctx.fillRect(xCenter + halfW * 0.75 - winSize, wallTopY + wallH * 0.15, winSize, winSize);
+          for (const wx of [xCenter - halfW * 0.75, xCenter + halfW * 0.75 - winSize]) {
+            ctx.fillStyle = '#cfeaff';
+            ctx.fillRect(wx, wallTopY + wallH * 0.15, winSize, winSize);
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.fillRect(wx, wallTopY + wallH * 0.15, winSize, winSize * 0.28);
+            if (winSize > 5) {
+              ctx.strokeStyle = 'rgba(90,58,36,0.8)';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(wx, wallTopY + wallH * 0.15, winSize, winSize);
+            }
+          }
         }
+      } else if (o.type === 'building') {
+        const halfW = (o.width / 2) * u;
+        if (halfW < 2) continue;
+        const bH = o.height * u;
+        const topY = groundY - bH;
+        // 本体 + 右側面の陰
+        ctx.fillStyle = o.wallColor;
+        ctx.fillRect(xCenter - halfW, topY, halfW * 2, bH);
+        ctx.fillStyle = 'rgba(30,40,60,0.22)';
+        ctx.fillRect(xCenter + halfW * 0.45, topY, halfW * 0.55, bH);
+        // 屋上の縁
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(xCenter - halfW, topY, halfW * 2, Math.max(1, bH * 0.02));
+        // 窓のグリッド
+        if (halfW > 6) {
+          const cols = o.winCols, rows = o.winRows;
+          const cellW = halfW * 2 / cols, cellH = bH / rows;
+          ctx.fillStyle = o.glass;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              ctx.fillRect(xCenter - halfW + (c + 0.28) * cellW, topY + (r + 0.28) * cellH,
+                           cellW * 0.48, cellH * 0.5);
+            }
+          }
+        }
+      } else if (o.type === 'park') {
+        const halfW = (o.width / 2) * u;
+        if (halfW < 3) continue;
+        // 芝生
+        ctx.fillStyle = 'rgba(150,205,110,0.85)';
+        ctx.beginPath();
+        ctx.ellipse(xCenter, groundY, halfW, Math.max(2, halfW * 0.2), 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 低い柵
+        const fh = 0.8 * u;
+        ctx.strokeStyle = '#b9895a';
+        ctx.lineWidth = Math.max(1, 0.08 * u);
+        for (let f = -0.85; f <= 0.86; f += 0.34) {
+          const X = xCenter + f * halfW;
+          ctx.beginPath(); ctx.moveTo(X, groundY); ctx.lineTo(X, groundY - fh); ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(xCenter - halfW * 0.85, groundY - fh * 0.6);
+        ctx.lineTo(xCenter + halfW * 0.85, groundY - fh * 0.6);
+        ctx.stroke();
+        // ブランコ
+        const sw = 2.4 * u, sh = 2.4 * u;
+        const sx = xCenter - halfW * 0.35;
+        ctx.strokeStyle = '#d05a5a';
+        ctx.lineWidth = Math.max(1, 0.12 * u);
+        ctx.beginPath();
+        ctx.moveTo(sx - sw / 2, groundY);
+        ctx.lineTo(sx - sw / 3.5, groundY - sh);
+        ctx.lineTo(sx + sw / 3.5, groundY - sh);
+        ctx.lineTo(sx + sw / 2, groundY);
+        ctx.stroke();
+        ctx.strokeStyle = '#667080';
+        ctx.lineWidth = Math.max(1, 0.05 * u);
+        for (const off of [-0.55, 0.55]) {
+          const cx2 = sx + off * sw * 0.28;
+          ctx.beginPath(); ctx.moveTo(cx2, groundY - sh); ctx.lineTo(cx2, groundY - sh * 0.25); ctx.stroke();
+          ctx.fillStyle = '#8a5a3a';
+          ctx.fillRect(cx2 - 0.25 * u, groundY - sh * 0.25, 0.5 * u, Math.max(1, 0.09 * u));
+        }
+        // すべり台
+        const slX = xCenter + halfW * 0.4;
+        ctx.strokeStyle = '#4a9ad0';
+        ctx.lineWidth = Math.max(1, 0.14 * u);
+        ctx.beginPath();
+        ctx.moveTo(slX - 1.3 * u, groundY);
+        ctx.lineTo(slX, groundY - 1.8 * u);
+        ctx.lineTo(slX + 0.9 * u, groundY);
+        ctx.stroke();
       } else if (o.type === 'tree') {
-        const trunkW = Math.max(1, 0.6 * scale * 20);
-        const trunkH = o.trunkHeight * scale * 20;
-        const crownR = o.crownSize * scale * 20;
+        const trunkW = Math.max(1, 0.6 * u);
+        const trunkH = o.trunkHeight * u;
+        const crownR = o.crownSize * u;
         if (crownR < 1.5) continue;
 
         ctx.fillStyle = '#6b4a2a';
         ctx.fillRect(xCenter - trunkW / 2, groundY - trunkH, trunkW, trunkH);
 
-        ctx.fillStyle = '#3f7a3a';
-        ctx.beginPath();
-        ctx.arc(xCenter, groundY - trunkH - crownR * 0.6, crownR, 0, Math.PI * 2);
-        ctx.fill();
+        // 三層の樹冠で立体感を出す
+        const cy = groundY - trunkH - crownR * 0.6;
+        ctx.fillStyle = '#35662d';
+        ctx.beginPath(); ctx.arc(xCenter, cy, crownR, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#4b8a3c';
+        ctx.beginPath(); ctx.arc(xCenter - crownR * .22, cy - crownR * .18, crownR * .8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#63a84e';
+        ctx.beginPath(); ctx.arc(xCenter - crownR * .4, cy - crownR * .42, crownR * .5, 0, Math.PI * 2); ctx.fill();
       } else if (o.type === 'palm') {
-        const trunkW = Math.max(1, 0.5 * scale * 20);
-        const trunkH = o.trunkHeight * scale * 20;
-        const leafLen = o.crownSize * scale * 20;
+        const trunkW = Math.max(1, 0.5 * u);
+        const trunkH = o.trunkHeight * u;
+        const leafLen = o.crownSize * u;
         if (leafLen < 1.5) continue;
 
         // 少し曲がった幹
@@ -741,64 +919,302 @@
         ctx.quadraticCurveTo(xCenter + trunkW * 1.5, groundY - trunkH * 0.6, xCenter + trunkW, groundY - trunkH);
         ctx.stroke();
 
-        // 葉(放射状に数枚)
+        // 葉(放射状に数枚・二色で層を作る)
         const topX = xCenter + trunkW, topY = groundY - trunkH;
-        ctx.strokeStyle = '#2f7a3f';
-        ctx.lineWidth = Math.max(1, trunkW * 0.8);
-        for (let a = -1; a <= 1; a++) {
-          ctx.beginPath();
-          ctx.moveTo(topX, topY);
-          ctx.quadraticCurveTo(topX + a * leafLen * 0.6, topY - leafLen * 0.3, topX + a * leafLen, topY + leafLen * 0.35);
-          ctx.stroke();
+        for (const [col, lw] of [['#256b34', 1.0], ['#3d9450', 0.7]]) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = Math.max(1, trunkW * lw);
+          for (let a = -1; a <= 1; a++) {
+            ctx.beginPath();
+            ctx.moveTo(topX, topY);
+            ctx.quadraticCurveTo(topX + a * leafLen * 0.6, topY - leafLen * 0.35, topX + a * leafLen, topY + leafLen * 0.32);
+            ctx.stroke();
+          }
+        }
+      } else if (o.type === 'boat') {
+        const s = o.size * u;
+        if (s < 2) continue;
+        const bob = Math.sin(animT * 1.5 + o.pos) * s * 0.06;
+        const by = groundY + bob;
+        // 帆
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.beginPath();
+        ctx.moveTo(xCenter, by - s * 1.7);
+        ctx.lineTo(xCenter, by - s * 0.25);
+        ctx.lineTo(xCenter - s * 0.9, by - s * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        // 船体
+        ctx.fillStyle = '#31536b';
+        ctx.beginPath();
+        ctx.moveTo(xCenter - s, by - s * 0.2);
+        ctx.lineTo(xCenter + s, by - s * 0.2);
+        ctx.lineTo(xCenter + s * 0.6, by + s * 0.18);
+        ctx.lineTo(xCenter - s * 0.6, by + s * 0.18);
+        ctx.closePath();
+        ctx.fill();
+      } else if (o.type === 'pole') {
+        const poleH = 7.5 * u;
+        const pw = Math.max(1, 0.32 * u);
+        const topY = groundY - poleH;
+        // コンクリート柱
+        ctx.strokeStyle = '#8d949c';
+        ctx.lineWidth = pw;
+        ctx.beginPath(); ctx.moveTo(xCenter, groundY); ctx.lineTo(xCenter, topY); ctx.stroke();
+        // 腕金（線路側へ）
+        ctx.strokeStyle = '#5b636c';
+        ctx.lineWidth = Math.max(1, pw * 0.7);
+        ctx.beginPath();
+        ctx.moveTo(xCenter, topY + 0.4 * u);
+        ctx.lineTo(xCenter - 3.4 * u, topY + 0.4 * u);
+        ctx.moveTo(xCenter, topY + 1.6 * u);
+        ctx.lineTo(xCenter - 2.6 * u, topY + 0.5 * u);
+        ctx.stroke();
+        polePts.push({ x: xCenter, yTop: topY + 0.2 * u, dist });
+      } else if (o.type === 'signal') {
+        const poleH = 5.6 * u;
+        if (poleH < 5) continue;
+        const topY = groundY - poleH;
+        ctx.strokeStyle = '#707880';
+        ctx.lineWidth = Math.max(1, 0.28 * u);
+        ctx.beginPath(); ctx.moveTo(xCenter, groundY); ctx.lineTo(xCenter, topY); ctx.stroke();
+        // 灯器（3灯・下から緑/黄/赤）
+        const hw = 0.65 * u, hh = 2.5 * u;
+        ctx.fillStyle = '#1c2126';
+        ctx.beginPath();
+        ctx.roundRect(xCenter - hw, topY - hh, hw * 2, hh, hw * 0.5);
+        ctx.fill();
+        const dSt = o.stationPos - state.pos;
+        const lamp = dSt < 140 ? 0 : dSt < 320 ? 1 : 2;  // 0=赤(上) 1=黄(中) 2=緑(下)
+        const cols = ['#ff4646', '#ffc83a', '#35dd66'];
+        for (let li = 0; li < 3; li++) {
+          const ly = topY - hh + hh * (li + 0.5) / 3;
+          const on = li === lamp;
+          ctx.fillStyle = on ? cols[li] : '#2e3339';
+          ctx.beginPath(); ctx.arc(xCenter, ly, hw * 0.52, 0, Math.PI * 2); ctx.fill();
+          if (on && hw > 2) {
+            const gg = ctx.createRadialGradient(xCenter, ly, 0, xCenter, ly, hw * 1.8);
+            gg.addColorStop(0, cols[li] + 'aa');
+            gg.addColorStop(1, cols[li] + '00');
+            ctx.fillStyle = gg;
+            ctx.beginPath(); ctx.arc(xCenter, ly, hw * 1.8, 0, Math.PI * 2); ctx.fill();
+          }
         }
       }
     }
   }
 
+  // ---- 環境描画ヘルパー ----
+  function drawMountains(pos) {
+    // 2層の山並み。進行方向の正面にある遠景は横には流れないので固定
+    // （以前は走行位置に連動して横滑りさせていたが、背景がよけて動くように見える違和感の原因だった）
+    const layers = [
+      { off: 0, seed: 3.1, amp: 14, base: 26, col: 'rgba(148,178,208,0.85)' },
+      { off: 0, seed: 8.7, amp: 20, base: 12, col: 'rgba(114,152,128,0.8)' },
+    ];
+    for (const L of layers) {
+      ctx.fillStyle = L.col;
+      ctx.beginPath();
+      ctx.moveTo(0, HORIZON_Y + 1);
+      for (let x = 0; x <= W; x += 14) {
+        ctx.lineTo(x, HORIZON_Y - L.base + ridgeY(x + L.off, L.seed, L.amp) * 0.5 - Math.abs(ridgeY(x + L.off, L.seed, L.amp)) * 0.5);
+      }
+      ctx.lineTo(W, HORIZON_Y + 1);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  function drawClouds(t, pos) {
+    for (const c of CLOUDS) {
+      const cw = 52 * c.s;
+      let x = c.x - t * c.v;   // 雲は風でゆっくり流れるだけ（走行位置には連動させない）
+      x = ((x % (W + cw * 2)) + W + cw * 2) % (W + cw * 2) - cw;
+      const y = c.y;
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.beginPath();
+      ctx.arc(x, y, 14 * c.s, 0, Math.PI * 2);
+      ctx.arc(x + 16 * c.s, y - 7 * c.s, 12 * c.s, 0, Math.PI * 2);
+      ctx.arc(x + 32 * c.s, y - 2 * c.s, 13 * c.s, 0, Math.PI * 2);
+      ctx.arc(x + 17 * c.s, y + 5 * c.s, 15 * c.s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(190,215,235,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(x + 16 * c.s, y + 9 * c.s, 26 * c.s, 6 * c.s, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function drawCatenaryWires() {
+    // 吊架線（柱の頭同士を結ぶ）
+    if (polePts.length >= 2) {
+      const pts = polePts.slice().sort((a, b) => b.dist - a.dist);
+      ctx.strokeStyle = 'rgba(40,45,52,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      pts.forEach((pt, i) => { i ? ctx.lineTo(pt.x, pt.yTop) : ctx.moveTo(pt.x, pt.yTop); });
+      ctx.stroke();
+    }
+    // トロリ線（線路中央の上空）
+    ctx.strokeStyle = 'rgba(35,40,46,0.8)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let d = 0; d <= 300; d += 12) {
+      const p = project(Math.max(0.1, d));
+      const y = p.y - 5.4 * p.s;
+      d === 0 ? ctx.moveTo(W / 2, y) : ctx.lineTo(W / 2, y);
+    }
+    ctx.stroke();
+  }
+  function drawCab(spd) {
+    // フロントガラスの映り込み（斜めの淡い光）
+    ctx.fillStyle = 'rgba(255,255,255,0.035)';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.08, 0); ctx.lineTo(W * 0.3, 0);
+    ctx.lineTo(W * 0.1, H); ctx.lineTo(0, H); ctx.lineTo(0, H * 0.6);
+    ctx.closePath(); ctx.fill();
+    // 上部サンバイザー
+    const vg = ctx.createLinearGradient(0, 0, 0, 22);
+    vg.addColorStop(0, 'rgba(8,10,14,0.95)');
+    vg.addColorStop(1, 'rgba(8,10,14,0)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, 22);
+    // 運転台コンソール
+    const cg = ctx.createLinearGradient(0, H - 105, 0, H);
+    cg.addColorStop(0, '#333b48');
+    cg.addColorStop(.25, '#262c36');
+    cg.addColorStop(1, '#14171c');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.moveTo(0, H); ctx.lineTo(0, H - 62);
+    ctx.lineTo(120, H - 102); ctx.lineTo(W - 120, H - 102);
+    ctx.lineTo(W, H - 62); ctx.lineTo(W, H);
+    ctx.closePath(); ctx.fill();
+    // コンソール上端のハイライト
+    ctx.strokeStyle = 'rgba(120,140,165,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, H - 62); ctx.lineTo(120, H - 102);
+    ctx.lineTo(W - 120, H - 102); ctx.lineTo(W, H - 62);
+    ctx.stroke();
+    // 速度計（アナログ + デジタル）
+    const cx = W / 2, cy = H - 4, R = 46;
+    ctx.fillStyle = '#0d1013';
+    ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#3d4652';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, 0); ctx.stroke();
+    const A0 = Math.PI * 1.08, A1 = Math.PI * 1.92;  // 目盛りの角度範囲
+    for (let v = 0; v <= 120; v += 10) {
+      const a = A0 + (A1 - A0) * v / 120;
+      const r1 = R - 4, r2 = v % 20 === 0 ? R - 11 : R - 8;
+      ctx.strokeStyle = v > 100 ? '#c05555' : '#9aa5b1';
+      ctx.lineWidth = v % 20 === 0 ? 1.6 : 1;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+      ctx.stroke();
+    }
+    const na = A0 + (A1 - A0) * Math.min(120, spd) / 120;
+    ctx.strokeStyle = '#ff5a5a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(na) * (R - 13), cy + Math.sin(na) * (R - 13));
+    ctx.stroke();
+    ctx.fillStyle = '#2b323c';
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7fd4ff';
+    ctx.font = 'bold 12px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(spd.toFixed(0) + ' km/h', cx, cy - R - 6);
+  }
+
   function render() {
+    ctx.setTransform(2, 0, 0, 2, 0, 0);   // 実キャンバスは2倍解像度
     ctx.clearRect(0, 0, W, H);
+
+    const t = animT;
+    const spd = state ? state.speed : 0;
+    const pos = state ? state.pos : 0;
 
     // 空
     const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
-    skyGrad.addColorStop(0, '#4a90d9');
-    skyGrad.addColorStop(1, '#bfe3ff');
+    skyGrad.addColorStop(0, '#3a7fc9');
+    skyGrad.addColorStop(.55, '#7db8e8');
+    skyGrad.addColorStop(1, '#dcecf8');
     ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, W, HORIZON_Y);
+    ctx.fillRect(0, 0, W, HORIZON_Y + 1);
 
-    // 地面
+    // 太陽
+    const sunX = 648, sunY = 50;
+    const sg = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 48);
+    sg.addColorStop(0, 'rgba(255,252,228,0.95)');
+    sg.addColorStop(.3, 'rgba(255,244,190,0.5)');
+    sg.addColorStop(1, 'rgba(255,244,190,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(sunX, sunY, 48, 0, Math.PI * 2); ctx.fill();
+
+    drawMountains(pos);
+    drawClouds(t, pos);
+
+    // 地面（ベース）
     const groundGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, H);
-    groundGrad.addColorStop(0, '#8fbf5f');
-    groundGrad.addColorStop(1, '#4f7a34');
+    groundGrad.addColorStop(0, '#9cc46a');
+    groundGrad.addColorStop(.4, '#7fae52');
+    groundGrad.addColorStop(1, '#4d7834');
     ctx.fillStyle = groundGrad;
     ctx.fillRect(0, HORIZON_Y, W, H - HORIZON_Y);
 
-    if (!state) return;
+    if (!state) { drawCab(0); return; }
 
-    // 海浜公園駅付近：ホームと反対側(進行方向左側)を海にする
-    // 奥行きごとに実際のワールド座標での海判定をして塗るので、
-    // ゾーンの外(家がある場所)まで海色が被らない
+    // ---- ここから走行風景（速度に応じてカメラを揺らす）----
+    const sway = Math.min(1, spd / 90);
+    const bump = Math.pow(Math.max(0, Math.sin(pos / 25 * Math.PI * 2)), 12);   // レール継ぎ目(25m)と同期
+    const shX = (Math.sin(t * 8.3) + Math.sin(t * 13.7) * .5) * sway * 1.1;
+    const shY = (Math.sin(t * 11.1) * .5 + Math.sin(t * 23.7) * .3) * sway * 1.2 + bump * sway * 1.5;
+    ctx.save();
+    ctx.translate(shX, shY);
+
     const GROUND_DEPTH_STEPS = 24;
     const GROUND_DEPTH_MAX = 300;
+
+    // 田畑の帯（スクロールで速度感を出す）
+    for (let i = 0; i < GROUND_DEPTH_STEPS; i++) {
+      const d0 = GROUND_DEPTH_MAX * i / GROUND_DEPTH_STEPS;
+      const d1 = GROUND_DEPTH_MAX * (i + 1) / GROUND_DEPTH_STEPS;
+      const band = Math.floor((pos + (d0 + d1) / 2) / 24) % 3;
+      if (band === 0) continue;
+      const pNear = project(Math.max(0.1, d0));
+      const pFar = project(Math.max(0.1, d1));
+      ctx.fillStyle = band === 1 ? 'rgba(255,255,170,0.06)' : 'rgba(0,60,10,0.07)';
+      ctx.fillRect(0, pFar.y, W, (pNear.y - pFar.y) + 1);
+    }
+    // 地平の並木シルエット
+    {
+      const pA = project(298), pB = project(240);
+      ctx.fillStyle = 'rgba(70,102,58,0.65)';
+      ctx.fillRect(0, pA.y - 4, W, (pB.y - pA.y) + 4);
+    }
+
+    // 海浜公園駅付近：ホームと反対側(進行方向左側)を海にする
     for (let i = 0; i < GROUND_DEPTH_STEPS; i++) {
       const d0 = GROUND_DEPTH_MAX * i / GROUND_DEPTH_STEPS;
       const d1 = GROUND_DEPTH_MAX * (i + 1) / GROUND_DEPTH_STEPS;
       const sea = seaFactorAt(state.pos + (d0 + d1) / 2);
-      // 建物の生成判定(sea > 0.3で陸側の建物を除外)と同じ閾値に揃え、
-      // 海と建物の境界がずれて「海の中に家」が見えないようにする
       if (sea <= 0.3) continue;
       const pNear = project(Math.max(0.1, d0));
       const pFar = project(Math.max(0.1, d1));
+      const depthT = i / GROUND_DEPTH_STEPS;   // 0=手前 1=奥
       ctx.save();
       ctx.globalAlpha = sea;
-      ctx.fillStyle = '#1c6a95';
+      ctx.fillStyle = depthT > 0.66 ? '#8fc6de' : depthT > 0.33 ? '#3c8cb4' : '#1e6f9e';
       ctx.fillRect(0, pFar.y, W / 2, (pNear.y - pFar.y) + 1);
       ctx.restore();
 
       // 波の線
       if (sea > 0.4 && pNear.y - pFar.y > 3) {
         ctx.save();
-        ctx.globalAlpha = sea;
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.globalAlpha = sea * 0.8;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1;
         const waveOffset = (state.pos * 3 + d0 * 5) % 14;
         for (let wy = pFar.y + waveOffset; wy < pNear.y; wy += 14) {
@@ -812,59 +1228,143 @@
     }
 
     drawScenery();
+    drawCatenaryWires();
 
     const RAIL_GAUGE = 6; // レール幅(m)
-    const BALLAST_WIDTH = 14;
+    const BALLAST_WIDTH = 5.5;   // 道床の半幅(m)。広すぎると画面下が灰色で埋まる
 
-    // 遠くから手前へ、バラスト(道床)を台形で描画
-    ctx.fillStyle = '#7a7368';
-    ctx.beginPath();
+    // バラスト(道床)：グラデーションで立体感
     const far = project(300);
     const near = project(0.1);
-    ctx.moveTo(W/2 - BALLAST_WIDTH*far.scale*20, far.y);
-    ctx.lineTo(W/2 + BALLAST_WIDTH*far.scale*20, far.y);
-    ctx.lineTo(W/2 + BALLAST_WIDTH*near.scale*20, near.y);
-    ctx.lineTo(W/2 - BALLAST_WIDTH*near.scale*20, near.y);
+    const bg = ctx.createLinearGradient(0, far.y, 0, near.y);
+    bg.addColorStop(0, '#8d8578');
+    bg.addColorStop(1, '#6d675d');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - BALLAST_WIDTH * far.s, far.y);
+    ctx.lineTo(W / 2 + BALLAST_WIDTH * far.s, far.y);
+    ctx.lineTo(W / 2 + BALLAST_WIDTH * near.s, near.y);
+    ctx.lineTo(W / 2 - BALLAST_WIDTH * near.s, near.y);
     ctx.closePath();
     ctx.fill();
-
-    // 枕木
-    ctx.fillStyle = '#3b2a20';
-    for (let d = 0; d < 300; d += 6) {
-      const p = project(d);
-      const width = RAIL_GAUGE * p.scale * 22;
-      const h = Math.max(1, 3 * p.scale);
-      ctx.fillRect(W/2 - width/2, p.y - h/2, width, h);
+    // 砕石の粒（世界座標に固定して流れるように見せる）
+    ctx.fillStyle = 'rgba(50,44,38,0.5)';
+    for (let ad = Math.ceil(state.pos + 3); ad < state.pos + 90; ad += 1.7) {
+      const dist = ad - state.pos;
+      const p = project(dist);
+      const h1 = Math.sin(ad * 12.9898) * 43758.5453;
+      const h2 = Math.sin(ad * 78.233) * 12543.21;
+      const fx = (h1 - Math.floor(h1)) * 2 - 1;
+      const fy = (h2 - Math.floor(h2));
+      const dotX = W / 2 + fx * BALLAST_WIDTH * 0.85 * p.s;
+      const dotR = Math.max(0.5, 0.07 * p.s);
+      ctx.fillRect(dotX, p.y - dotR / 2 + fy * 0.5 * p.s, dotR, dotR);
     }
 
-    // レール(2本)
-    ctx.strokeStyle = '#d8d8d8';
-    ctx.lineWidth = 2;
-    for (const side of [-1, 1]) {
-      ctx.beginPath();
-      for (let d = 0; d <= 300; d += 5) {
-        const p = project(d);
-        const x = W/2 + side * (RAIL_GAUGE/2) * p.scale * 22;
-        if (d === 0) ctx.moveTo(x, p.y); else ctx.lineTo(x, p.y);
+    // 枕木（世界座標に固定し、走行に合わせて流れる。上面ハイライト付き）
+    const SLEEPER_INT = 5;
+    for (let ad = Math.ceil((state.pos + 2) / SLEEPER_INT) * SLEEPER_INT; ad < state.pos + 300; ad += SLEEPER_INT) {
+      const p = project(ad - state.pos);
+      const width = RAIL_GAUGE * 1.15 * p.s;
+      const h = Math.max(1, 0.18 * p.s);
+      ctx.fillStyle = '#3b2a20';
+      ctx.fillRect(W / 2 - width / 2, p.y - h / 2, width, h);
+      if (h > 2) {
+        ctx.fillStyle = 'rgba(255,235,200,0.14)';
+        ctx.fillRect(W / 2 - width / 2, p.y - h / 2, width, 1);
       }
-      ctx.stroke();
+    }
+
+    // レール(2本)：暗い土台 + 明るい光沢の二重描き
+    for (const side of [-1, 1]) {
+      for (const [col, lw] of [['#565b62', 3.2], ['#e8edf2', 1.4]]) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        for (let d = 0; d <= 300; d += 5) {
+          const p = project(d);
+          const x = W / 2 + side * (RAIL_GAUGE / 2) * p.s;
+          if (d === 0) ctx.moveTo(x, p.y); else ctx.lineTo(x, p.y);
+        }
+        ctx.stroke();
+      }
     }
 
     // 駅・停止目標の描画
     const station = STATIONS[Math.min(state.stationIndex, STATIONS.length - 1)];
     const stationDist = station.pos - state.pos;
     if (stationDist < 320 && stationDist > -30) {
-      // ホーム
-      const platformNear = project(Math.max(0.1, stationDist + 5));
-      const platformFar = project(Math.max(0.1, stationDist - 60));
-      ctx.fillStyle = '#c9a25a';
+      const pEnd = project(stationDist + 5);     // ホームの奥端
+      const pNear = project(stationDist - 60);   // ホームの手前端（通過中は画面手前へ流れる）
+      const topEnd = pEnd.y - 1.1 * pEnd.s;      // ホーム上面（レール面から約1.1m）
+      const topNear = pNear.y - 1.1 * pNear.s;
+      // 側面
+      ctx.fillStyle = '#8a7b5e';
       ctx.beginPath();
-      ctx.moveTo(W/2 + 12*platformFar.scale*22, platformFar.y);
-      ctx.lineTo(W/2 + 30*platformFar.scale*22, platformFar.y);
-      ctx.lineTo(W/2 + 30*platformNear.scale*22, platformNear.y);
-      ctx.lineTo(W/2 + 12*platformNear.scale*22, platformNear.y);
+      ctx.moveTo(W / 2 + 12 * pEnd.s, pEnd.y);
+      ctx.lineTo(W / 2 + 12 * pNear.s, pNear.y);
+      ctx.lineTo(W / 2 + 12 * pNear.s, topNear);
+      ctx.lineTo(W / 2 + 12 * pEnd.s, topEnd);
       ctx.closePath();
       ctx.fill();
+      // 上面
+      ctx.fillStyle = '#d3bd8c';
+      ctx.beginPath();
+      ctx.moveTo(W / 2 + 12 * pEnd.s, topEnd);
+      ctx.lineTo(W / 2 + 30 * pEnd.s, topEnd);
+      ctx.lineTo(W / 2 + 30 * pNear.s, topNear);
+      ctx.lineTo(W / 2 + 12 * pNear.s, topNear);
+      ctx.closePath();
+      ctx.fill();
+      // 白線＋点字ブロック
+      for (const [off, col, w] of [[13.2, 'rgba(255,255,255,0.9)', 0.7], [15.2, 'rgba(240,200,60,0.9)', 1.0]]) {
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + off * pEnd.s, topEnd);
+        ctx.lineTo(W / 2 + (off + w) * pEnd.s, topEnd);
+        ctx.lineTo(W / 2 + (off + w) * pNear.s, topNear);
+        ctx.lineTo(W / 2 + off * pNear.s, topNear);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // 屋根と柱
+      const roofEnd = pEnd.y - 5.0 * pEnd.s;
+      const roofNear = pNear.y - 5.0 * pNear.s;
+      ctx.strokeStyle = '#5b636c';
+      for (const fr of [0.15, 0.5, 0.85]) {
+        const py = pEnd.y + (pNear.y - pEnd.y) * fr;
+        const ps = pEnd.s + (pNear.s - pEnd.s) * fr;
+        const ry = roofEnd + (roofNear - roofEnd) * fr;
+        ctx.lineWidth = Math.max(1, 0.25 * ps);
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + 21 * ps, py - 1.1 * ps);
+        ctx.lineTo(W / 2 + 21 * ps, ry);
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(122,68,68,0.92)';
+      ctx.beginPath();
+      ctx.moveTo(W / 2 + 13 * pEnd.s, roofEnd);
+      ctx.lineTo(W / 2 + 29 * pEnd.s, roofEnd);
+      ctx.lineTo(W / 2 + 29 * pNear.s, roofNear);
+      ctx.lineTo(W / 2 + 13 * pNear.s, roofNear);
+      ctx.closePath();
+      ctx.fill();
+      // 待っている人のシルエット
+      const PEOPLE_COL = ['#c98a8a', '#8a9ac9', '#8ab89a'];
+      for (let k = 0; k < 3; k++) {
+        const pd = stationDist - 12 - k * 16;
+        if (pd < 2 || pd > 280) continue;
+        const pp = project(pd);
+        const px = W / 2 + (17 + k * 2.5) * pp.s;
+        const baseY = pp.y - 1.1 * pp.s;
+        const ph = 1.75 * pp.s;   // 身長 約1.75m
+        if (ph < 3) continue;
+        ctx.fillStyle = PEOPLE_COL[k];
+        ctx.fillRect(px - ph * 0.13, baseY - ph * 0.72, ph * 0.26, ph * 0.72);
+        ctx.beginPath();
+        ctx.arc(px, baseY - ph * 0.84, ph * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // 停止目標標識
       if (stationDist > -10) {
@@ -872,36 +1372,212 @@
         const size = 40 * p.scale;
         const closeUp = stationDist < 40;
         ctx.fillStyle = closeUp ? '#ffd700' : '#fff';
-        ctx.fillRect(W/2 - size/2, p.y - size, size, size*0.6);
+        ctx.fillRect(W / 2 - size / 2, p.y - size, size, size * 0.6);
         ctx.strokeStyle = '#c00';
-        ctx.lineWidth = Math.max(1, 3*p.scale);
-        ctx.strokeRect(W/2 - size/2, p.y - size, size, size*0.6);
+        ctx.lineWidth = Math.max(1, 3 * p.scale);
+        ctx.strokeRect(W / 2 - size / 2, p.y - size, size, size * 0.6);
         ctx.fillStyle = '#c00';
-        ctx.font = `bold ${Math.max(8, 14*p.scale)}px sans-serif`;
+        ctx.font = `bold ${Math.max(8, 14 * p.scale)}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText('停止', W/2, p.y - size*0.35);
+        ctx.fillText('停止', W / 2, p.y - size * 0.35);
       }
 
-      // 駅名標
-      const nameP = project(Math.max(0.1, stationDist + 40));
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.max(8, 16*nameP.scale)}px sans-serif`;
+      // 駅名標（白い看板・ホームの上に設置）
+      const nameP = project(Math.max(1, stationDist + 40));
+      const fs = Math.max(9, 16 * nameP.scale);
+      const nx = W / 2 + 25 * nameP.s;
+      const ny = nameP.y - 4.2 * nameP.s;
+      ctx.font = `bold ${fs}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(station.name, W/2 + 60*nameP.scale*22, nameP.y - 10*nameP.scale*22);
+      const tw = ctx.measureText(station.name).width;
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.beginPath();
+      ctx.roundRect(nx - tw / 2 - fs * 0.5, ny - fs * 1.15, tw + fs, fs * 1.7, fs * 0.25);
+      ctx.fill();
+      ctx.strokeStyle = '#2f6d4f';
+      ctx.lineWidth = Math.max(1, fs * 0.09);
+      ctx.stroke();
+      ctx.fillStyle = '#1c2126';
+      ctx.fillText(station.name, nx, ny);
+      ctx.fillStyle = '#2f6d4f';
+      ctx.fillRect(nx - tw / 2 - fs * 0.5, ny + fs * 0.3, tw + fs, fs * 0.18);
     }
 
-    // 運転台(下部シルエット)
-    ctx.fillStyle = '#20242b';
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    ctx.lineTo(0, H - 60);
-    ctx.lineTo(120, H - 100);
-    ctx.lineTo(W - 120, H - 100);
-    ctx.lineTo(W, H - 60);
-    ctx.lineTo(W, H);
-    ctx.closePath();
-    ctx.fill();
+    // 地平の霞
+    const hz = ctx.createLinearGradient(0, HORIZON_Y - 26, 0, HORIZON_Y + 64);
+    hz.addColorStop(0, 'rgba(215,235,248,0)');
+    hz.addColorStop(.42, 'rgba(215,235,248,0.4)');
+    hz.addColorStop(1, 'rgba(215,235,248,0)');
+    ctx.fillStyle = hz;
+    ctx.fillRect(0, HORIZON_Y - 26, W, 90);
+
+    ctx.restore();   // 揺れ終了
+
+    drawCab(spd);
   }
+
+
+  // ---- 走行音（外部音源を使わず、Web Audio APIでその場に生成）----
+  // 継ぎ目音: レール25mごとに「タ・タン…タ・タン」(前台車2軸→後台車2軸が継ぎ目を通過する音)
+  // 連続音: 速度に応じて音量・音色が変わる転がり音(シャー)と低い唸り(ゴォー)
+  let audioCtx = null;
+  let bgmGain = null;        // マスター音量（ミュート対象）
+  let bgmMuted = false;
+  let rollGain = null, rollFilter = null;
+  let rumbleGain = null, rumbleFilter = null;
+
+  const RAIL_LEN = 25;       // レール1本の長さ(m)
+  const AXLE_GAP = 2.1;      // 台車内の車軸間隔(m)
+  const BOGIE_GAP = 13.8;    // 前台車と後台車の間隔(m)
+
+  function createReverbImpulse(ctx) {
+    const duration = 1.6, decay = 2.2;
+    const length = Math.floor(ctx.sampleRate * duration);
+    const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return impulse;
+  }
+
+  function makeNoiseBuffer(sec) {
+    const len = Math.floor(audioCtx.sampleRate * sec);
+    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function ensureAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    bgmGain = audioCtx.createGain();
+    bgmGain.gain.value = bgmMuted ? 0 : 1.0;
+
+    const warmFilter = audioCtx.createBiquadFilter();
+    warmFilter.type = 'lowpass';
+    warmFilter.frequency.value = 4200;
+    warmFilter.Q.value = 0.5;
+
+    const reverb = audioCtx.createConvolver();
+    reverb.buffer = createReverbImpulse(audioCtx);
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.16;
+
+    bgmGain.connect(warmFilter);
+    warmFilter.connect(audioCtx.destination);
+    warmFilter.connect(reverb);
+    reverb.connect(reverbGain);
+    reverbGain.connect(audioCtx.destination);
+  }
+
+  // 「タン」1回分: 低い打撃音 + 高めのカチッというノイズ
+  function playJointHit(time, strength) {
+    const thud = audioCtx.createOscillator();
+    const tg = audioCtx.createGain();
+    thud.type = 'sine';
+    const f0 = 64 * (0.95 + Math.random() * 0.1);
+    thud.frequency.setValueAtTime(f0, time);
+    thud.frequency.exponentialRampToValueAtTime(f0 * 0.55, time + 0.09);
+    tg.gain.setValueAtTime(0.0001, time);
+    tg.gain.linearRampToValueAtTime(0.5 * strength, time + 0.006);
+    tg.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+    thud.connect(tg);
+    tg.connect(bgmGain);
+    thud.start(time);
+    thud.stop(time + 0.14);
+
+    const click = audioCtx.createBufferSource();
+    click.buffer = makeNoiseBuffer(0.05);
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 700 + Math.random() * 400;
+    bp.Q.value = 1.2;
+    const cg = audioCtx.createGain();
+    cg.gain.setValueAtTime(0.26 * strength, time);
+    cg.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
+    click.connect(bp);
+    bp.connect(cg);
+    cg.connect(bgmGain);
+    click.start(time);
+    click.stop(time + 0.05);
+  }
+
+  // レール継ぎ目の通過を検出して「タ・タン…タ・タン」を予約する
+  function scheduleJointSounds(prevPos, pos, speedKmh) {
+    if (!audioCtx || bgmMuted || speedKmh < 4) return;
+    const j0 = Math.floor(prevPos / RAIL_LEN), j1 = Math.floor(pos / RAIL_LEN);
+    if (j1 <= j0) return;
+    const v = speedKmh / 3.6;   // m/s
+    const now = audioCtx.currentTime;
+    const strength = Math.min(1, 0.35 + speedKmh / 90);
+    for (let j = j0 + 1; j <= j1; j++) {
+      const base = now + Math.max(0, (j * RAIL_LEN - pos) / v) + 0.01;
+      playJointHit(base, strength);                                  // タ（前台車1軸目）
+      playJointHit(base + AXLE_GAP / v, strength * 0.9);             // タン（前台車2軸目）
+      playJointHit(base + BOGIE_GAP / v, strength * 0.95);           // タ（後台車1軸目）
+      playJointHit(base + (BOGIE_GAP + AXLE_GAP) / v, strength * 0.85); // タン（後台車2軸目）
+    }
+  }
+
+  // 速度に応じて連続音の音量・音色を追従させる
+  function updateRollingSound(speedKmh) {
+    if (!audioCtx || !rollGain) return;
+    const v = Math.min(1, speedKmh / 100);
+    const t = audioCtx.currentTime;
+    rollGain.gain.setTargetAtTime(v * 0.14, t, 0.15);
+    rollFilter.frequency.setTargetAtTime(250 + v * 2600, t, 0.15);
+    rumbleGain.gain.setTargetAtTime(v * 0.42, t, 0.2);
+    rumbleFilter.frequency.setTargetAtTime(60 + v * 90, t, 0.2);
+  }
+
+  function startBgm() {   // ゲーム開始時に呼ばれる（走行音の常時再生を開始）
+    ensureAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (rollGain) return;
+    // 転がり音（シャー）
+    const roll = audioCtx.createBufferSource();
+    roll.buffer = makeNoiseBuffer(2);
+    roll.loop = true;
+    rollFilter = audioCtx.createBiquadFilter();
+    rollFilter.type = 'lowpass';
+    rollFilter.frequency.value = 250;
+    rollGain = audioCtx.createGain();
+    rollGain.gain.value = 0;
+    roll.connect(rollFilter);
+    rollFilter.connect(rollGain);
+    rollGain.connect(bgmGain);
+    roll.start();
+    // 低い唸り（ゴォー）
+    const rumble = audioCtx.createBufferSource();
+    rumble.buffer = makeNoiseBuffer(2.3);
+    rumble.loop = true;
+    rumbleFilter = audioCtx.createBiquadFilter();
+    rumbleFilter.type = 'lowpass';
+    rumbleFilter.frequency.value = 70;
+    rumbleGain = audioCtx.createGain();
+    rumbleGain.gain.value = 0;
+    rumble.connect(rumbleFilter);
+    rumbleFilter.connect(rumbleGain);
+    rumbleGain.connect(bgmGain);
+    rumble.start();
+  }
+
+  function setBgmMuted(muted) {
+    bgmMuted = muted;
+    if (bgmGain) bgmGain.gain.value = bgmMuted ? 0 : 1.0;
+    bgmToggleBtn.textContent = bgmMuted ? '🔇 走行音 OFF' : '🔊 走行音 ON';
+  }
+
+  bgmToggleBtn.addEventListener('click', () => {
+    ensureAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    setBgmMuted(!bgmMuted);
+  });
 
   function startGame() {
     const easyMode = easyModeCheck.checked;
@@ -911,9 +1587,11 @@
     popupEl.classList.remove('show');
     brakeAssist.classList.remove('active', 'late');
     easyBadge.style.display = easyMode ? 'inline' : 'none';
+    startBgm();
   }
 
   startBtn.addEventListener('click', startGame);
+  window._train = { get s() { return state; } };   // 動作確認・デバッグ用フック
   requestAnimationFrame(loop);
 })();
 </script>
