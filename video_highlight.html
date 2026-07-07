@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highlight Cutter — 動画ハイライト作成</title>
+<style>
+  :root{
+    --bg:#101216;
+    --bar:#171a20;
+    --line:rgba(255,255,255,.1);
+    --text:#e2e7ed;
+    --muted:#94a0ad;
+    --accent:#5ac8a0;          /* エディタらしい落ち着いたグリーン */
+    --accent-dim:rgba(90,200,160,.4);
+    --cut:#e06060;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:"Segoe UI","Yu Gothic UI","Hiragino Sans",sans-serif;
+    font-size:14px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  header{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 16px;background:var(--bar);border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.2;margin-right:8px}
+  .brand b{font-size:13px;letter-spacing:.18em;color:var(--accent);font-weight:700}
+  .brand span{font-size:10.5px;color:var(--muted)}
+  .btn{
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;
+    color:#ccd4dc;font-size:13px;padding:8px 14px;cursor:pointer;font-family:inherit;white-space:nowrap;
+  }
+  .btn:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.07)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.acc{border-color:var(--accent-dim);color:var(--accent)}
+  .btn.acc:hover{background:rgba(90,200,160,.1)}
+  .btn.danger{color:var(--cut);border-color:rgba(224,96,96,.4)}
+  .spacer{flex:1}
+
+  main{flex:1;display:flex;min-height:0}
+  .stage{
+    flex:1;display:flex;flex-direction:column;min-width:0;
+  }
+  .vwrap{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    background:#0a0c0f;min-height:0;position:relative;
+  }
+  video{max-width:100%;max-height:100%;outline:none}
+  #dropHint{
+    position:absolute;inset:0;display:flex;flex-direction:column;gap:12px;
+    align-items:center;justify-content:center;color:var(--muted);
+    font-size:15px;pointer-events:none;text-align:center;line-height:1.9;
+  }
+  #dropHint b{color:var(--text);font-size:17px}
+  #exportOverlay{
+    position:absolute;inset:0;background:rgba(10,12,15,.88);z-index:5;
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  }
+  #exportOverlay.show{display:flex}
+  #exportOverlay .big{font-size:17px}
+  #exportBar{width:min(420px,80%);height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+  #exportBar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  #exportOverlay small{color:var(--muted)}
+
+  /* コントロール */
+  .ctrl{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:9px 16px;background:var(--bar);border-top:1px solid var(--line);
+  }
+  #tcur{font-family:Consolas,monospace;font-size:15px;min-width:170px}
+  #tcur span{color:var(--muted)}
+  .kbd{font-size:11px;color:var(--muted)}
+  .kbd b{color:#c3ccd5;border:1px solid var(--line);border-radius:4px;padding:0 5px;font-family:Consolas,monospace}
+
+  /* タイムライン */
+  .tl{
+    padding:10px 16px 14px;background:var(--bar);border-top:1px solid var(--line);
+  }
+  #timeline{width:100%;height:74px;display:block;border-radius:8px;cursor:crosshair}
+
+  /* 右パネル */
+  aside{
+    width:270px;background:var(--bar);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;padding:14px;gap:10px;overflow-y:auto;
+  }
+  .sec-title{font-size:11px;letter-spacing:.15em;color:var(--accent);font-weight:700}
+  .sec-sub{font-size:11px;color:var(--muted);margin-top:-6px}
+  #cutList{display:flex;flex-direction:column;gap:6px}
+  .cutItem{
+    display:flex;align-items:center;gap:8px;padding:7px 10px;
+    border:1px solid rgba(224,96,96,.3);border-radius:8px;background:rgba(224,96,96,.06);
+    font-size:12.5px;font-family:Consolas,monospace;
+  }
+  .cutItem button{
+    margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;
+  }
+  .cutItem button:hover{color:var(--cut)}
+  .stat{font-size:12.5px;color:var(--muted);line-height:1.9}
+  .stat b{color:var(--text);font-family:Consolas,monospace}
+  .note{font-size:11px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:10px}
+
+  #toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:#1e242c;border:1px solid var(--accent-dim);border-radius:8px;
+    color:var(--text);font-size:13px;padding:9px 18px;
+    opacity:0;pointer-events:none;transition:opacity .3s;z-index:20;
+  }
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>HIGHLIGHT CUTTER</b><span>動画ハイライト作成 — 不要シーンをカット</span></div>
+  <button class="btn" id="bOpen">動画を開く</button>
+  <span class="spacer"></span>
+  <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer">
+    <input type="checkbox" id="skipCuts" checked style="accent-color:var(--accent)">カットを反映して再生
+  </label>
+  <button class="btn acc" id="bExport" disabled>⬇ ハイライトを書き出し</button>
+  <input type="file" id="fVideo" accept="video/*" hidden>
+</header>
+
+<main>
+  <div class="stage">
+    <div class="vwrap">
+      <video id="vid" playsinline></video>
+      <div id="dropHint">
+        <b>動画ファイルをここにドラッグ＆ドロップ</b>
+        （または左上の「動画を開く」）<br>
+        <span style="font-size:12.5px">Ｉキーでカット開始 → Ｏキーでカット確定。<br>不要なシーンを取り除いたハイライト動画を書き出せます。</span>
+      </div>
+      <div id="exportOverlay">
+        <div class="big">ハイライトを書き出し中…</div>
+        <div id="exportBar"><i></i></div>
+        <small>残す区間を実時間で再生しながら録画しています。タブを閉じないでください</small>
+        <button class="btn danger" id="bCancelExport">中止</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button class="btn" id="bPlay">▶ 再生</button>
+      <span id="tcur">00:00.0 <span>/ 00:00.0</span></span>
+      <button class="btn" id="bIn">Ｉ カット開始</button>
+      <button class="btn" id="bOut" disabled>Ｏ カット確定</button>
+      <span class="spacer"></span>
+      <span class="kbd"><b>Space</b> 再生/停止　<b>←</b>/<b>→</b> 1秒　<b>Shift+←→</b> 5秒　<b>I</b>/<b>O</b> カット</span>
+    </div>
+    <div class="tl"><canvas id="timeline" height="74"></canvas></div>
+  </div>
+
+  <aside>
+    <div class="sec-title">CUT LIST</div>
+    <div class="sec-sub">カットする区間（クリックでその位置へ）</div>
+    <div id="cutList"><div style="font-size:12px;color:var(--muted)">まだありません</div></div>
+    <div class="sec-title" style="margin-top:8px">SUMMARY</div>
+    <div class="stat" id="stat">動画を読み込んでください</div>
+    <div class="note">
+      書き出しはブラウザ内で完結します（アップロードなし）。残す区間を実時間で再生しながら録画するため、ハイライトの長さと同じ時間がかかります。
+      出力はWebM/MP4形式（ブラウザにより自動選択）で、画質は元動画に準じます。
+    </div>
+  </aside>
+</main>
+
+<div id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   Highlight Cutter — 不要シーンをカットしてハイライトを書き出す
+   すべてブラウザ内で処理（アップロードなし・依存ライブラリなし）
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const vid = $('vid');
+const tl = $('timeline');
+const tctx = tl.getContext('2d');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+let duration = 0;
+let cuts = [];            // {a,b} 秒。ソート済み・重複マージ済み
+let pendingIn = null;     // Iキーで設定したカット開始点
+let thumbs = [];          // フィルムストリップ
+let fileName = 'video';
+let exporting = null;
+
+/* ---------------- 読み込み ---------------- */
+function loadFile(file) {
+  if (!file || !file.type.startsWith('video/')) { toast('動画ファイルを選んでください'); return; }
+  fileName = file.name.replace(/\.[^.]+$/, '');
+  vid.src = URL.createObjectURL(file);
+  cuts = []; pendingIn = null; thumbs = [];
+  $('dropHint').style.display = 'none';
+  vid.addEventListener('loadedmetadata', async () => {
+    if (!isFinite(vid.duration)) {
+      // 録画由来のWebMなどはdurationがInfinityになるため、末尾へシークして確定させる
+      vid.currentTime = 1e7;
+      await new Promise(r => vid.addEventListener('durationchange', r, { once: true }));
+      vid.currentTime = 0;
+    }
+    duration = vid.duration;
+    $('bExport').disabled = false;
+    refreshAll();
+    buildThumbs();
+  }, { once: true });
+}
+$('bOpen').addEventListener('click', () => $('fVideo').click());
+$('fVideo').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+
+/* フィルムストリップ（動画をシークしながらサムネイルを取る） */
+async function buildThumbs() {
+  const N = 28;
+  const t0 = vid.currentTime;
+  const w = 80, h = 45;
+  const tmp = document.createElement('video');
+  tmp.muted = true;
+  tmp.src = vid.src;
+  await new Promise(r => tmp.addEventListener('loadedmetadata', r, { once: true }));
+  for (let i = 0; i < N; i++) {
+    const t = duration * (i + 0.5) / N;
+    await new Promise(r => {
+      tmp.currentTime = t;
+      tmp.addEventListener('seeked', r, { once: true });
+      setTimeout(r, 600);   // シークが失敗しても先へ進む
+    });
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    try { c.getContext('2d').drawImage(tmp, 0, 0, w, h); } catch (_) {}
+    thumbs.push(c);
+    drawTimeline();
+  }
+  tmp.src = '';
+}
+
+/* ---------------- カット区間 ---------------- */
+function addCut(a, b) {
+  if (b - a < 0.05) { toast('区間が短すぎます'); return; }
+  cuts.push({ a: Math.max(0, a), b: Math.min(duration, b) });
+  cuts.sort((x, y) => x.a - y.a);
+  // 重なりをマージ
+  const merged = [];
+  for (const c of cuts) {
+    const last = merged[merged.length - 1];
+    if (last && c.a <= last.b + 0.01) last.b = Math.max(last.b, c.b);
+    else merged.push({ ...c });
+  }
+  cuts = merged;
+  refreshAll();
+}
+function keptSegments() {
+  const seg = [];
+  let t = 0;
+  for (const c of cuts) {
+    if (c.a > t + 0.05) seg.push({ a: t, b: c.a });
+    t = Math.max(t, c.b);
+  }
+  if (duration - t > 0.05) seg.push({ a: t, b: duration });
+  return seg;
+}
+function keptDuration() {
+  return keptSegments().reduce((s, x) => s + (x.b - x.a), 0);
+}
+
+/* ---------------- UI更新 ---------------- */
+function fmt(t) {
+  const m = Math.floor(t / 60), s = t % 60;
+  return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0');
+}
+function refreshAll() {
+  // カット一覧
+  const list = $('cutList');
+  list.innerHTML = '';
+  if (!cuts.length) list.innerHTML = '<div style="font-size:12px;color:var(--muted)">まだありません</div>';
+  cuts.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'cutItem';
+    d.innerHTML = `✂ ${fmt(c.a)} 〜 ${fmt(c.b)}<button title="このカットを取り消す">✕</button>`;
+    d.addEventListener('click', () => { vid.currentTime = c.a; });
+    d.querySelector('button').addEventListener('click', e => {
+      e.stopPropagation();
+      cuts.splice(i, 1);
+      refreshAll();
+    });
+    list.appendChild(d);
+  });
+  // サマリー
+  if (duration) {
+    $('stat').innerHTML =
+      `元の長さ: <b>${fmt(duration)}</b><br>` +
+      `カット: <b>${cuts.length}</b> 箇所 (<b>${fmt(duration - keptDuration())}</b>)<br>` +
+      `ハイライト: <b>${fmt(keptDuration())}</b>`;
+  }
+  drawTimeline();
+}
+
+/* ---------------- タイムライン描画 ---------------- */
+function sizeTimeline() {
+  const r = tl.getBoundingClientRect();
+  tl.width = Math.round(r.width * DPR);
+  tl.height = Math.round(74 * DPR);
+  drawTimeline();
+}
+function drawTimeline() {
+  const W = tl.width / DPR, H = 74;
+  tctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  tctx.clearRect(0, 0, W, H);
+  tctx.fillStyle = '#0d1013';
+  tctx.beginPath(); tctx.roundRect(0, 0, W, H, 8); tctx.fill();
+  if (!duration) {
+    tctx.fillStyle = 'rgba(255,255,255,.25)';
+    tctx.font = '12px "Segoe UI","Yu Gothic UI",sans-serif';
+    tctx.textAlign = 'center';
+    tctx.fillText('タイムライン（動画読み込み後に表示）', W / 2, H / 2 + 4);
+    return;
+  }
+  // フィルムストリップ
+  tctx.save();
+  tctx.beginPath(); tctx.roundRect(0, 0, W, H, 8); tctx.clip();
+  const n = Math.max(1, thumbs.length);
+  for (let i = 0; i < thumbs.length; i++) {
+    tctx.drawImage(thumbs[i], i * W / n, 6, W / n + 1, H - 22);
+  }
+  // カット区間（赤）
+  for (const c of cuts) {
+    const x0 = c.a / duration * W, x1 = c.b / duration * W;
+    tctx.fillStyle = 'rgba(224,96,96,.4)';
+    tctx.fillRect(x0, 0, x1 - x0, H);
+    tctx.strokeStyle = 'rgba(224,96,96,.95)';
+    tctx.lineWidth = 1.5;
+    tctx.strokeRect(x0, 1, x1 - x0, H - 2);
+    // ✂マーク
+    if (x1 - x0 > 18) {
+      tctx.fillStyle = 'rgba(255,255,255,.85)';
+      tctx.font = '11px sans-serif';
+      tctx.textAlign = 'center';
+      tctx.fillText('✂', (x0 + x1) / 2, 15);
+    }
+  }
+  // カット開始点（Iキー押下後）
+  if (pendingIn !== null) {
+    const x = pendingIn / duration * W;
+    tctx.fillStyle = 'rgba(224,96,96,.9)';
+    tctx.fillRect(x - 1, 0, 2, H);
+    tctx.font = '10px sans-serif';
+    tctx.textAlign = 'left';
+    tctx.fillText('カット開始', x + 4, 12);
+  }
+  // 時間目盛り
+  tctx.fillStyle = 'rgba(255,255,255,.4)';
+  tctx.font = '10px Consolas,monospace';
+  const step = duration > 600 ? 120 : duration > 120 ? 30 : 10;
+  for (let t = 0; t < duration; t += step) {
+    const x = t / duration * W;
+    tctx.fillRect(x, H - 14, 1, 5);
+    tctx.textAlign = 'left';
+    tctx.fillText(fmt(t), x + 3, H - 4);
+  }
+  tctx.restore();
+  // 再生ヘッド
+  const px = vid.currentTime / duration * W;
+  tctx.fillStyle = '#5ac8a0';
+  tctx.fillRect(px - 1, 0, 2, H);
+  tctx.beginPath();
+  tctx.moveTo(px - 5, 0); tctx.lineTo(px + 5, 0); tctx.lineTo(px, 7);
+  tctx.closePath(); tctx.fill();
+}
+tl.addEventListener('pointerdown', e => {
+  if (!duration) return;
+  const r = tl.getBoundingClientRect();
+  const seek = (clientX) => {
+    vid.currentTime = Math.max(0, Math.min(duration, (clientX - r.left) / r.width * duration));
+  };
+  seek(e.clientX);
+  const mv = ev => seek(ev.clientX);
+  const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); };
+  addEventListener('pointermove', mv);
+  addEventListener('pointerup', up);
+});
+
+/* ---------------- 再生（カットスキップ） ---------------- */
+function tick() {
+  if (duration) {
+    // プレビュー時にカット区間へ入ったらスキップ
+    if ($('skipCuts').checked && !vid.paused && !exporting) {
+      for (const c of cuts) {
+        if (vid.currentTime >= c.a && vid.currentTime < c.b - 0.05) {
+          vid.currentTime = c.b;
+          break;
+        }
+      }
+    }
+    $('tcur').innerHTML = fmt(vid.currentTime) + ' <span>/ ' + fmt(duration) + '</span>';
+    drawTimeline();
+  }
+  requestAnimationFrame(tick);
+}
+$('bPlay').addEventListener('click', () => { vid.paused ? vid.play() : vid.pause(); });
+vid.addEventListener('play', () => $('bPlay').textContent = '⏸ 停止');
+vid.addEventListener('pause', () => $('bPlay').textContent = '▶ 再生');
+
+/* ---------------- カット操作 ---------------- */
+function markIn() {
+  if (!duration) return;
+  pendingIn = vid.currentTime;
+  $('bOut').disabled = false;
+  toast('カット開始: ' + fmt(pendingIn) + ' — 終了位置でＯを押してください');
+  drawTimeline();
+}
+function markOut() {
+  if (!duration || pendingIn === null) return;
+  const a = Math.min(pendingIn, vid.currentTime);
+  const b = Math.max(pendingIn, vid.currentTime);
+  pendingIn = null;
+  $('bOut').disabled = true;
+  addCut(a, b);
+}
+$('bIn').addEventListener('click', markIn);
+$('bOut').addEventListener('click', markOut);
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (!duration) return;
+  if (e.code === 'Space') { vid.paused ? vid.play() : vid.pause(); e.preventDefault(); }
+  else if (e.key === 'i' || e.key === 'I') markIn();
+  else if (e.key === 'o' || e.key === 'O') markOut();
+  else if (e.key === 'ArrowLeft') { vid.currentTime = Math.max(0, vid.currentTime - (e.shiftKey ? 5 : 1)); e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { vid.currentTime = Math.min(duration, vid.currentTime + (e.shiftKey ? 5 : 1)); e.preventDefault(); }
+});
+
+/* ---------------- 書き出し ----------------
+   残す区間を順に実時間で再生し、canvas + 音声をMediaRecorderで録画する */
+let actx = null, mediaSrc = null;
+function ensureAudioGraph() {
+  if (actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  mediaSrc = actx.createMediaElementSource(vid);
+  mediaSrc.connect(actx.destination);   // 通常再生でも音が出るように
+}
+async function exportHighlight() {
+  const segs = keptSegments();
+  if (!segs.length) { toast('残す区間がありません'); return; }
+  ensureAudioGraph();
+  if (actx.state === 'suspended') actx.resume();
+
+  const cw = Math.min(1920, vid.videoWidth || 1280);
+  const ch = Math.round(cw * (vid.videoHeight || 720) / (vid.videoWidth || 1280));
+  const cnv = document.createElement('canvas');
+  cnv.width = cw; cnv.height = ch;
+  const cctx = cnv.getContext('2d');
+
+  const dest = actx.createMediaStreamDestination();
+  mediaSrc.connect(dest);
+  const stream = cnv.captureStream(30);
+  for (const tr of dest.stream.getAudioTracks()) stream.addTrack(tr);
+
+  const cand = [
+    ['video/mp4;codecs=avc1.640028', 'mp4'],
+    ['video/mp4', 'mp4'],
+    ['video/webm;codecs=vp9,opus', 'webm'],
+    ['video/webm', 'webm'],
+  ];
+  let mime = null, ext = 'webm';
+  for (const [m, x] of cand) { if (MediaRecorder.isTypeSupported(m)) { mime = m; ext = x; break; } }
+  const chunks = [];
+  const rec = new MediaRecorder(stream, { mimeType: mime || undefined, videoBitsPerSecond: 10_000_000 });
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+
+  const total = keptDuration();
+  exporting = { cancel: false };
+  $('exportOverlay').classList.add('show');
+  vid.pause();
+  vid.muted = false;
+
+  const drawLoop = () => {
+    if (!exporting) return;
+    cctx.drawImage(vid, 0, 0, cw, ch);
+    requestAnimationFrame(drawLoop);
+  };
+
+  rec.start(250);
+  drawLoop();
+  let done = 0;
+  try {
+    for (const seg of segs) {
+      if (exporting.cancel) break;
+      vid.currentTime = seg.a;
+      await new Promise(r => vid.addEventListener('seeked', r, { once: true }));
+      await vid.play();
+      await new Promise(resolve => {
+        const check = () => {
+          if (!exporting || exporting.cancel || vid.currentTime >= seg.b || vid.ended) {
+            resolve();
+          } else {
+            $('exportBar').firstElementChild.style.width =
+              Math.min(100, (done + vid.currentTime - seg.a) / total * 100) + '%';
+            setTimeout(check, 60);
+          }
+        };
+        check();
+      });
+      done += seg.b - seg.a;
+      vid.pause();
+    }
+  } catch (err) {
+    toast('書き出し中にエラー: ' + err.message);
+  }
+  const cancelled = exporting.cancel;
+  exporting = null;
+  await new Promise(r => { rec.onstop = r; rec.stop(); });
+  mediaSrc.disconnect(dest);
+  $('exportOverlay').classList.remove('show');
+  if (cancelled) { toast('書き出しを中止しました'); return; }
+  const blob = new Blob(chunks, { type: chunks[0] ? chunks[0].type : 'video/webm' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName + '_highlight.' + ext;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast('ハイライトを書き出しました（.' + ext + '）');
+  window._vh_lastExportBytes = blob.size;
+}
+$('bExport').addEventListener('click', exportHighlight);
+$('bCancelExport').addEventListener('click', () => { if (exporting) exporting.cancel = true; });
+
+/* ---------------- misc ---------------- */
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 3000);
+}
+addEventListener('resize', sizeTimeline);
+
+/* デバッグ用フック */
+window._vh = {
+  loadBlob(blob, name) { loadFile(new File([blob], name || 'test.webm', { type: blob.type })); },
+  get cuts() { return cuts; },
+  get kept() { return keptDuration(); },
+  addCut, exportHighlight,
+};
+
+sizeTimeline();
+tick();
+</script>
+</body>
+</html>
