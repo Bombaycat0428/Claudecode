@@ -908,8 +908,10 @@
     <span class="tool-sep">|</span>
     <label class="tool-btn" for="importInput">Import</label>
     <input type="file" id="importInput" accept=".json" style="display:none">
+    <!-- セキュリティ対応のためShare URL機能を無効化
     <span class="tool-sep">|</span>
     <button class="tool-btn" id="btnCopyUrl">Share URL</button>
+    -->
   </div>
 </header>
 <div id="toast"></div>
@@ -978,7 +980,9 @@
         <ul class="howto-list">
           <li><span class="howto-key">Export</span> → 予定と画像をまとめてJSONファイルに保存できる。</li>
           <li><span class="howto-key">Import</span> → 保存したJSONファイルを読み込んで復元できる（現在の予定は置き換わる）。</li>
+          <!-- セキュリティ対応のためShare URL機能を無効化
           <li><span class="howto-key">Share URL</span> → 予定データ入りのURLをクリップボードにコピーする。別の端末やブラウザで開くと同じ予定を復元できる（画像は含まれない）。</li>
+          -->
         </ul>
         <div class="howto-note">
           データが消えると困る場合は定期的に <span class="howto-key">Export</span> しておくのが最も安全。画像も含めて完全バックアップできる。
@@ -1004,7 +1008,7 @@
   </div>
 </div>
 
-<!-- 画像アップロード用 -->
+<!-- 画像アップロード用 hidden input -->
 <input type="file" id="imgInput" accept="image/*" style="display:none">
 
 <!-- コンフェッティ -->
@@ -1128,7 +1132,7 @@
   // ── ユーティリティ ──────────────────────────────────
   const pad  = n => String(n).padStart(2, '0');
   const pad3 = n => String(Math.min(n, 999)).padStart(3, '0');
-  const esc  = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const esc  = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
   function fmtDate(iso) {
     const d = new Date(iso);
@@ -1642,15 +1646,21 @@
     } catch (_) {}
   }
 
+  function isValidEvent(ev) {
+    return ev && typeof ev.id === 'string' && typeof ev.name === 'string' &&
+      typeof ev.iso === 'string' && !isNaN(new Date(ev.iso));
+  }
+
   function loadFromHash() {
     const hash = window.location.hash.slice(1);
     if (!hash) return false;
     try {
       const data = fromBase64(hash);
-      if (Array.isArray(data) && data.length) {
-        events = data;
-        return true;
-      }
+      if (!Array.isArray(data)) return false;
+      const valid = data.filter(isValidEvent);
+      if (!valid.length) return false;
+      events = valid;
+      return true;
     } catch (_) {}
     return false;
   }
@@ -1686,7 +1696,7 @@
         showToast('読み込み失敗：正しいエクスポートファイルを選択してください');
         return;
       }
-      const valid = data.filter(ev => ev.id && ev.name && ev.iso);
+      const valid = data.filter(isValidEvent);
       if (!valid.length) {
         showToast('読み込み失敗：イベントデータが見つかりませんでした');
         return;
@@ -1751,6 +1761,7 @@
     e.target.value = '';
   });
 
+  /* セキュリティ対応のためShare URL機能を無効化
   document.getElementById('btnCopyUrl').addEventListener('click', async () => {
     if (!events.length) { showToast('イベントを追加してからURLを共有してください'); return; }
     try {
@@ -1762,14 +1773,17 @@
       showToast('コピーできませんでした：手動でURLをコピーしてください');
     }
   });
+  */
 
   // ── 起動 ─────────────────────────────────────────────
   load();
+  /* セキュリティ対応のためShare URL機能を無効化（ハッシュからの復元を停止）
   if (!events.length) {
     // localStorageにデータがない場合だけハッシュから復元（ハッシュで上書きしない）
     const restoredFromHash = loadFromHash();
     if (restoredFromHash) save();
   }
+  */
   render();
   initFlaps();
   renderCalendar();
