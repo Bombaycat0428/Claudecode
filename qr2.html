@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Code Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #05070d;
+    --card-bg: rgba(255, 255, 255, 0.055);
+    --card-border: rgba(255, 255, 255, 0.14);
+    --ink: #eef1f7;
+    --muted: #8891a3;
+    --accent: #7dd3fc;
+    --accent-2: #a78bfa;
+    --accent-glow: rgba(125, 211, 252, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Noto Sans JP", sans-serif;
+    background: var(--bg-deep);
+    color: var(--ink);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ambient blurred light — kept low-opacity by design preference */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(90px);
+  }
+
+  .aurora span {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.22;
+    animation: drift 22s ease-in-out infinite;
+  }
+
+  .aurora span:nth-child(1) {
+    width: 420px;
+    height: 420px;
+    top: -120px;
+    left: -100px;
+    background: var(--accent-2);
+    animation-delay: 0s;
+  }
+
+  .aurora span:nth-child(2) {
+    width: 380px;
+    height: 380px;
+    bottom: -140px;
+    right: -80px;
+    background: var(--accent);
+    animation-delay: -8s;
+  }
+
+  .aurora span:nth-child(3) {
+    width: 260px;
+    height: 260px;
+    bottom: 10%;
+    left: 8%;
+    background: #f472b6;
+    opacity: 0.14;
+    animation-delay: -14s;
+  }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.08); }
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 32px 28px;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .eyebrow .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .card.active .eyebrow .dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .card.active .eyebrow .state {
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    margin: 0 0 6px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 26px;
+  }
+
+  .stage {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .placeholder {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--muted);
+    text-align: center;
+    padding: 0 28px;
+  }
+
+  .card.active .placeholder {
+    display: none;
+  }
+
+  .qr-mount {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    display: none;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .card.active .qr-mount {
+    display: flex;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+  }
+
+  .input-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 16px;
+  }
+
+  .input-row input::placeholder {
+    color: var(--muted);
+  }
+
+  .input-row input:focus-visible {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora span { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="aurora">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="card" id="card">
+    <div class="eyebrow">
+      <span class="dot"></span>
+      <span class="state" id="stateText">STANDBY</span>
+    </div>
+    <h1>QR CODE GENERATOR</h1>
+    <p class="subtitle">URLや文字列を入力すると、QRコードがその場で生成されます。</p>
+
+    <div class="stage">
+      <span class="placeholder" id="placeholder">ここにQRコードが<br>表示されます</span>
+      <div class="qr-mount" id="qrWrap"></div>
+    </div>
+
+    <div class="input-row">
+      <input id="text" placeholder="URLや文字列を入力してください" autocomplete="off">
+    </div>
+  </div>
+
+<script>
+  const card = document.getElementById('card');
+  const textInput = document.getElementById('text');
+  const qrWrap = document.getElementById('qrWrap');
+  const stateText = document.getElementById('stateText');
+
+  let qrcode = null;
+
+  function update() {
+    const value = textInput.value.trim();
+
+    if (!value) {
+      card.classList.remove('active');
+      stateText.textContent = 'STANDBY';
+      qrcode = null;
+      qrWrap.innerHTML = '';
+      return;
+    }
+
+    if (!qrcode) {
+      qrWrap.innerHTML = '';
+      qrcode = new QRCode(qrWrap, {
+        text: value,
+        width: 200,
+        height: 200,
+        colorDark: '#05070d',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      qrcode.makeCode(value);
+    }
+
+    card.classList.add('active');
+    stateText.textContent = 'GENERATED';
+  }
+
+  textInput.addEventListener('input', update);
+</script>
+</body>
+</html>
