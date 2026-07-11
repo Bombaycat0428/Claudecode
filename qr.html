@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR MAKER</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --primary: #e60012;
+    --signal: #f68d1f;
+    --amber: #ecab37;
+    --nav-gold: #e48600;
+    --canvas: #7a8aba;
+    --canvas-soft: #9fbee7;
+    --lavender: #acace7;
+    --periwinkle: #8ba1d4;
+    --chrome-indigo: #3d4f97;
+    --muted-indigo: #60619c;
+    --platinum: #dedede;
+    --surface: #ffffff;
+    --carbon: #21242e;
+    --hairline: #5a5f8c;
+    --ink: #21242e;
+    --ink-soft: #3d4f97;
+    --on-primary: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--ink);
+    /* brushed periwinkle machine body */
+    background-color: var(--canvas);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 3px),
+      linear-gradient(180deg, #8b9bc9 0%, #7a8aba 40%, #6f7fae 100%);
+    padding: 28px 12px 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ───── page chrome: one chamfered faceplate ───── */
+  .page {
+    width: 100%;
+    max-width: 820px;
+    background: var(--canvas);
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 var(--chrome-indigo);
+    padding: 10px;
+  }
+
+  /* hard-bevel plate helper */
+  .plate {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      inset 1px 0 0 rgba(255,255,255,0.25),
+      inset 0 -1px 0 var(--chrome-indigo),
+      inset -1px 0 0 var(--chrome-indigo);
+  }
+
+  .halftone {
+    background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
+  /* ───── masthead: mascot bubble ───── */
+  .masthead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 4px 10px;
+  }
+
+  .mascot {
+    width: 34px;
+    height: 34px;
+    background: var(--primary);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    box-shadow: 0 2px 0 var(--chrome-indigo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--on-primary);
+    font-weight: 900;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .bubble {
+    position: relative;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--carbon);
+    box-shadow: 0 2px 0 var(--chrome-indigo);
+  }
+
+  .bubble::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: var(--surface);
+    border-left: none;
+  }
+
+  /* ───── nav bar: carbon command slab ───── */
+  .nav-bar {
+    background: var(--carbon);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 7px 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 0 var(--chrome-indigo);
+  }
+
+  .logo-pill {
+    background: var(--surface);
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    border-radius: 9999px;
+    padding: 4px 14px;
+    border: 2px solid var(--primary);
+    white-space: nowrap;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .nav-links span {
+    color: var(--nav-gold);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .nav-chip {
+    background: var(--amber);
+    color: var(--carbon);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 5px 10px;
+    border-radius: 2px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 0 rgba(0,0,0,0.4);
+    white-space: nowrap;
+  }
+
+  /* ───── subnav strip ───── */
+  .subnav {
+    background: var(--canvas-soft);
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 var(--chrome-indigo);
+    margin-bottom: 10px;
+  }
+
+  .subnav .sep { color: var(--muted-indigo); }
+
+  /* ───── hero panel ───── */
+  .hero {
+    position: relative;
+    border-radius: 6px;
+    background-color: var(--lavender);
+    background-image:
+      linear-gradient(rgba(61,79,151,0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,79,151,0.14) 1px, transparent 1px),
+      radial-gradient(circle at 78% 30%, rgba(255,255,255,0.5) 0%, transparent 45%);
+    background-size: 22px 22px, 22px 22px, auto;
+    padding: 26px 22px 22px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 var(--chrome-indigo);
+  }
+
+  .hero h1 {
+    margin: 0 0 8px;
+    font-family: "Arial Black", Arial, sans-serif;
+    font-weight: 900;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--surface);
+    -webkit-text-stroke: 2px var(--carbon);
+    paint-order: stroke fill;
+    text-shadow: 4px 4px 0 rgba(33,36,46,0.55);
+    letter-spacing: 1px;
+  }
+
+  .hero .tagline {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--carbon);
+    margin: 0;
+  }
+
+  .hero .go-disc {
+    position: absolute;
+    right: 20px;
+    bottom: 18px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--signal);
+    color: var(--on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 15px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 0 rgba(33,36,46,0.5);
+  }
+
+  /* ───── body grid ───── */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 230px;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .panel {
+    background: var(--canvas);
+  }
+
+  .section-label {
+    background: var(--canvas);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 7px 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 var(--chrome-indigo);
+  }
+
+  /* viewer */
+  .viewer {
+    background: var(--platinum);
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 264px;
+    box-shadow:
+      inset 0 2px 0 var(--chrome-indigo),
+      inset 0 -1px 0 rgba(255,255,255,0.7);
+  }
+
+  .placeholder {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.8;
+  }
+
+  .placeholder .micro {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted-indigo);
+    margin-top: 6px;
+  }
+
+  .qr-mount {
+    display: none;
+    background: var(--surface);
+    padding: 14px;
+    border: 2px solid var(--chrome-indigo);
+    border-radius: 4px;
+    box-shadow: 3px 3px 0 rgba(33,36,46,0.35);
+  }
+
+  .page.ready .qr-mount { display: flex; }
+  .page.ready .placeholder { display: none; }
+
+  /* form panel */
+  .form-panel {
+    background: var(--platinum);
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 var(--chrome-indigo);
+  }
+
+  .form-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .field-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .form-row input {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    padding: 10px 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    height: 40px;
+  }
+
+  .form-row input:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 0;
+  }
+
+  .btn-go {
+    background: var(--signal);
+    color: var(--on-primary);
+    border: none;
+    border-radius: 2px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 0 18px;
+    height: 40px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 0 rgba(33,36,46,0.5);
+  }
+
+  .btn-go:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 0 rgba(33,36,46,0.5);
+  }
+
+  .form-note {
+    border-top: 1px dotted var(--muted-indigo);
+    margin-top: 10px;
+    padding-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  /* ───── right rail ───── */
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .status-panel {
+    background: var(--periwinkle);
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -2px 0 var(--chrome-indigo);
+  }
+
+  .status-panel .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .status-lamp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--carbon);
+    padding: 8px 10px;
+    border-radius: 2px;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.6);
+  }
+
+  .lamp-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--muted-indigo);
+    flex-shrink: 0;
+  }
+
+  .page.ready .lamp-dot {
+    background: var(--signal);
+    box-shadow: 0 0 6px var(--signal);
+  }
+
+  .status-lamp .text {
+    color: var(--canvas-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .page.ready .status-lamp .text { color: var(--signal); }
+
+  .btn-rail {
+    background: var(--carbon);
+    color: var(--on-primary);
+    border: none;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: left;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 0 var(--chrome-indigo);
+  }
+
+  .btn-rail .arrow { color: var(--signal); margin-right: 6px; }
+
+  .btn-rail:active { transform: translateY(1px); }
+
+  .info-box {
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 0 var(--chrome-indigo);
+  }
+
+  .info-box .tab {
+    background: var(--amber);
+    color: var(--carbon);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+
+  .info-box .copy {
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  /* ───── footer ───── */
+  .footer {
+    background: var(--carbon);
+    color: var(--canvas-soft);
+    font-size: 10px;
+    line-height: 1.5;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  .footer .badge {
+    background: var(--amber);
+    color: var(--carbon);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  /* ───── narrow viewport ───── */
+  @media (max-width: 720px) {
+    .body-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 32px; }
+    .nav-links span:nth-child(n+3) { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page" id="page">
+
+    <div class="masthead">
+      <div class="mascot">Q</div>
+      <div class="bubble">Welcome to QR MAKER! 文字を入れるとQRコードができるよ！</div>
+    </div>
+
+    <nav class="nav-bar halftone">
+      <span class="logo-pill">QR MAKER</span>
+      <div class="nav-links">
+        <span>Generate</span>
+        <span>Tools</span>
+        <span>Help</span>
+      </div>
+      <span class="nav-chip">CODE BANK</span>
+    </nav>
+
+    <div class="subnav">
+      <span>ホーム</span><span class="sep">|</span>
+      <span>使い方</span><span class="sep">|</span>
+      <span>QRコードとは</span><span class="sep">|</span>
+      <span>お問い合わせ</span>
+    </div>
+
+    <div class="hero">
+      <h1>QR MAKER</h1>
+      <p class="tagline">URLや文字列から、その場でQRコードを生成。<br>スキャンして、すぐアクセス。</p>
+      <span class="go-disc">▶</span>
+    </div>
+
+    <div class="body-grid">
+
+      <div class="content">
+        <div class="panel">
+          <div class="section-label">■ QR Viewer</div>
+          <div class="viewer">
+            <div class="placeholder">
+              ここにQRコードが表示されます
+              <span class="micro">下の入力欄に文字を入れてください</span>
+            </div>
+            <div class="qr-mount" id="qrWrap"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:10px;">
+          <div class="section-label">≡ Generate</div>
+          <div class="form-panel">
+            <div class="form-row">
+              <span class="field-label">TEXT / URL</span>
+              <input id="text" placeholder="URLや文字列を入力" autocomplete="off">
+              <button class="btn-go" id="goBtn">GO!</button>
+            </div>
+            <div class="form-note">Note: 入力すると自動でQRコードが更新されます。日本語もOK。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail">
+        <div class="status-panel">
+          <div class="label">● System Status</div>
+          <div class="status-lamp">
+            <span class="lamp-dot"></span>
+            <span class="text" id="statusText">STANDBY</span>
+          </div>
+        </div>
+
+        <button class="btn-rail" id="clearBtn"><span class="arrow">▶</span>CLEAR — 入力をクリア</button>
+
+        <div class="info-box">
+          <div class="tab">What Is — QR Maker</div>
+          <div class="copy">
+            QRコード（二次元バーコード）を無料で作れるツールです。作ったコードはスマホのカメラで読み取れます。
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="footer halftone">
+      <span>&copy;2026 QR MAKER. スマホのカメラアプリでスキャンしてください。</span>
+      <span class="badge">QR OK</span>
+    </footer>
+
+  </div>
+
+<script>
+  const page = document.getElementById('page');
+  const textInput = document.getElementById('text');
+  const qrWrap = document.getElementById('qrWrap');
+  const statusText = document.getElementById('statusText');
+
+  let qrcode = null;
+
+  function update() {
+    const value = textInput.value.trim();
+
+    if (!value) {
+      page.classList.remove('ready');
+      statusText.textContent = 'STANDBY';
+      qrcode = null;
+      qrWrap.innerHTML = '';
+      return;
+    }
+
+    if (!qrcode) {
+      qrWrap.innerHTML = '';
+      qrcode = new QRCode(qrWrap, {
+        text: value,
+        width: 200,
+        height: 200,
+        colorDark: '#21242e',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      qrcode.makeCode(value);
+    }
+
+    page.classList.add('ready');
+    statusText.textContent = 'READY!';
+  }
+
+  textInput.addEventListener('input', update);
+  document.getElementById('goBtn').addEventListener('click', update);
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    textInput.value = '';
+    update();
+    textInput.focus();
+  });
+</script>
+</body>
+</html>
