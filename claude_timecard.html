@@ -286,6 +286,68 @@ main { flex: 1; width: 100%; }
 .footer-brand .brand-name { font-family: var(--serif); font-size: 18px; font-weight: 500; }
 .footer-copy { font-size: 13px; }
 
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,20,19,0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(20,20,19,0.08);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.modal-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.modal-close {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 9999px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--ink); background: var(--surface-soft); }
+
+/* ── Guide modal ── */
+button.nav-tab { background: transparent; border: none; cursor: pointer; font-family: var(--sans); }
+.modal.guide-modal { max-width: 620px; }
+.guide-title-jp { font-family: var(--sans); font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+.howto-section { margin-bottom: 18px; }
+.howto-section:last-child { margin-bottom: 0; }
+.howto-heading {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.howto-list { margin: 0; padding-left: 1.3em; font-size: 14px; color: var(--body); }
+.howto-list li { margin-bottom: 4px; }
+.howto-list li:last-child { margin-bottom: 0; }
+
 button:focus-visible, input:focus-visible, a:focus-visible {
   outline: 2px solid var(--coral);
   outline-offset: 2px;
@@ -318,6 +380,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
       <a href="claude_timecard.html" class="nav-tab current">Timecard<span class="jp">打刻</span></a>
       <a href="claude_list.html" class="nav-tab">Records<span class="jp">修正・一覧</span></a>
       <a href="claude_register.html" class="nav-tab">Members<span class="jp">ユーザー登録</span></a>
+      <button type="button" class="nav-tab" id="btn-guide">Guide<span class="jp">使い方</span></button>
     </div>
   </div>
 </nav>
@@ -402,6 +465,53 @@ button:focus-visible, input:focus-visible, a:focus-visible {
     <span class="footer-copy">&copy;bombaycat0428 — 2026</span>
   </div>
 </footer>
+
+<div class="modal-overlay" id="guide-modal" hidden>
+  <div class="modal guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="modal-head">
+      <div class="modal-title" id="guide-title">How to Use<span class="guide-title-jp">使い方</span></div>
+      <button class="modal-close" id="guide-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="howto-section">
+      <div class="howto-heading">1. First Setup — 初回セットアップ</div>
+      <ul class="howto-list">
+        <li>初めて使うときは、Timecard（打刻）画面で管理者パスコード（数字4桁）を設定します。</li>
+        <li>管理者のIDは「admin」です。以後は「admin」＋設定したパスコードでログインできます。</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <div class="howto-heading">2. Members — ユーザー登録（管理者のみ）</div>
+      <ul class="howto-list">
+        <li>管理者でログインした状態で、Members画面から氏名とパスコード（4桁）を登録します。</li>
+        <li>社員番号は自動で採番されます。「管理者権限を付与する」にチェックすると管理者になります。</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <div class="howto-heading">3. Timecard — 打刻</div>
+      <ul class="howto-list">
+        <li>社員番号とパスコードを入力して「本人確認」を押します。</li>
+        <li>「出勤」「退勤」ボタンでその日の勤怠を記録します（各1日1回）。</li>
+        <li>打刻を間違えた・忘れた場合は、Records画面から修正を申請してください。</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <div class="howto-heading">4. Records — 勤怠の確認と修正</div>
+      <ul class="howto-list">
+        <li>月とユーザーを選ぶと、勤怠一覧と出勤日数・合計勤務時間が表示されます。</li>
+        <li>一般ユーザーは「修正を申請」から理由を添えて修正・追加を申請します。</li>
+        <li>管理者は他のユーザーの勤怠を直接編集でき、承認待ちの申請を承認・却下できます。</li>
+        <li>管理者自身の勤怠修正は申請制で、別の管理者による承認が必要です。</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <div class="howto-heading">5. Data — データの保存について</div>
+      <ul class="howto-list">
+        <li>データはこのブラウザ内（localStorage）に保存され、別の端末やブラウザとは共有されません。</li>
+        <li>パスコードは暗号化されない簡易的なものです。普段使う大切なパスワードは使わないでください。</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
 <script>
 const USERS_KEY = 'attendance_users_v1';
@@ -698,6 +808,17 @@ window.addEventListener('storage', e => {
     if (!session && currentUser) resetToIdentify();
     else if (session && (!currentUser || currentUser.id !== session.id)) restoreSession();
   }
+});
+
+/* ───────── 使い方モーダル ───────── */
+const guideModal = document.getElementById('guide-modal');
+document.getElementById('btn-guide').addEventListener('click', () => { guideModal.hidden = false; });
+document.getElementById('guide-close').addEventListener('click', () => { guideModal.hidden = true; });
+guideModal.addEventListener('click', e => {
+  if (e.target === guideModal) guideModal.hidden = true;
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !guideModal.hidden) guideModal.hidden = true;
 });
 
 /* ───────── 初期化 ───────── */
