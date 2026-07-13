@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タイムカード | Timecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+JP:wght@500;600&family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --coral:          #cc785c;
+  --coral-active:   #a9583e;
+  --coral-disabled: #e6dfd8;
+  --ink:            #141413;
+  --body:           #3d3d3a;
+  --body-strong:    #252523;
+  --muted:          #6c6a64;
+  --muted-soft:     #8e8b82;
+  --hairline:       #e6dfd8;
+  --hairline-soft:  #ebe6df;
+  --canvas:         #faf9f5;
+  --surface-soft:   #f5f0e8;
+  --surface-card:   #efe9de;
+  --cream-strong:   #e8e0d2;
+  --dark:           #181715;
+  --dark-elevated:  #252320;
+  --dark-soft:      #1f1e1b;
+  --on-dark:        #faf9f5;
+  --on-dark-soft:   #a09d96;
+  --teal:           #5db8a6;
+  --amber:          #e8a55a;
+  --success:        #5db872;
+  --warning:        #d4a017;
+  --error:          #c64545;
+
+  --serif: 'Cormorant Garamond', 'Noto Serif JP', 'Times New Roman', serif;
+  --sans:  'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --mono:  'JetBrains Mono', 'Consolas', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--canvas);
+  color: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+/* ── Top nav ── */
+.top-nav {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 64px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand svg { display: block; }
+.brand-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.brand-sub { font-size: 12px; color: var(--muted-soft); margin-left: 2px; }
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.nav-tab {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.current { background: var(--surface-card); color: var(--ink); }
+.nav-tab .jp { font-weight: 400; color: var(--muted-soft); font-size: 12px; margin-left: 5px; }
+.nav-tab.current .jp { color: var(--muted); }
+
+/* ── Page ── */
+main { flex: 1; width: 100%; }
+.container { max-width: 560px; margin: 0 auto; padding: 48px 24px 96px; }
+
+.page-head { margin-bottom: 32px; }
+.page-head h1 {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.page-head .lede { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+/* ── Card ── */
+.card {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 32px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+.field label { font-size: 13px; font-weight: 500; color: var(--body-strong); }
+.field input {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  min-height: 44px;
+  outline: none;
+  width: 100%;
+}
+.field input::placeholder { color: var(--muted-soft); }
+.field input:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(204,120,92,0.15); }
+
+.input-with-toggle { display: flex; gap: 8px; }
+.input-with-toggle input { flex: 1; min-width: 0; }
+.btn-toggle-pw {
+  flex-shrink: 0;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  cursor: pointer;
+}
+.btn-toggle-pw:hover { color: var(--ink); }
+.btn-toggle-pw.active { background: var(--surface-card); color: var(--ink); border-color: var(--cream-strong); }
+
+.btn-primary {
+  width: 100%;
+  background: var(--coral);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 20px;
+  min-height: 48px;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--coral-active); }
+.btn-primary:active { background: var(--coral-active); }
+
+.form-msg { font-size: 13px; min-height: 1.3em; margin-top: 14px; text-align: center; }
+.form-msg.err { color: var(--error); }
+.form-msg.ok  { color: var(--success); }
+
+.reg-hint { font-size: 13px; color: var(--muted); text-align: center; margin-top: 20px; }
+.reg-hint a { color: var(--coral); text-decoration: none; }
+.reg-hint a:hover { text-decoration: underline; }
+
+/* ── Panels ── */
+#punch-panel[hidden], #id-panel[hidden], #setup-panel[hidden] { display: none; }
+
+/* ── Setup panel ── */
+.setup-lead { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+.setup-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+/* ── Punch panel ── */
+.greeting { text-align: center; margin-bottom: 24px; }
+.greeting .name {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.greeting .empid { font-family: var(--mono); font-size: 12px; color: var(--muted-soft); margin-top: 4px; }
+
+.clock-card {
+  background: var(--dark);
+  border-radius: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.clock-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--on-dark-soft);
+  margin-bottom: 10px;
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+}
+.clock-date { font-size: 14px; color: var(--on-dark-soft); margin-bottom: 6px; }
+.clock-time {
+  font-family: var(--mono);
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--on-dark);
+}
+
+.punch-status { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+
+.punch-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.btn-punch {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 18px 10px;
+  min-height: 76px;
+  cursor: pointer;
+}
+.btn-punch .sub { display: block; font-family: var(--mono); font-size: 12px; font-weight: 400; margin-top: 4px; }
+.btn-punch.in { background: var(--coral); border-color: var(--coral); color: #ffffff; }
+.btn-punch.in:hover:not(:disabled), .btn-punch.in:active:not(:disabled) { background: var(--coral-active); border-color: var(--coral-active); }
+.btn-punch.in .sub { color: rgba(255,255,255,0.8); }
+.btn-punch.out { background: var(--canvas); border-color: var(--hairline); color: var(--ink); }
+.btn-punch.out:hover:not(:disabled) { background: var(--surface-soft); }
+.btn-punch:disabled { background: var(--coral-disabled); border-color: var(--coral-disabled); color: var(--muted); cursor: default; }
+.btn-punch:disabled .sub { color: var(--muted); }
+
+.btn-switch {
+  width: 100%;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.btn-switch:hover { color: var(--ink); background: var(--surface-soft); }
+
+.punch-note { text-align: center; font-size: 13px; color: var(--success); min-height: 1.3em; margin-bottom: 16px; }
+
+/* ── Footer ── */
+.site-footer { background: var(--dark); color: var(--on-dark-soft); }
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.footer-brand { display: flex; align-items: center; gap: 10px; color: var(--on-dark); }
+.footer-brand .brand-name { font-family: var(--serif); font-size: 18px; font-weight: 500; }
+.footer-copy { font-size: 13px; }
+
+button:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .page-head h1 { font-size: 32px; }
+  .clock-time { font-size: 36px; }
+  .card { padding: 24px 20px; }
+}
+@media (max-width: 480px) {
+  .punch-buttons { grid-template-columns: 1fr; }
+  .nav-inner { gap: 10px; }
+  .nav-tabs { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-inner">
+    <a class="brand" href="claude_timecard.html">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 1 L13.7 10.3 L23 12 L13.7 13.7 L12 23 L10.3 13.7 L1 12 L10.3 10.3 Z" fill="#141413"/>
+      </svg>
+      <span class="brand-name">Attendance</span>
+      <span class="brand-sub">勤怠管理</span>
+    </a>
+    <div class="nav-tabs">
+      <a href="claude_timecard.html" class="nav-tab current">Timecard<span class="jp">打刻</span></a>
+      <a href="claude_list.html" class="nav-tab">Records<span class="jp">修正・一覧</span></a>
+      <a href="claude_register.html" class="nav-tab">Members<span class="jp">ユーザー登録</span></a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<div class="container">
+
+<header class="page-head">
+  <h1>Timecard</h1>
+  <p class="lede">出勤・退勤を打刻します。社員番号とパスコードで本人確認をしてください。</p>
+</header>
+
+<section class="card">
+
+  <div id="setup-panel" hidden>
+    <div class="setup-title">初回セットアップ</div>
+    <div class="setup-lead">管理者アカウント（ID: admin）のパスコードを設定してください。</div>
+    <div class="field">
+      <label for="setup-passcode">管理者パスコード（数字4桁）</label>
+      <div class="input-with-toggle">
+        <input id="setup-passcode" type="password" inputmode="numeric" maxlength="4" placeholder="****" autocomplete="off">
+        <button type="button" class="btn-toggle-pw" id="toggle-setup-pw" aria-label="パスコードを表示">表示</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="setup-passcode2">パスコード確認</label>
+      <input id="setup-passcode2" type="password" inputmode="numeric" maxlength="4" placeholder="****" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="btn-setup" type="button">設定する</button>
+    <div class="form-msg" id="setup-msg" role="status"></div>
+  </div>
+
+  <div id="id-panel">
+    <div class="field">
+      <label for="input-empid">社員番号</label>
+      <input id="input-empid" type="text" placeholder="社員番号を入力" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="input-passcode">パスコード</label>
+      <div class="input-with-toggle">
+        <input id="input-passcode" type="password" placeholder="パスコード" autocomplete="off">
+        <button type="button" class="btn-toggle-pw" id="toggle-passcode" aria-label="パスコードを表示">表示</button>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-verify" type="button">本人確認</button>
+    <div class="form-msg" id="id-msg" role="status"></div>
+    <div class="reg-hint">まだ登録していない方は <a href="claude_register.html">ユーザー登録画面</a> から登録してください。</div>
+  </div>
+
+  <div id="punch-panel" hidden>
+    <div class="greeting">
+      <div class="name" id="greet-name"></div>
+      <div class="empid" id="greet-empid"></div>
+    </div>
+    <div class="clock-card">
+      <div class="clock-live"><span class="live-dot" aria-hidden="true"></span>Live</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+    <div class="punch-status" id="punch-status"></div>
+    <div class="punch-buttons">
+      <button class="btn-punch in" id="btn-clockin" type="button">出勤</button>
+      <button class="btn-punch out" id="btn-clockout" type="button">退勤</button>
+    </div>
+    <div class="punch-note" id="punch-note"></div>
+    <button class="btn-switch" id="btn-logout" type="button">ログアウト</button>
+  </div>
+
+</section>
+
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 1 L13.7 10.3 L23 12 L13.7 13.7 L12 23 L10.3 13.7 L1 12 L10.3 10.3 Z" fill="#faf9f5"/>
+      </svg>
+      <span class="brand-name">Attendance</span>
+    </div>
+    <span class="footer-copy">&copy;bombaycat0428 — 2026</span>
+  </div>
+</footer>
+
+<script>
+const USERS_KEY = 'attendance_users_v1';
+const RECORDS_KEY = 'attendance_records_v1';
+const SESSION_KEY = 'attendance_session_v1';
+
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)) ?? []; }
+  catch (e) { return []; }
+}
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(RECORDS_KEY)) ?? []; }
+  catch (e) { return []; }
+}
+function saveRecords(records) {
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch (e) {}
+}
+function genId() {
+  return 'rec-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+function todayStr(d = new Date()) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function nowHM(d = new Date()) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function toHalfWidthDigits(v) {
+  return String(v ?? '')
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .trim();
+}
+function normalizeEmpId(v) {
+  v = toHalfWidthDigits(v);
+  return /^\d+$/.test(v) ? v.padStart(4, '0') : v;
+}
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
+  catch (e) { return null; }
+}
+function saveSession(user) {
+  try {
+    if (user) localStorage.setItem(SESSION_KEY, JSON.stringify({ id: user.id }));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch (e) {}
+}
+
+let users = loadUsers();
+let records = loadRecords();
+let currentUser = null;
+
+/* ───────── 管理者初回セットアップ ─────────
+   固定パスコードでの自動作成はしない。管理者が不在の場合、
+   および旧バージョンが自動作成した admin/admin が残っている場合は
+   セットアップ画面でパスコードを設定してもらう */
+function saveUsers(list) {
+  try { localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function hasAnyAdmin() {
+  return users.some(u => u.isAdmin);
+}
+function promoteLegacyAdmin() {
+  if (hasAnyAdmin()) return;
+  const existing = users.find(u => u.empId === 'admin');
+  if (existing) {
+    existing.isAdmin = true;
+    saveUsers(users);
+  }
+}
+function needsAdminSetup() {
+  if (!hasAnyAdmin()) return true;
+  return users.some(u => u.isAdmin && u.empId === 'admin' && u.passcode === 'admin');
+}
+
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+/* ───────── ライブ時計 ───────── */
+function tickClock() {
+  const now = new Date();
+  const dateEl = document.getElementById('clock-date');
+  const timeEl = document.getElementById('clock-time');
+  if (dateEl) dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${WEEKDAYS[now.getDay()]}）`;
+  if (timeEl) timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ───────── 本人確認 ───────── */
+function setIdMsg(text, kind) {
+  const el = document.getElementById('id-msg');
+  el.textContent = text;
+  el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('toggle-passcode').addEventListener('click', function () {
+  const input = document.getElementById('input-passcode');
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  this.textContent = showing ? '表示' : '非表示';
+  this.classList.toggle('active', !showing);
+});
+
+/* ───────── 初回セットアップ画面 ───────── */
+function setSetupMsg(text, kind) {
+  const el = document.getElementById('setup-msg');
+  el.textContent = text;
+  el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+function showSetupPanel() {
+  document.getElementById('id-panel').hidden = true;
+  document.getElementById('punch-panel').hidden = true;
+  document.getElementById('setup-panel').hidden = false;
+  document.getElementById('setup-passcode').focus();
+}
+
+function hideSetupPanel() {
+  document.getElementById('setup-panel').hidden = true;
+  document.getElementById('setup-passcode').value = '';
+  document.getElementById('setup-passcode2').value = '';
+  setSetupMsg('');
+  document.getElementById('id-panel').hidden = false;
+}
+
+document.getElementById('toggle-setup-pw').addEventListener('click', function () {
+  const p1 = document.getElementById('setup-passcode');
+  const p2 = document.getElementById('setup-passcode2');
+  const showing = p1.type === 'text';
+  p1.type = p2.type = showing ? 'password' : 'text';
+  this.textContent = showing ? '表示' : '非表示';
+  this.classList.toggle('active', !showing);
+});
+
+document.getElementById('btn-setup').addEventListener('click', completeSetup);
+document.getElementById('setup-passcode').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('setup-passcode2').focus();
+});
+document.getElementById('setup-passcode2').addEventListener('keydown', e => {
+  if (e.key === 'Enter') completeSetup();
+});
+
+function completeSetup() {
+  const p1 = toHalfWidthDigits(document.getElementById('setup-passcode').value);
+  const p2 = toHalfWidthDigits(document.getElementById('setup-passcode2').value);
+  if (!/^\d{4}$/.test(p1)) { setSetupMsg('パスコードは数字4桁で入力してください。', 'err'); return; }
+  if (p1 !== p2) { setSetupMsg('パスコードが一致しません。', 'err'); return; }
+  const existing = users.find(u => u.empId === 'admin');
+  if (existing) {
+    existing.passcode = p1;
+    existing.isAdmin = true;
+  } else {
+    users.push({
+      id: 'usr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      empId: 'admin',
+      name: '管理者',
+      passcode: p1,
+      isAdmin: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveUsers(users);
+  hideSetupPanel();
+  setIdMsg('管理者パスコードを設定しました。ID「admin」でログインできます。', 'ok');
+  document.getElementById('input-empid').focus();
+}
+
+document.getElementById('btn-verify').addEventListener('click', verify);
+document.getElementById('input-passcode').addEventListener('keydown', e => {
+  if (e.key === 'Enter') verify();
+});
+document.getElementById('input-empid').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('input-passcode').focus();
+});
+
+function verify() {
+  const empId = normalizeEmpId(document.getElementById('input-empid').value);
+  const passcode = toHalfWidthDigits(document.getElementById('input-passcode').value);
+  if (!empId || !passcode) {
+    setIdMsg('社員番号とパスコードを入力してください。', 'err');
+    return;
+  }
+  const user = users.find(u => normalizeEmpId(u.empId) === empId && toHalfWidthDigits(u.passcode) === passcode);
+  if (!user) {
+    setIdMsg('社員番号またはパスコードが違います。', 'err');
+    return;
+  }
+  setIdMsg('');
+  currentUser = user;
+  saveSession(user);
+  showPunchPanel();
+}
+
+function restoreSession() {
+  const session = loadSession();
+  if (!session) return;
+  const user = users.find(u => u.id === session.id);
+  if (!user) { saveSession(null); return; }
+  currentUser = user;
+  showPunchPanel();
+}
+
+/* ───────── 打刻パネル ───────── */
+function todayRecord() {
+  return records.find(r => r.userId === currentUser.id && r.date === todayStr());
+}
+
+function showPunchPanel() {
+  document.getElementById('id-panel').hidden = true;
+  document.getElementById('punch-panel').hidden = false;
+  document.getElementById('greet-name').textContent = `ようこそ、${currentUser.name} さん`;
+  document.getElementById('greet-empid').textContent = `社員番号：${currentUser.empId}`;
+  document.getElementById('punch-note').textContent = '';
+  renderPunchPanel();
+}
+
+function renderPunchPanel() {
+  const rec = todayRecord();
+  const inBtn = document.getElementById('btn-clockin');
+  const outBtn = document.getElementById('btn-clockout');
+  const statusEl = document.getElementById('punch-status');
+
+  inBtn.innerHTML = '出勤';
+  outBtn.innerHTML = '退勤';
+  inBtn.disabled = false;
+  outBtn.disabled = true;
+
+  if (!rec || !rec.clockIn) {
+    statusEl.textContent = '本日はまだ出勤していません。';
+  } else if (rec.clockIn && !rec.clockOut) {
+    inBtn.disabled = true;
+    inBtn.innerHTML = `出勤済み<span class="sub">${rec.clockIn}</span>`;
+    outBtn.disabled = false;
+    statusEl.textContent = '出勤中です。';
+  } else {
+    inBtn.disabled = true;
+    inBtn.innerHTML = `出勤済み<span class="sub">${rec.clockIn}</span>`;
+    outBtn.disabled = true;
+    outBtn.innerHTML = `退勤済み<span class="sub">${rec.clockOut}</span>`;
+    statusEl.textContent = '本日の勤務は終了しました。';
+  }
+}
+
+document.getElementById('btn-clockin').addEventListener('click', () => {
+  let rec = todayRecord();
+  const now = nowHM();
+  if (!rec) {
+    rec = { id: genId(), userId: currentUser.id, date: todayStr(), clockIn: now, clockOut: '', note: '', updatedAt: new Date().toISOString() };
+    records.push(rec);
+  } else if (!rec.clockIn) {
+    rec.clockIn = now;
+    rec.updatedAt = new Date().toISOString();
+  } else {
+    return;
+  }
+  saveRecords(records);
+  renderPunchPanel();
+  document.getElementById('punch-note').textContent = `出勤を記録しました（${now}）`;
+});
+
+document.getElementById('btn-clockout').addEventListener('click', () => {
+  const rec = todayRecord();
+  if (!rec || !rec.clockIn || rec.clockOut) return;
+  const now = nowHM();
+  rec.clockOut = now;
+  rec.updatedAt = new Date().toISOString();
+  saveRecords(records);
+  renderPunchPanel();
+  document.getElementById('punch-note').textContent = `退勤を記録しました（${now}）`;
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  saveSession(null);
+  resetToIdentify();
+});
+
+function resetToIdentify() {
+  currentUser = null;
+  document.getElementById('input-empid').value = '';
+  document.getElementById('input-passcode').value = '';
+  setIdMsg('');
+  document.getElementById('punch-panel').hidden = true;
+  document.getElementById('id-panel').hidden = false;
+  document.getElementById('input-empid').focus();
+}
+
+/* 別タブでユーザー/記録/ログイン状態が変更された場合に追従 */
+window.addEventListener('storage', e => {
+  if (e.key === USERS_KEY) {
+    users = loadUsers();
+    if (!document.getElementById('setup-panel').hidden && !needsAdminSetup()) hideSetupPanel();
+  }
+  if (e.key === RECORDS_KEY) {
+    records = loadRecords();
+    if (currentUser && !document.getElementById('punch-panel').hidden) renderPunchPanel();
+  }
+  if (e.key === SESSION_KEY) {
+    const session = loadSession();
+    if (!session && currentUser) resetToIdentify();
+    else if (session && (!currentUser || currentUser.id !== session.id)) restoreSession();
+  }
+});
+
+/* ───────── 初期化 ───────── */
+promoteLegacyAdmin();
+if (needsAdminSetup()) showSetupPanel();
+else restoreSession();
+</script>
+</body>
+</html>

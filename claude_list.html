@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修正・一覧 | Records</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+JP:wght@500;600&family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --coral:          #cc785c;
+  --coral-active:   #a9583e;
+  --coral-disabled: #e6dfd8;
+  --ink:            #141413;
+  --body:           #3d3d3a;
+  --body-strong:    #252523;
+  --muted:          #6c6a64;
+  --muted-soft:     #8e8b82;
+  --hairline:       #e6dfd8;
+  --hairline-soft:  #ebe6df;
+  --canvas:         #faf9f5;
+  --surface-soft:   #f5f0e8;
+  --surface-card:   #efe9de;
+  --cream-strong:   #e8e0d2;
+  --dark:           #181715;
+  --dark-elevated:  #252320;
+  --dark-soft:      #1f1e1b;
+  --on-dark:        #faf9f5;
+  --on-dark-soft:   #a09d96;
+  --teal:           #5db8a6;
+  --amber:          #e8a55a;
+  --success:        #5db872;
+  --warning:        #d4a017;
+  --error:          #c64545;
+
+  --serif: 'Cormorant Garamond', 'Noto Serif JP', 'Times New Roman', serif;
+  --sans:  'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --mono:  'JetBrains Mono', 'Consolas', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--canvas);
+  color: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+/* ── Top nav ── */
+.top-nav {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 64px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand svg { display: block; }
+.brand-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.brand-sub { font-size: 12px; color: var(--muted-soft); margin-left: 2px; }
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.nav-tab {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.current { background: var(--surface-card); color: var(--ink); }
+.nav-tab .jp { font-weight: 400; color: var(--muted-soft); font-size: 12px; margin-left: 5px; }
+.nav-tab.current .jp { color: var(--muted); }
+
+/* ── Page ── */
+main { flex: 1; width: 100%; }
+.container { max-width: 1080px; margin: 0 auto; padding: 48px 24px 96px; }
+
+.page-head { margin-bottom: 32px; }
+.page-head h1 {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.page-head .lede { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+/* ── Status / gate ── */
+.admin-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+.admin-bar[hidden] { display: none; }
+.admin-bar .name { font-weight: 600; color: var(--ink); }
+
+.gate-panel {
+  border: 1px dashed var(--cream-strong);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.gate-panel[hidden] { display: none; }
+.gate-panel .gate-icon {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin-bottom: 10px;
+}
+.gate-panel a { color: var(--coral); text-decoration: none; }
+.gate-panel a:hover { text-decoration: underline; }
+
+#viewer-content[hidden] { display: none; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 13px; font-weight: 500; color: var(--body-strong); }
+.field label .req { color: var(--error); margin-left: 3px; }
+.field input {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  padding: 10px 14px;
+  min-height: 42px;
+  outline: none;
+  width: 100%;
+}
+.field input:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(204,120,92,0.15); }
+
+/* ── Approvals ── */
+.approvals {
+  background: var(--surface-card);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.approvals[hidden] { display: none; }
+.approvals-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.approvals-head .section-tag {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.approvals-head .row-count { font-size: 13px; color: var(--muted); }
+.approvals-empty { color: var(--muted); font-size: 14px; }
+.approval-row {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+}
+.approval-row:last-child { margin-bottom: 0; }
+.approval-main { flex: 1 1 260px; }
+.approval-user { font-weight: 600; color: var(--ink); }
+.approval-date { font-family: var(--mono); color: var(--muted); font-size: 13px; margin-left: 8px; }
+.approval-diff { font-family: var(--mono); font-size: 13px; margin-top: 4px; }
+.approval-diff .before { color: var(--muted-soft); text-decoration: line-through; }
+.approval-diff .after { color: var(--coral); margin-left: 8px; }
+.approval-reason { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.approval-meta { font-size: 12px; color: var(--muted-soft); margin-top: 4px; }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 220px; }
+.btn-approve {
+  background: var(--coral);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+.btn-approve:hover, .btn-approve:active { background: var(--coral-active); }
+.btn-reject {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--error);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+.btn-reject:hover { background: rgba(198,69,69,0.06); border-color: rgba(198,69,69,0.4); }
+.approval-self-note { font-size: 12px; color: var(--warning); flex-basis: 100%; }
+
+.badge-pending {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+  background: var(--amber);
+  border-radius: 9999px;
+  padding: 1px 9px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.filter-field { display: flex; flex-direction: column; gap: 5px; }
+.filter-field label { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.04em; }
+select.filter-box {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 8px 12px;
+  min-height: 40px;
+  outline: none;
+  cursor: pointer;
+}
+select.filter-box:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(204,120,92,0.15); }
+select.filter-box option { background: var(--canvas); color: var(--ink); }
+select.filter-box:disabled {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+  background: var(--surface-soft);
+  color: var(--body);
+  cursor: default;
+}
+
+.stats { display: flex; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+.stat {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px 18px 8px;
+  min-width: 116px;
+}
+.stat-num {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.stat-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; }
+
+/* ── Table ── */
+.ledger {
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  border-radius: 12px;
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+table { width: 100%; border-collapse: collapse; min-width: 680px; }
+thead th {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-soft);
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--hairline-soft); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface-soft); }
+tbody tr.sat .cell-date { color: var(--teal); }
+tbody tr.sun .cell-date { color: var(--error); }
+td { padding: 11px 16px; vertical-align: middle; font-size: 14px; }
+.cell-date { font-family: var(--mono); white-space: nowrap; font-size: 13px; }
+.cell-time { font-family: var(--mono); white-space: nowrap; font-size: 13px; color: var(--body-strong); }
+.cell-time.empty { color: var(--muted-soft); }
+.cell-note { color: var(--muted); font-size: 13px; }
+.col-actions { text-align: right; white-space: nowrap; width: 110px; }
+
+.btn-edit {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--coral);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+.btn-edit:hover { background: rgba(204,120,92,0.1); }
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.empty-state .empty-icon {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin-bottom: 10px;
+}
+
+/* ── Footer ── */
+.site-footer { background: var(--dark); color: var(--on-dark-soft); }
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.footer-brand { display: flex; align-items: center; gap: 10px; color: var(--on-dark); }
+.footer-brand .brand-name { font-family: var(--serif); font-size: 18px; font-weight: 500; }
+.footer-copy { font-size: 13px; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,20,19,0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(20,20,19,0.08);
+}
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.modal-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.modal-sub { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 2px; }
+.modal-close {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 9999px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--ink); background: var(--surface-soft); }
+
+.modal .field { margin-bottom: 16px; }
+.modal .field[hidden] { display: none; }
+.modal .field input, .modal .field textarea {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  padding: 10px 14px;
+  min-height: 42px;
+  outline: none;
+  width: 100%;
+}
+.modal .field input.mono { font-family: var(--mono); }
+.modal .field textarea { min-height: 70px; resize: vertical; }
+.modal .field input:focus, .modal .field textarea:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(204,120,92,0.15); }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+
+.form-msg { font-size: 13px; min-height: 1.3em; }
+.form-msg.err { color: var(--error); }
+.form-msg.ok  { color: var(--success); }
+
+.modal-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.btn-save {
+  background: var(--coral);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 22px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-save:hover, .btn-save:active { background: var(--coral-active); }
+.btn-cancel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--body);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-cancel:hover { background: var(--surface-soft); color: var(--ink); }
+.btn-del-day {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--error);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-del-day:hover { background: rgba(198,69,69,0.06); border-color: rgba(198,69,69,0.4); }
+.btn-del-day[hidden] { display: none; }
+
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .page-head h1 { font-size: 32px; }
+  .stats { margin-left: 0; }
+  .field-row { flex-direction: column; }
+  .nav-inner { gap: 10px; }
+  .nav-tabs { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-inner">
+    <a class="brand" href="claude_timecard.html">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 1 L13.7 10.3 L23 12 L13.7 13.7 L12 23 L10.3 13.7 L1 12 L10.3 10.3 Z" fill="#141413"/>
+      </svg>
+      <span class="brand-name">Attendance</span>
+      <span class="brand-sub">勤怠管理</span>
+    </a>
+    <div class="nav-tabs">
+      <a href="claude_timecard.html" class="nav-tab">Timecard<span class="jp">打刻</span></a>
+      <a href="claude_list.html" class="nav-tab current">Records<span class="jp">修正・一覧</span></a>
+      <a href="claude_register.html" class="nav-tab">Members<span class="jp">ユーザー登録</span></a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<div class="container">
+
+<header class="page-head">
+  <h1>Records</h1>
+  <p class="lede">月別の勤怠一覧の確認と、修正の申請・承認を行います。</p>
+</header>
+
+<div class="admin-bar" id="admin-status-bar" hidden>
+  <span>ログイン中：</span>
+  <span class="name" id="admin-status-name"></span>
+</div>
+
+<div class="gate-panel" id="gate-panel">
+  <span class="gate-icon">Locked</span>
+  <span id="gate-msg">勤怠の閲覧・修正申請には、<a href="claude_timecard.html">タイムカード画面</a>でログインしてください。</span>
+</div>
+
+<section class="approvals" id="approvals-panel" hidden>
+  <div class="approvals-head">
+    <span class="section-tag">承認待ちの修正申請</span>
+    <span class="row-count" id="approvals-count"></span>
+  </div>
+  <div id="approvals-list"></div>
+</section>
+
+<div id="viewer-content" hidden>
+
+<div class="filter-bar">
+  <div class="filter-field">
+    <label for="sel-month">月</label>
+    <select class="filter-box" id="sel-month"></select>
+  </div>
+  <div class="filter-field">
+    <label for="sel-user">ユーザー</label>
+    <select class="filter-box" id="sel-user"></select>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="stat-days">0</div>
+      <div class="stat-label">出勤日数</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-hours">0h00m</div>
+      <div class="stat-label">合計勤務時間</div>
+    </div>
+  </div>
+</div>
+
+<div class="ledger">
+  <table id="record-table" hidden>
+    <thead>
+      <tr>
+        <th>日付</th>
+        <th>出勤</th>
+        <th>退勤</th>
+        <th>勤務時間</th>
+        <th>備考</th>
+        <th class="col-actions">操作</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="empty-state" id="empty-state">
+    <span class="empty-icon">No User Selected</span>
+    <span id="empty-msg">ユーザー登録画面から先にユーザーを登録してください。</span>
+  </div>
+</div>
+
+</div>
+
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 1 L13.7 10.3 L23 12 L13.7 13.7 L12 23 L10.3 13.7 L1 12 L10.3 10.3 Z" fill="#faf9f5"/>
+      </svg>
+      <span class="brand-name">Attendance</span>
+    </div>
+    <span class="footer-copy">&copy;bombaycat0428 — 2026</span>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="edit-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="edit-title">勤怠を修正</div>
+        <div class="modal-sub" id="edit-sub"></div>
+      </div>
+      <button class="modal-close" id="edit-close" type="button" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="em-in">出勤時刻</label>
+        <input id="em-in" class="mono" type="time">
+      </div>
+      <div class="field">
+        <label for="em-out">退勤時刻</label>
+        <input id="em-out" class="mono" type="time">
+      </div>
+    </div>
+    <div class="field">
+      <label for="em-note">備考</label>
+      <textarea id="em-note" placeholder="遅刻理由や修正理由など"></textarea>
+    </div>
+    <div class="field" id="em-reason-field">
+      <label for="em-reason">申請理由<span class="req">*</span></label>
+      <textarea id="em-reason" placeholder="修正・追加が必要な理由を入力してください"></textarea>
+      <div class="approval-self-note" id="em-self-note" hidden>※自分自身への申請のため、別の管理者にログインして承認してもらう必要があります。</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-save" id="edit-save" type="button">保存</button>
+      <button class="btn-cancel" id="edit-cancel" type="button">キャンセル</button>
+      <button class="btn-del-day" id="edit-delete" type="button">この日の記録を削除</button>
+      <span class="form-msg" id="edit-msg" role="status"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const USERS_KEY = 'attendance_users_v1';
+const RECORDS_KEY = 'attendance_records_v1';
+const REQUESTS_KEY = 'attendance_requests_v1';
+const SESSION_KEY = 'attendance_session_v1';
+
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)) ?? []; }
+  catch (e) { return []; }
+}
+function saveUsers(list) {
+  try { localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(RECORDS_KEY)) ?? []; }
+  catch (e) { return []; }
+}
+function saveRecords(records) {
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch (e) {}
+}
+function loadRequests() {
+  try { return JSON.parse(localStorage.getItem(REQUESTS_KEY)) ?? []; }
+  catch (e) { return []; }
+}
+function saveRequests(list) {
+  try { localStorage.setItem(REQUESTS_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function genId() {
+  return 'rec-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+let users = loadUsers();
+let records = loadRecords();
+let requests = loadRequests();
+
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+/* ───────── 管理者救済（empId "admin" のユーザーがいれば昇格のみ） ─────────
+   管理者アカウントの新規作成（初回セットアップ）は claude_timecard.html 側で行う */
+function hasAnyAdmin() {
+  return users.some(u => u.isAdmin);
+}
+function promoteLegacyAdmin() {
+  if (hasAnyAdmin()) return;
+  const existing = users.find(u => u.empId === 'admin');
+  if (existing) {
+    existing.isAdmin = true;
+    saveUsers(users);
+  }
+}
+
+/* ───────── ログイン状態（Timecard画面と共有） ───────── */
+let currentAdmin = null;
+let currentViewer = null;
+
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
+  catch (e) { return null; }
+}
+function restoreSession() {
+  currentAdmin = null;
+  currentViewer = null;
+  const session = loadSession();
+  if (!session) return;
+  const u = users.find(x => x.id === session.id);
+  if (!u) return;
+  if (u.isAdmin) currentAdmin = u; else currentViewer = u;
+}
+
+function updateAdminUI() {
+  const loggedIn = !!(currentAdmin || currentViewer);
+  document.getElementById('admin-status-bar').hidden = !loggedIn;
+  document.getElementById('gate-panel').hidden = loggedIn;
+  document.getElementById('viewer-content').hidden = !loggedIn;
+  document.getElementById('approvals-panel').hidden = !currentAdmin;
+
+  if (currentAdmin) {
+    document.getElementById('admin-status-name').textContent = `${currentAdmin.name}（${currentAdmin.empId}） ・ 管理者`;
+  } else if (currentViewer) {
+    document.getElementById('admin-status-name').textContent = `${currentViewer.name}（${currentViewer.empId}）`;
+  }
+
+  populateUserSelect();
+  render();
+  renderApprovals();
+}
+
+/* ───────── 月プルダウン ───────── */
+function monthOptions() {
+  const opts = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    opts.push({ value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`, label: `${d.getFullYear()}年${d.getMonth() + 1}月` });
+  }
+  return opts;
+}
+
+function populateMonthSelect() {
+  const sel = document.getElementById('sel-month');
+  sel.innerHTML = monthOptions().map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+}
+
+function populateUserSelect() {
+  const sel = document.getElementById('sel-user');
+  if (currentAdmin) {
+    const prev = sel.value;
+    if (users.length === 0) {
+      sel.innerHTML = `<option value="">（未登録）</option>`;
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+      sel.innerHTML = users.map(u => `<option value="${escapeHtml(u.id)}">${escapeHtml(u.empId)} ${escapeHtml(u.name)}</option>`).join('');
+      if (users.some(u => u.id === prev)) sel.value = prev;
+    }
+  } else if (currentViewer) {
+    sel.disabled = true;
+    sel.innerHTML = `<option value="${escapeHtml(currentViewer.id)}">${escapeHtml(currentViewer.empId)} ${escapeHtml(currentViewer.name)}</option>`;
+  } else {
+    sel.innerHTML = `<option value="">（未ログイン）</option>`;
+    sel.disabled = true;
+  }
+}
+
+function daysInMonth(year, month1) { return new Date(year, month1, 0).getDate(); }
+
+function diffMinutes(a, b) {
+  const [ah, am] = a.split(':').map(Number);
+  const [bh, bm] = b.split(':').map(Number);
+  return (bh * 60 + bm) - (ah * 60 + am);
+}
+function formatMinutes(mins) { return `${Math.floor(mins / 60)}h${pad(mins % 60)}m`; }
+
+/* ───────── 一覧表示 ───────── */
+function render() {
+  const userId = document.getElementById('sel-user').value;
+  const table = document.getElementById('record-table');
+  const emptyState = document.getElementById('empty-state');
+  const emptyMsg = document.getElementById('empty-msg');
+
+  if (users.length === 0) {
+    table.hidden = true;
+    emptyState.hidden = false;
+    emptyMsg.textContent = 'ユーザー登録画面から先にユーザーを登録してください。';
+    document.getElementById('stat-days').textContent = '0';
+    document.getElementById('stat-hours').textContent = '0h00m';
+    return;
+  }
+  if (!userId) {
+    table.hidden = true;
+    emptyState.hidden = false;
+    emptyMsg.textContent = 'ユーザーを選択してください。';
+    return;
+  }
+
+  const [yearStr, monthStr] = document.getElementById('sel-month').value.split('-');
+  const year = Number(yearStr), month1 = Number(monthStr);
+  const count = daysInMonth(year, month1);
+  const canDirectEdit = !!currentAdmin && currentAdmin.id !== userId;
+
+  let rowsHtml = '';
+  let totalMinutes = 0, workDays = 0;
+
+  for (let day = 1; day <= count; day++) {
+    const dateStr = `${yearStr}-${pad(month1)}-${pad(day)}`;
+    const rec = records.find(r => r.userId === userId && r.date === dateStr);
+    const pending = requests.find(r => r.userId === userId && r.date === dateStr && r.status === 'pending');
+    const wd = new Date(year, month1 - 1, day).getDay();
+    const rowClass = wd === 0 ? 'sun' : wd === 6 ? 'sat' : '';
+    const clockIn = rec?.clockIn || '';
+    const clockOut = rec?.clockOut || '';
+
+    let workLabel = '<span class="cell-time empty">—</span>';
+    if (clockIn) workDays++;
+    if (clockIn && clockOut) {
+      const mins = diffMinutes(clockIn, clockOut);
+      if (mins > 0) { totalMinutes += mins; workLabel = `<span class="cell-time">${formatMinutes(mins)}</span>`; }
+    }
+
+    const btnLabel = canDirectEdit ? '編集' : (pending ? '再申請' : '修正を申請');
+
+    rowsHtml += `<tr class="${rowClass}">
+      <td class="cell-date">${month1}/${day}(${WEEKDAYS[wd]})${pending ? '<span class="badge-pending">申請中</span>' : ''}</td>
+      <td>${clockIn ? `<span class="cell-time">${clockIn}</span>` : '<span class="cell-time empty">—</span>'}</td>
+      <td>${clockOut ? `<span class="cell-time">${clockOut}</span>` : '<span class="cell-time empty">—</span>'}</td>
+      <td>${workLabel}</td>
+      <td class="cell-note">${escapeHtml(rec?.note || '')}</td>
+      <td class="col-actions"><button class="btn-edit" data-date="${dateStr}" type="button">${btnLabel}</button></td>
+    </tr>`;
+  }
+
+  document.getElementById('tbody').innerHTML = rowsHtml;
+  table.hidden = false;
+  emptyState.hidden = true;
+
+  document.getElementById('stat-days').textContent = workDays;
+  document.getElementById('stat-hours').textContent = formatMinutes(totalMinutes);
+
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(userId, btn.dataset.date));
+  });
+}
+
+/* ───────── 承認待ち一覧（管理者のみ） ───────── */
+function renderApprovals() {
+  const panel = document.getElementById('approvals-panel');
+  if (!currentAdmin) { panel.hidden = true; return; }
+  panel.hidden = false;
+
+  const pending = requests
+    .filter(r => r.status === 'pending')
+    .sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+
+  document.getElementById('approvals-count').textContent = pending.length ? `${pending.length}件` : '';
+  const listEl = document.getElementById('approvals-list');
+
+  if (pending.length === 0) {
+    listEl.innerHTML = '<div class="approvals-empty">承認待ちの申請はありません。</div>';
+    return;
+  }
+
+  listEl.innerHTML = pending.map(r => {
+    const u = users.find(x => x.id === r.userId);
+    const rec = records.find(x => x.userId === r.userId && x.date === r.date);
+    const [y, m, d] = r.date.split('-').map(Number);
+    const wd = new Date(y, m - 1, d).getDay();
+    const isOwnRequest = currentAdmin && r.userId === currentAdmin.id;
+    const actionsHtml = isOwnRequest
+      ? `<div class="approval-actions">
+           <span class="approval-self-note">自分の申請は承認できません。別の管理者にログインしてもらってください。</span>
+           <button class="btn-reject" data-id="${escapeHtml(r.id)}" type="button">取り下げ</button>
+         </div>`
+      : `<div class="approval-actions">
+           <button class="btn-approve" data-id="${escapeHtml(r.id)}" type="button">承認</button>
+           <button class="btn-reject" data-id="${escapeHtml(r.id)}" type="button">却下</button>
+         </div>`;
+    return `<div class="approval-row">
+      <div class="approval-main">
+        <span class="approval-user">${escapeHtml(u ? `${u.empId} ${u.name}` : '(削除済みユーザー)')}</span>
+        <span class="approval-date">${m}/${d}(${WEEKDAYS[wd]})</span>
+        <div class="approval-diff">
+          <span class="before">${rec?.clockIn || '—'} → ${rec?.clockOut || '—'}</span>
+          <span class="after">${r.clockIn || '—'} → ${r.clockOut || '—'}</span>
+        </div>
+        <div class="approval-reason">理由: ${escapeHtml(r.reason || '（未入力）')}</div>
+        <div class="approval-meta">申請日時: ${new Date(r.requestedAt).toLocaleString('ja-JP')}</div>
+      </div>
+      ${actionsHtml}
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.btn-approve').forEach(btn => {
+    btn.addEventListener('click', () => approveRequest(btn.dataset.id));
+  });
+  listEl.querySelectorAll('.btn-reject').forEach(btn => {
+    btn.addEventListener('click', () => rejectRequest(btn.dataset.id));
+  });
+}
+
+function approveRequest(id) {
+  const r = requests.find(x => x.id === id);
+  if (!r) return;
+  if (currentAdmin && r.userId === currentAdmin.id) { alert('自分自身の申請は承認できません。別の管理者にログインしてもらってください。'); return; }
+  let rec = records.find(x => x.userId === r.userId && x.date === r.date);
+  if (!r.clockIn && !r.clockOut && !r.note) {
+    if (rec) records = records.filter(x => x !== rec);
+  } else if (rec) {
+    rec.clockIn = r.clockIn;
+    rec.clockOut = r.clockOut;
+    rec.note = r.note;
+    rec.updatedAt = new Date().toISOString();
+  } else {
+    records.push({ id: genId(), userId: r.userId, date: r.date, clockIn: r.clockIn, clockOut: r.clockOut, note: r.note, updatedAt: new Date().toISOString() });
+  }
+  saveRecords(records);
+
+  r.status = 'approved';
+  r.decidedAt = new Date().toISOString();
+  r.decidedBy = currentAdmin ? currentAdmin.id : null;
+  saveRequests(requests);
+
+  render();
+  renderApprovals();
+}
+
+function rejectRequest(id) {
+  const r = requests.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm('この申請を却下しますか？')) return;
+  r.status = 'rejected';
+  r.decidedAt = new Date().toISOString();
+  r.decidedBy = currentAdmin ? currentAdmin.id : null;
+  saveRequests(requests);
+  renderApprovals();
+}
+
+/* ───────── 編集／申請モーダル ───────── */
+let editingUserId = null;
+let editingDate = null;
+
+function setEditMsg(text, kind) {
+  const el = document.getElementById('edit-msg');
+  el.textContent = text;
+  el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+function openEdit(userId, dateStr) {
+  editingUserId = userId;
+  editingDate = dateStr;
+  const rec = records.find(r => r.userId === userId && r.date === dateStr);
+  const pending = requests.find(r => r.userId === userId && r.date === dateStr && r.status === 'pending');
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const wd = new Date(y, m - 1, d).getDay();
+  const isAdminMode = !!currentAdmin && currentAdmin.id !== userId;
+  const isSelfAdmin = !!currentAdmin && currentAdmin.id === userId;
+
+  document.getElementById('edit-sub').textContent = `${y}年${m}月${d}日（${WEEKDAYS[wd]}）`;
+  document.getElementById('edit-title').textContent = isAdminMode ? '勤怠を修正（管理者）' : (isSelfAdmin ? '自分の勤怠を修正申請' : '修正を申請');
+  document.getElementById('edit-save').textContent = isAdminMode ? '保存' : '申請する';
+  document.getElementById('em-reason-field').hidden = isAdminMode;
+  document.getElementById('em-self-note').hidden = !isSelfAdmin;
+  document.getElementById('edit-delete').hidden = !(isAdminMode && rec);
+
+  const source = isAdminMode ? rec : (pending || rec);
+  document.getElementById('em-in').value = source?.clockIn || '';
+  document.getElementById('em-out').value = source?.clockOut || '';
+  document.getElementById('em-note').value = source?.note || '';
+  document.getElementById('em-reason').value = pending?.reason || '';
+
+  setEditMsg('');
+  document.getElementById('edit-modal').hidden = false;
+}
+
+function closeEdit() {
+  document.getElementById('edit-modal').hidden = true;
+  editingUserId = null;
+  editingDate = null;
+}
+
+document.getElementById('edit-save').addEventListener('click', () => {
+  const clockIn = document.getElementById('em-in').value;
+  const clockOut = document.getElementById('em-out').value;
+  const note = document.getElementById('em-note').value.trim();
+
+  if (currentAdmin && currentAdmin.id !== editingUserId) {
+    let rec = records.find(r => r.userId === editingUserId && r.date === editingDate);
+    if (!clockIn && !clockOut && !note) {
+      if (rec) records = records.filter(r => r !== rec);
+    } else if (rec) {
+      rec.clockIn = clockIn;
+      rec.clockOut = clockOut;
+      rec.note = note;
+      rec.updatedAt = new Date().toISOString();
+    } else {
+      records.push({ id: genId(), userId: editingUserId, date: editingDate, clockIn, clockOut, note, updatedAt: new Date().toISOString() });
+    }
+    saveRecords(records);
+    closeEdit();
+    render();
+  } else {
+    const reason = document.getElementById('em-reason').value.trim();
+    if (!reason) { setEditMsg('申請理由を入力してください。', 'err'); return; }
+
+    let reqRec = requests.find(r => r.userId === editingUserId && r.date === editingDate && r.status === 'pending');
+    if (reqRec) {
+      reqRec.clockIn = clockIn;
+      reqRec.clockOut = clockOut;
+      reqRec.note = note;
+      reqRec.reason = reason;
+      reqRec.requestedAt = new Date().toISOString();
+    } else {
+      requests.push({
+        id: genId(),
+        userId: editingUserId,
+        date: editingDate,
+        clockIn, clockOut, note, reason,
+        status: 'pending',
+        requestedAt: new Date().toISOString()
+      });
+    }
+    saveRequests(requests);
+    closeEdit();
+    render();
+  }
+});
+
+document.getElementById('edit-delete').addEventListener('click', () => {
+  if (!confirm('この日の勤怠記録を削除しますか？')) return;
+  records = records.filter(r => !(r.userId === editingUserId && r.date === editingDate));
+  saveRecords(records);
+  closeEdit();
+  render();
+});
+
+document.getElementById('edit-close').addEventListener('click', closeEdit);
+document.getElementById('edit-cancel').addEventListener('click', closeEdit);
+document.getElementById('edit-modal').addEventListener('click', e => {
+  if (e.target.id === 'edit-modal') closeEdit();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !document.getElementById('edit-modal').hidden) closeEdit();
+});
+
+/* ───────── イベント ───────── */
+document.getElementById('sel-month').addEventListener('change', render);
+document.getElementById('sel-user').addEventListener('change', render);
+
+window.addEventListener('storage', e => {
+  if (e.key === USERS_KEY) {
+    users = loadUsers();
+    promoteLegacyAdmin();
+    restoreSession();
+    updateAdminUI();
+  }
+  if (e.key === RECORDS_KEY) { records = loadRecords(); render(); }
+  if (e.key === REQUESTS_KEY) { requests = loadRequests(); render(); renderApprovals(); }
+  if (e.key === SESSION_KEY) { restoreSession(); updateAdminUI(); }
+});
+
+/* ───────── 初期化 ───────── */
+promoteLegacyAdmin();
+restoreSession();
+populateMonthSelect();
+updateAdminUI();
+</script>
+</body>
+</html>
