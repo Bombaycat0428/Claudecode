@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>夢ノート | Dream Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/htm@3/dist/htm.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body {
+    font-family: "Hiragino Sans", "Yu Gothic", "Helvetica Neue", Arial, sans-serif;
+  }
+  @keyframes fall {
+    0% {
+      transform: translateY(-10vh) translateX(0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) translateX(var(--drift)) rotate(var(--spin)) scale(0.8);
+      opacity: 0;
+    }
+  }
+  .petal {
+    position: fixed;
+    top: 0;
+    will-change: transform, opacity;
+    animation-name: fall;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    pointer-events: none;
+    z-index: 9999;
+    user-select: none;
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .pop-in { animation: pop-in 0.25s ease-out; }
+
+  @keyframes shine {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  .achieved-text {
+    background: linear-gradient(90deg, #f59e0b, #f472b6, #f59e0b);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 2.5s linear infinite;
+  }
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-rose-50 via-amber-50 to-sky-50">
+<div id="root"></div>
+
+<script>
+const { useState, useEffect, useRef, useMemo } = React;
+const html = htm.bind(React.createElement);
+
+const STORAGE_KEY = "dream-tracker-dreams-v1";
+const MAX_DREAMS = 100;
+const PETAL_EMOJIS = ["🌸", "🌺", "🌼", "🌷", "💮", "🌹", "✨"];
+
+function loadDreams() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveDreams(dreams) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dreams));
+}
+
+function Icon({ name, className }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = "";
+    const el = document.createElement("i");
+    el.setAttribute("data-lucide", name);
+    ref.current.appendChild(el);
+    lucide.createIcons({ icons: lucide.icons, root: ref.current });
+  }, [name]);
+  return html`<span ref=${ref} className=${className}></span>`;
+}
+
+function FlowerBurst({ burstId, onDone }) {
+  const particles = useMemo(() => {
+    const count = 70;
+    return Array.from({ length: count }, (_, i) => {
+      const left = Math.random() * 100;
+      const size = 16 + Math.random() * 22;
+      const duration = 2.6 + Math.random() * 2.2;
+      const delay = Math.random() * 0.6;
+      const drift = (Math.random() - 0.5) * 220;
+      const spin = (Math.random() - 0.5) * 720;
+      const emoji = PETAL_EMOJIS[Math.floor(Math.random() * PETAL_EMOJIS.length)];
+      return { id: i, left, size, duration, delay, drift, spin, emoji };
+    });
+  }, [burstId]);
+
+  useEffect(() => {
+    const maxLife = Math.max(...particles.map(p => p.delay + p.duration)) * 1000 + 200;
+    const t = setTimeout(() => onDone(burstId), maxLife);
+    return () => clearTimeout(t);
+  }, []);
+
+  return html`
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      ${particles.map(p => html`
+        <span
+          key=${p.id}
+          className="petal"
+          style=${{
+            left: `${p.left}%`,
+            fontSize: `${p.size}px`,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+            "--drift": `${p.drift}px`,
+            "--spin": `${p.spin}deg`,
+          }}
+        >${p.emoji}</span>
+      `)}
+    </div>
+  `;
+}
+
+function yearsLabel(years) {
+  if (years === 0) return "今すぐ";
+  return `${years}年後`;
+}
+
+function DreamForm({ onAdd, disabled }) {
+  const [years, setYears] = useState("");
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = (e) => {
+    e.preventDefault();
+    const y = parseInt(years, 10);
+    if (Number.isNaN(y) || y < 0) {
+      setError("年数は0以上の数字で入力してください");
+      return;
+    }
+    if (!text.trim()) {
+      setError("夢の内容を入力してください");
+      return;
+    }
+    onAdd({ years: y, text: text.trim() });
+    setYears("");
+    setText("");
+    setError("");
+  };
+
+  return html`
+    <form onSubmit=${submit} className="bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-rose-100 p-5 md:p-6 border border-rose-100">
+      <h2 className="flex items-center gap-2 text-lg font-bold text-rose-900 mb-4">
+        <${Icon} name="sparkles" className="text-amber-500 [&_svg]:w-5 [&_svg]:h-5" />
+        新しい夢を登録する
+      </h2>
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="w-full md:w-36">
+          <label className="block text-xs font-semibold text-rose-500 mb-1">何年後？</label>
+          <input
+            type="number"
+            min="0"
+            placeholder="例: 3"
+            value=${years}
+            onChange=${(e) => setYears(e.target.value)}
+            disabled=${disabled}
+            className="w-full rounded-xl border border-rose-200 px-3 py-2 text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:bg-rose-50"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-xs font-semibold text-rose-500 mb-1">夢の内容</label>
+          <input
+            type="text"
+            placeholder="叶えたい夢を書いてみましょう"
+            value=${text}
+            onChange=${(e) => setText(e.target.value)}
+            disabled=${disabled}
+            className="w-full rounded-xl border border-rose-200 px-3 py-2 text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:bg-rose-50"
+          />
+        </div>
+        <div className="flex md:items-end">
+          <button
+            type="submit"
+            disabled=${disabled}
+            className="w-full md:w-auto mt-1 md:mt-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-400 to-amber-400 text-white font-semibold px-5 py-2 shadow-md shadow-rose-200 hover:opacity-90 active:scale-95 transition disabled:opacity-50"
+          >
+            <${Icon} name="plus" className="[&_svg]:w-4 [&_svg]:h-4" />
+            追加
+          </button>
+        </div>
+      </div>
+      ${error && html`<p className="text-sm text-red-500 mt-2">${error}</p>`}
+      ${disabled && html`<p className="text-sm text-amber-600 mt-2">登録できる夢は最大${MAX_DREAMS}個までです。</p>`}
+    </form>
+  `;
+}
+
+function DreamItem({ dream, onToggle, onDelete }) {
+  return html`
+    <li className="pop-in flex items-center gap-3 rounded-xl border px-4 py-3 transition shadow-sm ${
+      dream.achieved
+        ? "bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200"
+        : "bg-white border-rose-100 hover:border-rose-300"
+    }">
+      <button
+        onClick=${() => onToggle(dream.id)}
+        aria-label="達成チェック"
+        className="flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition ${
+          dream.achieved
+            ? "bg-amber-400 border-amber-400 text-white"
+            : "border-rose-300 hover:border-rose-400 text-transparent"
+        }"
+      >
+        <${Icon} name="check" className="[&_svg]:w-4 [&_svg]:h-4" />
+      </button>
+
+      <span className="flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600 whitespace-nowrap">
+        ${yearsLabel(dream.years)}
+      </span>
+
+      <span className="flex-1 ${dream.achieved ? "achieved-text font-semibold line-through" : "text-rose-900"}">
+        ${dream.text}
+      </span>
+
+      <button
+        onClick=${() => onDelete(dream.id)}
+        aria-label="削除"
+        className="flex-shrink-0 text-rose-300 hover:text-rose-500 transition"
+      >
+        <${Icon} name="trash-2" className="[&_svg]:w-4 [&_svg]:h-4" />
+      </button>
+    </li>
+  `;
+}
+
+function App() {
+  const [dreams, setDreams] = useState(loadDreams);
+  const [bursts, setBursts] = useState([]);
+  const [importMsg, setImportMsg] = useState("");
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    saveDreams(dreams);
+  }, [dreams]);
+
+  const sorted = useMemo(
+    () => [...dreams].sort((a, b) => a.years - b.years),
+    [dreams]
+  );
+
+  const achievedCount = dreams.filter(d => d.achieved).length;
+
+  const addDream = ({ years, text }) => {
+    if (dreams.length >= MAX_DREAMS) return;
+    setDreams(prev => [...prev, { id: crypto.randomUUID(), years, text, achieved: false }]);
+  };
+
+  const deleteDream = (id) => {
+    setDreams(prev => prev.filter(d => d.id !== id));
+  };
+
+  const toggleDream = (id) => {
+    setDreams(prev => {
+      const target = prev.find(d => d.id === id);
+      const willAchieve = target && !target.achieved;
+      if (willAchieve) {
+        const burstId = crypto.randomUUID();
+        setBursts(b => [...b, burstId]);
+      }
+      return prev.map(d => d.id === id ? { ...d, achieved: !d.achieved } : d);
+    });
+  };
+
+  const removeBurst = (id) => {
+    setBursts(b => b.filter(x => x !== id));
+  };
+
+  const exportDreams = () => {
+    const blob = new Blob([JSON.stringify(dreams, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `dream-tracker_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const importDreams = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!Array.isArray(parsed)) throw new Error("配列形式のJSONではありません");
+
+        let added = 0, updated = 0, skipped = 0;
+        setDreams(prev => {
+          const next = [...prev];
+          for (const raw of parsed) {
+            const text = String(raw?.text ?? "").trim();
+            if (!text) { skipped++; continue; }
+            const years = Math.max(0, parseInt(raw?.years, 10) || 0);
+            const achieved = !!raw?.achieved;
+            const id = typeof raw?.id === "string" && raw.id ? raw.id : crypto.randomUUID();
+            const idx = next.findIndex(d => d.id === id);
+            if (idx >= 0) {
+              next[idx] = { id, years, text, achieved };
+              updated++;
+            } else {
+              if (next.length >= MAX_DREAMS) { skipped++; continue; }
+              next.push({ id, years, text, achieved });
+              added++;
+            }
+          }
+          return next;
+        });
+        setImportMsg(`インポート完了: 新規${added}件 / 更新${updated}件${skipped ? ` / スキップ${skipped}件` : ""}`);
+      } catch (e) {
+        setImportMsg("読み込みに失敗しました: " + e.message);
+      }
+    };
+    reader.onerror = () => setImportMsg("ファイル読み込みエラーが発生しました");
+    reader.readAsText(file, "UTF-8");
+  };
+
+  return html`
+    <div className="min-h-screen px-4 py-10 md:py-14">
+      <div className="max-w-2xl mx-auto">
+        <header className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <${Icon} name="moon-star" className="text-amber-400 [&_svg]:w-7 [&_svg]:h-7" />
+            <h1 className="text-3xl md:text-4xl font-bold text-rose-900 tracking-tight">夢ノート</h1>
+          </div>
+          <p className="text-rose-400 text-sm">叶えたい未来を、ひとつずつ書き記そう</p>
+        </header>
+
+        <div className="flex justify-center gap-2 mb-6">
+          <button
+            onClick=${exportDreams}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 border border-rose-200 text-rose-600 text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-white active:scale-95 transition"
+          >
+            <${Icon} name="download" className="[&_svg]:w-3.5 [&_svg]:h-3.5" />
+            エクスポート
+          </button>
+          <button
+            onClick=${() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 border border-rose-200 text-rose-600 text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-white active:scale-95 transition"
+          >
+            <${Icon} name="upload" className="[&_svg]:w-3.5 [&_svg]:h-3.5" />
+            インポート
+          </button>
+          <input
+            ref=${fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            style=${{ display: "none" }}
+            onChange=${(e) => {
+              const f = e.target.files[0];
+              if (f) importDreams(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        ${importMsg && html`<p className="text-center text-xs text-rose-400 mb-6">${importMsg}</p>`}
+
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-white/70 rounded-xl p-3 text-center shadow-sm border border-rose-100">
+            <p className="text-2xl font-bold text-rose-700">${dreams.length}</p>
+            <p className="text-xs text-rose-400">登録した夢</p>
+          </div>
+          <div className="bg-white/70 rounded-xl p-3 text-center shadow-sm border border-rose-100">
+            <p className="text-2xl font-bold text-amber-500">${achievedCount}</p>
+            <p className="text-xs text-rose-400">達成した夢</p>
+          </div>
+          <div className="bg-white/70 rounded-xl p-3 text-center shadow-sm border border-rose-100">
+            <p className="text-2xl font-bold text-sky-500">${MAX_DREAMS - dreams.length}</p>
+            <p className="text-xs text-rose-400">残り登録数</p>
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <${DreamForm} onAdd=${addDream} disabled=${dreams.length >= MAX_DREAMS} />
+        </div>
+
+        ${sorted.length === 0
+          ? html`<p className="text-center text-rose-300 py-10">まだ夢が登録されていません。最初の夢を書いてみましょう。</p>`
+          : html`<ul className="space-y-2.5">
+              ${sorted.map(dream => html`<${DreamItem} key=${dream.id} dream=${dream} onToggle=${toggleDream} onDelete=${deleteDream} />`)}
+            </ul>`
+        }
+
+        <footer className="text-center text-rose-300 text-xs mt-10">
+          データはこのブラウザに自動で保存されます
+        </footer>
+      </div>
+
+      ${bursts.map(id => html`<${FlowerBurst} key=${id} burstId=${id} onDone=${removeBurst} />`)}
+    </div>
+  `;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App} />`);
+</script>
+</body>
+</html>
