@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Cat Finder</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f7;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 150px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0077ed;
+        }
+        .image-container {
+            margin-top: 30px;
+            min-height: 250px;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>HTTP Cat 検索</h1>
+    <p>ステータスコード（例: 200, 404, 500）を入力してね</p>
+    
+    <input type="number" id="statusCode" placeholder="例: 404" value="404">
+    <button onclick="searchCat()">検索</button>
+
+    <div class="image-container">
+        <img id="catImage" src="https://http.cat/404" alt="HTTP Cat">
+    </div>
+</div>
+
+<script>
+    function searchCat() {
+        const code = document.getElementById('statusCode').value;
+        if (!code) return;
+        
+        // 入力されたコードをもとに、HTTP Cats APIの画像URLを生成して切り替えます
+        const imageUrl = `https://http.cat/${code}`;
+        document.getElementById('catImage').src = imageUrl;
+    }
+</script>
+
+</body>
+</html>
