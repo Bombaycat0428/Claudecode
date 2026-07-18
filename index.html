@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL AGENTS — Virtual Office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #141521;
+    --panel: #1f2233;
+    --panel2: #262b44;
+    --border: #3a4466;
+    --text: #f0f2f8;
+    --text-dim: #8b9bb4;
+    --green: #38b764;
+    --yellow: #ffcd75;
+    --orange: #ef7d57;
+    --blue: #41a6f6;
+    --red: #e5566d;
+    --purple: #a06bd8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "DotGothic16", monospace;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ===== ヘッダー ===== */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 #00000055;
+  }
+  header h1 span { color: var(--text-dim); font-size: 12px; letter-spacing: 0; margin-left: 8px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 13px; }
+  .stat-chip { color: var(--text-dim); }
+  .stat-chip b { color: var(--green); font-size: 16px; margin-left: 4px; }
+  #clock { color: var(--text); font-size: 16px; letter-spacing: 1px; }
+
+  /* ===== レイアウト ===== */
+  main { flex: 1; display: flex; min-height: 0; }
+
+  #stage-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      repeating-linear-gradient(45deg, #171827 0 12px, #141521 12px 24px);
+    min-width: 0;
+    padding: 12px;
+  }
+  #stage {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border: 3px solid var(--border);
+    box-shadow: 0 0 0 3px #0c0d16, 6px 8px 0 #0c0d16;
+    cursor: pointer;
+    background: #0c0d16;
+  }
+
+  /* ===== サイドパネル ===== */
+  aside {
+    width: 340px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-left: 2px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .panel-title {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    padding: 10px 14px 6px;
+  }
+  #agent-list {
+    overflow-y: auto;
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+  .agent-card {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--panel2);
+    border: 2px solid var(--border);
+    padding: 7px 9px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .agent-card:hover { border-color: #5a6a94; }
+  .agent-card.selected { border-color: var(--yellow); }
+  .agent-card canvas { image-rendering: pixelated; flex-shrink: 0; background: #1a1c2c; border: 1px solid var(--border); }
+  .agent-info { min-width: 0; flex: 1; }
+  .agent-name-row { display: flex; align-items: baseline; gap: 8px; }
+  .agent-name { font-size: 14px; }
+  .agent-role { font-size: 11px; color: var(--text-dim); }
+  .agent-status-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .status-dot { width: 8px; height: 8px; flex-shrink: 0; }
+  .agent-task {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .progress-outer {
+    margin-top: 4px;
+    height: 6px;
+    background: #141521;
+    border: 1px solid var(--border);
+  }
+  .progress-inner { height: 100%; width: 0%; background: var(--green); transition: width .4s linear; }
+
+  /* タスク追加フォーム */
+  #task-form {
+    padding: 8px 12px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  #task-form input, #task-form select, #task-form button {
+    font-family: inherit;
+    font-size: 12px;
+    background: var(--panel2);
+    color: var(--text);
+    border: 2px solid var(--border);
+    padding: 5px 6px;
+    outline: none;
+  }
+  #task-form input { flex: 1; min-width: 0; }
+  #task-form input::placeholder { color: #5a6a94; }
+  #task-form select { max-width: 80px; }
+  #task-form button { cursor: pointer; background: #2d4a35; border-color: var(--green); color: var(--green); }
+  #task-form button:hover { background: var(--green); color: #141521; }
+
+  /* ===== ログ ===== */
+  #log-section { flex: 1; display: flex; flex-direction: column; min-height: 120px; border-top: 2px solid var(--border); }
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 14px 10px;
+    font-size: 11px;
+    line-height: 1.9;
+  }
+  .log-time { color: #5a6a94; margin-right: 6px; }
+  .log-name { color: var(--yellow); }
+  .log-done { color: var(--green); }
+  .log-meet { color: var(--blue); }
+  .log-break { color: var(--orange); }
+  .log-new { color: var(--purple); }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--panel); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--panel); }
+
+  @media (max-width: 900px) {
+    main { flex-direction: column; }
+    aside { width: 100%; flex: 1; border-left: none; border-top: 2px solid var(--border); }
+    #stage-wrap { flex: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PIXEL AGENTS<span>AI社員バーチャルオフィス</span></h1>
+  <div class="header-right">
+    <div class="stat-chip">本日の完了タスク<b id="done-count">0</b></div>
+    <div id="clock">--:--:--</div>
+  </div>
+</header>
+
+<main>
+  <div id="stage-wrap">
+    <canvas id="stage" width="512" height="288"></canvas>
+  </div>
+
+  <aside>
+    <div class="panel-title">■ AGENTS</div>
+    <div id="agent-list"></div>
+    <form id="task-form">
+      <input type="text" id="task-input" maxlength="30" placeholder="タスクを依頼する…">
+      <select id="task-assignee"><option value="">自動</option></select>
+      <button type="submit">依頼</button>
+    </form>
+    <div id="log-section">
+      <div class="panel-title">■ ACTIVITY LOG</div>
+      <div id="log"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+'use strict';
+
+/* =========================================================
+   PIXEL AGENTS — AI社員バーチャルオフィス
+   32×18マス（1マス16px）のオフィスをCanvasに描画し、
+   AI社員が自律的に タスク→休憩→会議 を繰り返すシミュレーション
+   ========================================================= */
+
+const TILE = 16, COLS = 32, ROWS = 18;
+const W = COLS * TILE, H = ROWS * TILE;
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+/* ---------- カラーパレット ---------- */
+const PAL = {
+  wallTop: '#2b2f4a', wallFace: '#56658a', wallLight: '#66779e', baseboard: '#3a4466',
+  floorA: '#c8a06c', floorB: '#bd9260', floorLine: '#a87f4f',
+  rug: '#a05a48', rugEdge: '#7a4438', rugIn: '#b06a55',
+  deskTop: '#8a5a36', deskFace: '#6e4527', deskEdge: '#5a3820',
+  chair: '#4a5480', chairDark: '#363e60',
+  monitor: '#22243a', screenOn: '#9ff5e0', screenDim: '#3b4a6b',
+  shadow: 'rgba(20,15,30,0.25)',
+};
+
+/* ---------- AI社員の定義 ---------- */
+const AGENT_DEFS = [
+  { name: 'Atlas', role: 'PM',         shirt: '#b13e53', pants: '#3a3a50', hair: '#4a3225', skin: '#f0c8a0',
+    tasks: ['進捗レポート作成','スプリント計画の更新','要件の整理','ロードマップ見直し','朝会メモの共有'] },
+  { name: 'Nova',  role: 'エンジニア',  shirt: '#3b5dc9', pants: '#2b2b3f', hair: '#26232f', skin: '#e8b088',
+    tasks: ['APIのバグ修正','ログイン画面の実装','テストコード追加','リファクタリング','DBクエリ最適化','ビルドエラー調査'] },
+  { name: 'Pixel', role: 'デザイナー',  shirt: '#eb6a9c', pants: '#3a3a50', hair: '#41a6f6', skin: '#f0c8a0',
+    tasks: ['LPのモックアップ作成','アイコンのリデザイン','配色パレット検討','プロトタイプ更新','UIレビュー対応'] },
+  { name: 'Sage',  role: 'リサーチャー', shirt: '#38b764', pants: '#2b2b3f', hair: '#6d5a48', skin: '#c68e5f',
+    tasks: ['競合調査レポート','ユーザー行動の分析','論文サーベイ','データ収集の実行','市場トレンド調査'] },
+  { name: 'Echo',  role: 'サポート',    shirt: '#ef7d57', pants: '#3a3a50', hair: '#8a4a2a', skin: '#f0c8a0',
+    tasks: ['問い合わせ対応','FAQの更新','障害チケット対応','フィードバック整理','ヘルプ記事の執筆'] },
+  { name: 'Quill', role: 'ライター',    shirt: '#ffcd75', pants: '#2b2b3f', hair: '#e8d8b0', skin: '#e8b088',
+    tasks: ['ブログ記事の執筆','リリースノート作成','SNS投稿の下書き','ドキュメント校正','ニュースレター作成'] },
+];
+
+/* ---------- オフィスの間取り ---------- */
+// デスク：左タイルの下が椅子（作業スポット）
+const DESKS = [ {x:3,y:5}, {x:8,y:5}, {x:13,y:5}, {x:3,y:9}, {x:8,y:9}, {x:13,y:9} ];
+// 会議テーブルと座席
+const MEETING_TABLE = { x: 21, y: 7, w: 5, h: 2 };
+const MEETING_SEATS = [ {x:22,y:6},{x:24,y:6},{x:22,y:10},{x:24,y:10} ];
+// コーヒーコーナー
+const COFFEE = { machine: {x:1,y:14}, counter: {x:2,y:14}, spots: [{x:1,y:15},{x:2,y:15}] };
+// 観葉植物
+const PLANTS = [ {x:1,y:2},{x:17,y:2},{x:27,y:16},{x:30,y:11},{x:19,y:13} ];
+// サーバーラック
+const SERVER = { x: 28, y: 2, w: 3, h: 2 };
+// ラグ（見た目のみ）
+const RUG = { x: 6, y: 13, w: 9, h: 4 };
+// 窓とホワイトボード（壁面の飾り）
+const WINDOWS = [3, 9, 15];
+const WHITEBOARD = { x: 21, y: 0, w: 5 };
+
+/* ---------- 衝突判定グリッド ---------- */
+const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+function block(x, y, w = 1, h = 1) {
+  for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++)
+    if (j >= 0 && j < ROWS && i >= 0 && i < COLS) grid[j][i] = 1;
+}
+for (let i = 0; i < COLS; i++) { grid[0][i] = 1; grid[1][i] = 1; } // 上壁
+DESKS.forEach(d => block(d.x, d.y, 2, 1));
+block(MEETING_TABLE.x, MEETING_TABLE.y, MEETING_TABLE.w, MEETING_TABLE.h);
+block(COFFEE.machine.x, COFFEE.machine.y); block(COFFEE.counter.x, COFFEE.counter.y);
+PLANTS.forEach(p => block(p.x, p.y));
+block(SERVER.x, SERVER.y, SERVER.w, SERVER.h);
+
+const walkable = (x, y) => x >= 0 && x < COLS && y >= 2 && y < ROWS && grid[y][x] === 0;
+
+/* ---------- 経路探索（BFS） ---------- */
+function findPath(sx, sy, tx, ty) {
+  if (sx === tx && sy === ty) return [];
+  if (!walkable(tx, ty)) return null;
+  const prev = new Map(), key = (x, y) => y * COLS + x;
+  const queue = [[sx, sy]];
+  prev.set(key(sx, sy), null);
+  while (queue.length) {
+    const [cx, cy] = queue.shift();
+    if (cx === tx && cy === ty) {
+      const path = [];
+      let k = key(tx, ty);
+      while (k !== null) { path.push({ x: k % COLS, y: Math.floor(k / COLS) }); k = prev.get(k); }
+      path.reverse(); path.shift(); // 先頭（現在地）は除く
+      return path;
+    }
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = cx + dx, ny = cy + dy, nk = key(nx, ny);
+      if (walkable(nx, ny) && !prev.has(nk)) { prev.set(nk, key(cx, cy)); queue.push([nx, ny]); }
+    }
+  }
+  return null;
+}
+
+function randomFloorTile() {
+  for (let i = 0; i < 60; i++) {
+    const x = 2 + Math.floor(Math.random() * (COLS - 4));
+    const y = 3 + Math.floor(Math.random() * (ROWS - 4));
+    if (walkable(x, y)) return { x, y };
+  }
+  return { x: 10, y: 13 };
+}
+
+/* ---------- ユーティリティ ---------- */
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const tileCenter = t => ({ x: t.x * TILE + TILE / 2, y: t.y * TILE + TILE / 2 });
+
+/* ---------- 状態表示の定義 ---------- */
+const STATUS_INFO = {
+  working: { label: '作業中',   color: 'var(--green)',  c: '#38b764' },
+  walking: { label: '移動中',   color: 'var(--yellow)', c: '#ffcd75' },
+  meeting: { label: '会議中',   color: 'var(--blue)',   c: '#41a6f6' },
+  coffee:  { label: '休憩中',   color: 'var(--orange)', c: '#ef7d57' },
+  idle:    { label: '考え中',   color: '#8b9bb4',       c: '#8b9bb4' },
+};
+
+/* =========================================================
+   エージェント（AI社員）
+   ========================================================= */
+let doneCount = 0;
+let selectedAgent = null;
+const taskQueue = []; // ユーザーが依頼したタスク { text, assignee }
+
+class Agent {
+  constructor(def, idx) {
+    Object.assign(this, def);
+    this.idx = idx;
+    this.desk = DESKS[idx];
+    this.deskSpot = { x: this.desk.x, y: this.desk.y + 1 }; // 椅子の位置
+    const start = randomFloorTile();
+    this.px = start.x * TILE + TILE / 2;
+    this.py = start.y * TILE + TILE / 2;
+    this.dir = 'down';        // down / up / left / right
+    this.state = 'idle';
+    this.path = [];
+    this.onArrive = null;
+    this.speed = rand(42, 52);        // px/秒
+    this.stateUntil = performance.now() + rand(500, 3000);
+    this.task = null;                 // { text, duration, elapsed, fromUser }
+    this.savedTask = null;            // 会議で中断したタスク
+    this.bubble = null;               // { text, until }
+    this.sitting = false;
+    this.bobSeed = Math.random() * 1000;
+  }
+
+  /* 目的地へ経路をセット */
+  goTo(tx, ty, onArrive) {
+    const cx = Math.floor(this.px / TILE), cy = Math.floor(this.py / TILE);
+    const path = findPath(cx, cy, tx, ty);
+    if (path === null) { this.state = 'idle'; this.stateUntil = performance.now() + 2000; return; }
+    this.path = path;
+    this.onArrive = onArrive;
+    this.sitting = false;
+    if (path.length === 0) { const cb = this.onArrive; this.onArrive = null; if (cb) cb(); }
+    else this.state = 'walking';
+  }
+
+  /* 次のタスクを取得（ユーザー依頼を優先） */
+  pullTask() {
+    const qi = taskQueue.findIndex(t => !t.assignee || t.assignee === this.name);
+    if (qi >= 0) {
+      const t = taskQueue.splice(qi, 1)[0];
+      return { text: t.text, duration: rand(18000, 35000), elapsed: 0, fromUser: true };
+    }
+    return { text: pick(this.tasks), duration: rand(20000, 45000), elapsed: 0, fromUser: false };
+  }
+
+  startWork(resume) {
+    if (!resume) this.task = this.pullTask();
+    this.goTo(this.deskSpot.x, this.deskSpot.y, () => {
+      this.state = 'working';
+      this.sitting = true;
+      this.dir = 'up';
+      if (!resume) addLog(this, `「${this.task.text}」を開始`, '');
+    });
+    if (!resume) addLog(this, `「${this.task.text}」に着手`, '', true);
+  }
+
+  finishWork(now) {
+    doneCount++;
+    document.getElementById('done-count').textContent = doneCount;
+    addLog(this, `「${this.task.text}」を完了 ✔`, 'log-done');
+    this.bubble = { text: '✔', until: now + 2000 };
+    this.task = null;
+    this.sitting = false;
+    if (Math.random() < 0.35) { // コーヒー休憩へ
+      const spot = pick(COFFEE.spots);
+      this.goTo(spot.x, spot.y, () => {
+        this.state = 'coffee';
+        this.dir = 'up';
+        this.stateUntil = performance.now() + rand(6000, 11000);
+        addLog(this, `コーヒー休憩中`, 'log-break');
+      });
+    } else {
+      this.state = 'idle';
+      this.stateUntil = now + rand(2000, 6000);
+    }
+  }
+
+  update(dt, now) {
+    // 吹き出しの期限切れ
+    if (this.bubble && now > this.bubble.until) this.bubble = null;
+
+    switch (this.state) {
+      case 'walking': {
+        if (this.path.length === 0) {
+          const cb = this.onArrive; this.onArrive = null;
+          this.state = 'idle'; this.stateUntil = now + rand(1500, 4000);
+          if (cb) cb();
+          break;
+        }
+        const target = tileCenter(this.path[0]);
+        const dx = target.x - this.px, dy = target.y - this.py;
+        const dist = Math.hypot(dx, dy);
+        const step = this.speed * dt;
+        if (dist <= step) {
+          this.px = target.x; this.py = target.y;
+          this.path.shift();
+        } else {
+          this.px += (dx / dist) * step;
+          this.py += (dy / dist) * step;
+          this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+        }
+        break;
+      }
+      case 'working': {
+        this.task.elapsed += dt * 1000;
+        // ときどき吹き出し
+        if (!this.bubble && Math.random() < dt * 0.15)
+          this.bubble = { text: pick(['…', '!', '♪']), until: now + 1800 };
+        if (this.task.elapsed >= this.task.duration) this.finishWork(now);
+        break;
+      }
+      case 'coffee': {
+        if (!this.bubble && Math.random() < dt * 0.3)
+          this.bubble = { text: '旦', until: now + 1500 };
+        if (now > this.stateUntil) { this.state = 'idle'; this.stateUntil = now + rand(1000, 3000); }
+        break;
+      }
+      case 'meeting': {
+        if (!this.bubble && Math.random() < dt * 0.35)
+          this.bubble = { text: pick(['…', '!', '?']), until: now + 1500 };
+        // 終了はミーティングマネージャー側で制御
+        break;
+      }
+      case 'idle': {
+        if (now > this.stateUntil) {
+          // ユーザー依頼があれば最優先で仕事へ
+          const hasUserTask = taskQueue.some(t => !t.assignee || t.assignee === this.name);
+          const r = Math.random();
+          if (hasUserTask || r < 0.65) this.startWork(false);
+          else { // ぶらぶら歩く
+            const t = randomFloorTile();
+            this.goTo(t.x, t.y, null);
+          }
+        }
+        break;
+      }
+    }
+  }
+}
+
+const agents = AGENT_DEFS.map((d, i) => new Agent(d, i));
+
+/* =========================================================
+   ミーティングマネージャー（ときどき会議を招集）
+   ========================================================= */
+let meeting = null; // { members, until }
+let nextMeeting = performance.now() + rand(40000, 80000);
+
+function updateMeeting(now) {
+  if (meeting) {
+    if (now > meeting.until) {
+      addLog(null, `ミーティング終了`, 'log-meet');
+      meeting.members.forEach(a => {
+        a.sitting = false;
+        if (a.savedTask) { a.task = a.savedTask; a.savedTask = null; a.startWork(true); }
+        else { a.state = 'idle'; a.stateUntil = now + rand(1000, 4000); }
+      });
+      meeting = null;
+      nextMeeting = now + rand(50000, 100000);
+    }
+    return;
+  }
+  if (now < nextMeeting) return;
+  // 会議メンバーを選ぶ（休憩中・会議中以外から2〜3人）
+  const candidates = agents.filter(a => ['idle', 'working', 'walking'].includes(a.state));
+  if (candidates.length < 2) { nextMeeting = now + 15000; return; }
+  const count = Math.min(candidates.length, 2 + (Math.random() < 0.5 ? 1 : 0));
+  const members = [...candidates].sort(() => Math.random() - 0.5).slice(0, count);
+  meeting = { members, until: now + rand(12000, 20000) };
+  addLog(null, `ミーティング開始（${members.map(m => m.name).join('・')}）`, 'log-meet');
+  members.forEach((a, i) => {
+    if (a.state === 'working' && a.task) { a.savedTask = a.task; a.task = null; }
+    a.sitting = false;
+    const seat = MEETING_SEATS[i % MEETING_SEATS.length];
+    a.goTo(seat.x, seat.y, () => {
+      a.state = 'meeting';
+      a.sitting = true;
+      a.dir = seat.y < MEETING_TABLE.y ? 'down' : 'up';
+    });
+  });
+}
+
+/* =========================================================
+   アクティビティログ
+   ========================================================= */
+const logEl = document.getElementById('log');
+function addLog(agent, text, cls, silent) {
+  if (silent) return;
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2, '0');
+  const mm = String(t.getMinutes()).padStart(2, '0');
+  const div = document.createElement('div');
+  const name = agent ? `<span class="log-name">${agent.name}</span> ` : '';
+  div.innerHTML = `<span class="log-time">${hh}:${mm}</span>${name}<span class="${cls || ''}">${text}</span>`;
+  logEl.prepend(div);
+  while (logEl.children.length > 60) logEl.removeChild(logEl.lastChild);
+}
+
+/* =========================================================
+   描画：オフィス背景
+   ========================================================= */
+function drawOffice(now) {
+  // 床（市松模様の木目）
+  for (let y = 2; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      ctx.fillStyle = (x + y) % 2 === 0 ? PAL.floorA : PAL.floorB;
+      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+      ctx.fillStyle = PAL.floorLine;
+      ctx.fillRect(x * TILE, y * TILE + TILE - 1, TILE, 1);
+    }
+  }
+
+  // ラグ
+  ctx.fillStyle = PAL.rugEdge;
+  ctx.fillRect(RUG.x * TILE, RUG.y * TILE, RUG.w * TILE, RUG.h * TILE);
+  ctx.fillStyle = PAL.rug;
+  ctx.fillRect(RUG.x * TILE + 3, RUG.y * TILE + 3, RUG.w * TILE - 6, RUG.h * TILE - 6);
+  ctx.fillStyle = PAL.rugIn;
+  ctx.fillRect(RUG.x * TILE + 10, RUG.y * TILE + 10, RUG.w * TILE - 20, RUG.h * TILE - 20);
+
+  // 壁
+  ctx.fillStyle = PAL.wallTop;
+  ctx.fillRect(0, 0, W, 10);
+  ctx.fillStyle = PAL.wallFace;
+  ctx.fillRect(0, 10, W, TILE * 2 - 10);
+  ctx.fillStyle = PAL.wallLight;
+  ctx.fillRect(0, 10, W, 2);
+  ctx.fillStyle = PAL.baseboard;
+  ctx.fillRect(0, TILE * 2 - 4, W, 4);
+
+  // 窓（空と流れる雲）
+  WINDOWS.forEach(wx => {
+    const x = wx * TILE, y = 6, w = TILE * 3, h = 20;
+    ctx.fillStyle = '#2b2f4a'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    // 空のグラデーション（2トーン）
+    ctx.fillStyle = '#7ec8e8'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#a8dff0'; ctx.fillRect(x, y + h - 8, w, 8);
+    // 雲（ゆっくり流れる）
+    ctx.fillStyle = '#ffffff';
+    const off = (now / 300) % (w + 20);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.fillRect(x - 20 + off, y + 4, 14, 4);
+    ctx.fillRect(x - 16 + off, y + 2, 8, 3);
+    ctx.fillRect(x - 20 + ((off + 26) % (w + 20)), y + 11, 10, 3);
+    ctx.restore();
+    // 桟
+    ctx.fillStyle = '#2b2f4a';
+    ctx.fillRect(x + w / 2 - 1, y, 2, h);
+  });
+
+  // ホワイトボード
+  {
+    const x = WHITEBOARD.x * TILE, y = 5, w = WHITEBOARD.w * TILE, h = 21;
+    ctx.fillStyle = '#3a4466'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.fillStyle = '#e8ecf4'; ctx.fillRect(x, y, w, h);
+    // 落書き（グラフっぽい線）
+    ctx.fillStyle = '#e5566d'; ctx.fillRect(x + 6, y + 12, 12, 2);
+    ctx.fillStyle = '#3b5dc9';
+    ctx.fillRect(x + 24, y + 14, 2, 4); ctx.fillRect(x + 28, y + 10, 2, 8);
+    ctx.fillRect(x + 32, y + 6, 2, 12); ctx.fillRect(x + 36, y + 12, 2, 6);
+    ctx.fillStyle = '#38b764'; ctx.fillRect(x + 46, y + 5, 22, 2);
+    ctx.fillStyle = '#8b9bb4'; ctx.fillRect(x + 46, y + 10, 18, 1); ctx.fillRect(x + 46, y + 14, 20, 1);
+  }
+
+  // サーバーラック
+  {
+    const x = SERVER.x * TILE, y = SERVER.y * TILE - 14;
+    const w = SERVER.w * TILE, h = SERVER.h * TILE + 14;
+    ctx.fillStyle = '#1a1c2c'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#262b44'; ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+    for (let r = 0; r < 4; r++) {
+      const ry = y + 6 + r * 12;
+      ctx.fillStyle = '#1a1c2c'; ctx.fillRect(x + 4, ry, w - 8, 8);
+      // 点滅LED
+      for (let l = 0; l < 3; l++) {
+        const on = Math.floor(now / 400 + r * 2 + l * 5) % 3 !== 0;
+        ctx.fillStyle = on ? (l === 0 ? '#38b764' : l === 1 ? '#ffcd75' : '#41a6f6') : '#141521';
+        ctx.fillRect(x + 7 + l * 6, ry + 3, 2, 2);
+      }
+      ctx.fillStyle = '#3a4466'; ctx.fillRect(x + w - 16, ry + 2, 8, 4);
+    }
+  }
+
+  // デスク
+  DESKS.forEach((d, i) => {
+    const x = d.x * TILE, y = d.y * TILE;
+    const occupant = agents[i];
+    const isWorking = occupant && occupant.state === 'working' && occupant.sitting;
+    // 天板
+    ctx.fillStyle = PAL.deskTop;  ctx.fillRect(x, y - 4, TILE * 2, TILE);
+    ctx.fillStyle = PAL.deskFace; ctx.fillRect(x, y + TILE - 4, TILE * 2, 4);
+    ctx.fillStyle = PAL.deskEdge; ctx.fillRect(x, y + TILE - 1, TILE * 2, 1);
+    // モニター（左タイル上）
+    const mx = x + 3;
+    ctx.fillStyle = PAL.monitor; ctx.fillRect(mx, y - 14, 12, 10);
+    if (isWorking) {
+      // 画面点灯＋ちらつき
+      const flick = Math.floor(now / 200 + i * 3) % 7 === 0;
+      ctx.fillStyle = flick ? '#c8fff0' : PAL.screenOn;
+      ctx.fillRect(mx + 1, y - 13, 10, 8);
+      ctx.fillStyle = '#41a6f6';
+      ctx.fillRect(mx + 2, y - 12, 6, 1);
+      ctx.fillRect(mx + 2, y - 10, 8, 1);
+      ctx.fillRect(mx + 2, y - 8, 5, 1);
+    } else {
+      ctx.fillStyle = PAL.screenDim; ctx.fillRect(mx + 1, y - 13, 10, 8);
+    }
+    ctx.fillStyle = PAL.monitor; ctx.fillRect(mx + 5, y - 4, 2, 2);
+    // キーボードと小物（右タイル）
+    ctx.fillStyle = '#3a4466'; ctx.fillRect(x + 4, y + 2, 10, 4);
+    ctx.fillStyle = '#e8ecf4'; ctx.fillRect(x + TILE + 5, y - 2, 7, 5);   // 書類
+    ctx.fillStyle = '#8b9bb4'; ctx.fillRect(x + TILE + 6, y - 1, 5, 1);
+    ctx.fillStyle = '#38b764'; ctx.fillRect(x + TILE + 4, y + 5, 3, 3);   // ミニ植物
+    ctx.fillStyle = '#6e4527'; ctx.fillRect(x + TILE + 4, y + 8, 3, 2);
+    // 椅子（誰も座っていなければ描く。座っている時はキャラの後ろに背もたれだけ）
+    const spot = { x: d.x, y: d.y + 1 };
+    const occupied = agents.some(a => a.sitting && Math.floor(a.px / TILE) === spot.x && Math.floor(a.py / TILE) === spot.y);
+    const cx = spot.x * TILE + 8, cy = spot.y * TILE + 8;
+    if (!occupied) {
+      ctx.fillStyle = PAL.chairDark; ctx.fillRect(cx - 5, cy - 3, 10, 8);
+      ctx.fillStyle = PAL.chair;     ctx.fillRect(cx - 4, cy - 2, 8, 6);
+      ctx.fillStyle = PAL.chairDark; ctx.fillRect(cx - 4, cy + 5, 8, 2);
+    }
+  });
+
+  // 会議テーブル
+  {
+    const x = MEETING_TABLE.x * TILE, y = MEETING_TABLE.y * TILE;
+    const w = MEETING_TABLE.w * TILE, h = MEETING_TABLE.h * TILE;
+    ctx.fillStyle = PAL.deskEdge; ctx.fillRect(x + 2, y - 2, w - 4, h);
+    ctx.fillStyle = PAL.deskTop;  ctx.fillRect(x + 2, y - 4, w - 4, h - 2);
+    ctx.fillStyle = '#9a6a42';    ctx.fillRect(x + 4, y - 2, w - 8, h - 6);
+    // テーブル上のノートPCと資料
+    ctx.fillStyle = '#3a4466'; ctx.fillRect(x + 14, y + 4, 10, 7);
+    ctx.fillStyle = meeting ? '#9ff5e0' : PAL.screenDim; ctx.fillRect(x + 15, y + 5, 8, 5);
+    ctx.fillStyle = '#e8ecf4'; ctx.fillRect(x + w - 26, y + 6, 9, 6);
+    ctx.fillStyle = '#e5566d'; ctx.fillRect(x + w - 38, y + 8, 4, 4);
+  }
+
+  // コーヒーコーナー
+  {
+    const m = COFFEE.machine, c = COFFEE.counter;
+    const mx = m.x * TILE, my = m.y * TILE;
+    // カウンター
+    ctx.fillStyle = PAL.deskFace; ctx.fillRect(mx, my + 4, TILE * 2, TILE - 4);
+    ctx.fillStyle = PAL.deskTop;  ctx.fillRect(mx, my - 2, TILE * 2, 8);
+    // コーヒーマシン
+    ctx.fillStyle = '#26232f'; ctx.fillRect(mx + 2, my - 14, 12, 14);
+    ctx.fillStyle = '#e5566d'; ctx.fillRect(mx + 4, my - 12, 8, 3);
+    ctx.fillStyle = '#ffcd75'; ctx.fillRect(mx + 6, my - 7, 4, 2);
+    ctx.fillStyle = '#e8ecf4'; ctx.fillRect(mx + 6, my - 3, 4, 3); // カップ
+    // 湯気（誰か休憩中なら多め）
+    const someoneBrewing = agents.some(a => a.state === 'coffee');
+    const steamPhase = Math.floor(now / 350) % 3;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    if (steamPhase === 0 || someoneBrewing) ctx.fillRect(mx + 7, my - 18, 2, 2);
+    if (steamPhase === 1) ctx.fillRect(mx + 9, my - 21, 2, 2);
+    // カウンター上のカップ
+    ctx.fillStyle = '#e8ecf4'; ctx.fillRect(c.x * TILE + 4, my, 4, 4);
+    ctx.fillStyle = '#41a6f6'; ctx.fillRect(c.x * TILE + 10, my, 4, 4);
+  }
+
+  // 観葉植物
+  PLANTS.forEach(p => {
+    const x = p.x * TILE + 8, y = p.y * TILE + 12;
+    ctx.fillStyle = '#b13e53'; ctx.fillRect(x - 4, y - 2, 8, 6);
+    ctx.fillStyle = '#8a2f40'; ctx.fillRect(x - 4, y + 2, 8, 2);
+    ctx.fillStyle = '#38b764';
+    ctx.fillRect(x - 2, y - 12, 4, 10);
+    ctx.fillRect(x - 6, y - 8, 4, 5);
+    ctx.fillRect(x + 2, y - 9, 4, 6);
+    ctx.fillStyle = '#2d9151';
+    ctx.fillRect(x - 5, y - 6, 2, 3); ctx.fillRect(x + 3, y - 7, 2, 3);
+  });
+}
+
+/* =========================================================
+   描画：キャラクター（12×16ピクセル手描き風）
+   ========================================================= */
+function drawCharacter(a, now) {
+  const x = Math.round(a.px), footY = Math.round(a.py) + 6;
+  const walking = a.state === 'walking';
+  const frame = walking ? Math.floor(now / 160) % 2 : 0;
+  const bob = a.sitting ? (a.state === 'working' ? Math.floor(now / 260 + a.bobSeed) % 2 : 0)
+                        : (walking ? 0 : Math.floor(now / 600 + a.bobSeed) % 2 === 0 ? 0 : 0);
+  const h = 15; // キャラの高さ
+  const top = footY - h - (a.sitting ? -3 : 0) + (a.sitting ? bob : 0);
+
+  // 影
+  ctx.fillStyle = PAL.shadow;
+  ctx.fillRect(x - 5, footY - 1, 10, 3);
+
+  // 座っている場合は椅子の座面を先に
+  if (a.sitting) {
+    ctx.fillStyle = PAL.chairDark;
+    ctx.fillRect(x - 5, footY - 6, 10, 6);
+  }
+
+  const S = a.skin, SH = a.shirt, HA = a.hair, PA = a.pants;
+  const px = (dx, dy, w, hh, c) => { ctx.fillStyle = c; ctx.fillRect(x + dx, top + dy, w, hh); };
+
+  if (a.dir === 'up') {
+    // 後ろ姿：髪が頭全体
+    px(-4, 0, 8, 6, HA);
+    px(-5, 2, 1, 3, HA); px(4, 2, 1, 3, HA);
+    px(-4, 6, 8, 1, S);                       // うなじ
+    px(-4, 7, 8, 5, SH);                      // 体
+    px(-6, 8, 2, 3, SH); px(4, 8, 2, 3, SH);  // 腕
+    if (!a.sitting) {
+      px(-3, 12, 2, 3 - frame, PA); px(1, 12 , 2, 2 + frame, PA);
+    }
+  } else if (a.dir === 'down') {
+    px(-4, 0, 8, 3, HA);                      // 前髪
+    px(-5, 1, 1, 4, HA); px(4, 1, 1, 4, HA);  // サイド
+    px(-4, 3, 8, 4, S);                       // 顔
+    px(-2, 4, 1, 2, '#26232f'); px(1, 4, 1, 2, '#26232f'); // 目
+    px(-4, 7, 8, 5, SH);
+    px(-6, 8, 2, 3, SH); px(4, 8, 2, 3, SH);
+    px(-6, 11, 2, 1, S); px(4, 11, 2, 1, S);  // 手
+    if (!a.sitting) {
+      px(-3, 12, 2, 2 + frame, PA); px(1, 12, 2, 3 - frame, PA);
+    }
+  } else {
+    const f = a.dir === 'right' ? 1 : -1;
+    px(-4, 0, 8, 3, HA);
+    px(-4 - Math.min(0, f * 1), 1, 1, 4, HA);
+    px(-4, 3, 8, 4, S);
+    px(f > 0 ? 1 : -2, 4, 1, 2, '#26232f');   // 目（進行方向側）
+    px(-4, 7, 8, 5, SH);
+    px(f > 0 ? 3 : -5, 8, 2, 3 + frame, SH);  // 前の腕
+    if (!a.sitting) {
+      px(-2, 12, 2, 2 + frame, PA); px(0, 12, 2, 3 - frame, PA);
+    }
+  }
+
+  // 名前ラベル
+  ctx.font = '8px "DotGothic16", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(12,13,22,0.6)';
+  const nameW = ctx.measureText(a.name).width;
+  ctx.fillRect(x - nameW / 2 - 2, top - 10, nameW + 4, 9);
+  ctx.fillStyle = selectedAgent === a ? '#ffcd75' : '#f0f2f8';
+  ctx.fillText(a.name, x, top - 3);
+
+  // 選択マーカー
+  if (selectedAgent === a) {
+    const blink = Math.floor(now / 300) % 2 === 0;
+    if (blink) {
+      ctx.fillStyle = '#ffcd75';
+      ctx.fillRect(x - 2, top - 16, 4, 2);
+      ctx.fillRect(x - 1, top - 14, 2, 2);
+    }
+  }
+
+  // 作業中プログレスバー
+  if (a.state === 'working' && a.task) {
+    const p = Math.min(1, a.task.elapsed / a.task.duration);
+    ctx.fillStyle = 'rgba(20,21,33,0.55)';
+    ctx.fillRect(x - 7, top + h + 5, 14, 3);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(x - 6, top + h + 6, Math.round(12 * p), 1);
+  }
+
+  // 吹き出し
+  if (a.bubble) {
+    const bx = x + 8, by = top - 12;
+    ctx.fillStyle = '#f0f2f8';
+    ctx.fillRect(bx - 2, by - 8, 14, 11);
+    ctx.fillRect(bx - 1, by + 3, 3, 2);
+    ctx.fillStyle = '#26232f';
+    ctx.font = '8px "DotGothic16", monospace';
+    ctx.fillText(a.bubble.text, bx + 5, by);
+  }
+}
+
+/* =========================================================
+   サイドパネル
+   ========================================================= */
+const listEl = document.getElementById('agent-list');
+const cards = [];
+
+function buildPanel() {
+  const sel = document.getElementById('task-assignee');
+  agents.forEach(a => {
+    // 割り当てセレクト
+    const opt = document.createElement('option');
+    opt.value = a.name; opt.textContent = a.name;
+    sel.appendChild(opt);
+
+    // カード
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+    const av = document.createElement('canvas');
+    av.width = 12; av.height = 12;
+    av.style.width = '36px'; av.style.height = '36px';
+    const actx = av.getContext('2d');
+    actx.fillStyle = '#1a1c2c'; actx.fillRect(0, 0, 12, 12);
+    actx.fillStyle = a.hair; actx.fillRect(2, 1, 8, 4);
+    actx.fillRect(1, 2, 1, 4); actx.fillRect(10, 2, 1, 4);
+    actx.fillStyle = a.skin; actx.fillRect(2, 4, 8, 5);
+    actx.fillStyle = '#26232f'; actx.fillRect(4, 6, 1, 2); actx.fillRect(7, 6, 1, 2);
+    actx.fillStyle = a.shirt; actx.fillRect(2, 9, 8, 3);
+
+    const info = document.createElement('div');
+    info.className = 'agent-info';
+    info.innerHTML = `
+      <div class="agent-name-row">
+        <span class="agent-name">${a.name}</span>
+        <span class="agent-role">${a.role}</span>
+      </div>
+      <div class="agent-status-row">
+        <div class="status-dot"></div>
+        <span class="agent-task"></span>
+      </div>
+      <div class="progress-outer"><div class="progress-inner"></div></div>`;
+    card.appendChild(av);
+    card.appendChild(info);
+    card.addEventListener('click', () => {
+      selectedAgent = selectedAgent === a ? null : a;
+      refreshSelection();
+    });
+    listEl.appendChild(card);
+    cards.push({
+      card,
+      dot: info.querySelector('.status-dot'),
+      task: info.querySelector('.agent-task'),
+      bar: info.querySelector('.progress-inner'),
+    });
+  });
+}
+
+function refreshSelection() {
+  agents.forEach((a, i) => cards[i].card.classList.toggle('selected', selectedAgent === a));
+}
+
+function updatePanel() {
+  agents.forEach((a, i) => {
+    const c = cards[i];
+    const st = STATUS_INFO[a.state] || STATUS_INFO.idle;
+    c.dot.style.background = st.c;
+    let text = st.label;
+    if (a.state === 'working' && a.task) text = a.task.text;
+    else if (a.state === 'walking' && a.task) text = `移動中 →「${a.task.text}」`;
+    else if (a.state === 'meeting') text = 'ミーティングに参加中';
+    else if (a.state === 'coffee') text = 'コーヒー休憩中';
+    else if (a.state === 'walking') text = '移動中';
+    else text = '次のタスクを考え中…';
+    c.task.textContent = text;
+    const p = (a.state === 'working' && a.task) ? Math.min(100, a.task.elapsed / a.task.duration * 100) : 0;
+    c.bar.style.width = p + '%';
+  });
+}
+buildPanel();
+setInterval(updatePanel, 400);
+
+/* ---------- タスク依頼フォーム ---------- */
+document.getElementById('task-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const input = document.getElementById('task-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const assignee = document.getElementById('task-assignee').value || null;
+  taskQueue.push({ text, assignee });
+  addLog(null, `新しい依頼「${text}」${assignee ? ` → ${assignee}` : ''}`, 'log-new');
+  input.value = '';
+});
+
+/* ---------- キャンバスクリックで選択 ---------- */
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width * W;
+  const my = (e.clientY - rect.top) / rect.height * H;
+  let best = null, bestD = 24;
+  agents.forEach(a => {
+    const d = Math.hypot(a.px - mx, a.py - my);
+    if (d < bestD) { bestD = d; best = a; }
+  });
+  selectedAgent = best === selectedAgent ? null : best;
+  refreshSelection();
+});
+
+/* ---------- キャンバスの拡大表示（ドット感を保ったまま画面にフィット） ---------- */
+function fitCanvas() {
+  const wrap = document.getElementById('stage-wrap');
+  const availW = wrap.clientWidth - 30, availH = wrap.clientHeight - 30;
+  const scale = Math.max(1, Math.min(availW / W, availH / H));
+  canvas.style.width = Math.floor(W * scale) + 'px';
+  canvas.style.height = Math.floor(H * scale) + 'px';
+}
+window.addEventListener('resize', fitCanvas);
+fitCanvas();
+
+/* ---------- 時計 ---------- */
+setInterval(() => {
+  const t = new Date();
+  document.getElementById('clock').textContent =
+    [t.getHours(), t.getMinutes(), t.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
+}, 500);
+
+/* =========================================================
+   メインループ
+   ========================================================= */
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
+
+  updateMeeting(now);
+  agents.forEach(a => a.update(dt, now));
+
+  drawOffice(now);
+  // Y座標順に描画（手前のキャラが上に重なる）
+  [...agents].sort((p, q) => p.py - q.py).forEach(a => drawCharacter(a, now));
+
+  requestAnimationFrame(loop);
+}
+
+addLog(null, 'オフィスが開きました。AI社員が出社しています…', 'log-new');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
