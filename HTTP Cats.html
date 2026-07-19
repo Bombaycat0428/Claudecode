@@ -50,6 +50,85 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+        .cat-caption {
+            margin-top: 12px;
+            min-height: 1.4em;
+        }
+        .caption-summary {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 10px;
+        }
+        .caption-detail {
+            font-size: 13.5px;
+            color: #555;
+            line-height: 1.8;
+            text-align: left;
+            background: #f8f8fa;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 0;
+        }
+        .list-section {
+            max-width: 860px;
+            margin: 40px auto 0;
+            text-align: left;
+        }
+        .list-section h2 {
+            text-align: center;
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .list-note {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            margin-top: 0;
+        }
+        .group-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #666;
+            margin: 28px 4px 10px;
+        }
+        .code-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 8px;
+        }
+        .code-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: box-shadow 0.15s;
+        }
+        .code-item:hover {
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .code-item .code {
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .code-item .name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+        .code-item .desc {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .c1 .code { color: #64748b; }
+        .c2 .code { color: #16a34a; }
+        .c3 .code { color: #d97706; }
+        .c4 .code { color: #dc2626; }
+        .c5 .code { color: #7c3aed; }
     </style>
 </head>
 <body>
@@ -63,18 +142,242 @@
 
     <div class="image-container">
         <img id="catImage" src="https://http.cat/404" alt="HTTP Cat">
+        <div id="catCaption" class="cat-caption"></div>
     </div>
+</div>
+
+<div class="list-section">
+    <h2>HTTP Status Codes</h2>
+    <p class="list-note">クリックすると画像が表示されます</p>
+    <div id="codeList"></div>
 </div>
 
 <script>
     function searchCat() {
         const code = document.getElementById('statusCode').value;
         if (!code) return;
-        
+
         // 入力されたコードをもとに、HTTP Cats APIの画像URLを生成して切り替えます
         const imageUrl = `https://http.cat/${code}`;
         document.getElementById('catImage').src = imageUrl;
+        updateCaption(code);
     }
+
+    // 画像の下に一行説明と詳細解説を表示する
+    function updateCaption(code) {
+        const entry = STATUS_CODES.find(([c]) => c === Number(code));
+        const captionEl = document.getElementById('catCaption');
+        if (!entry) {
+            captionEl.innerHTML = '';
+            return;
+        }
+        captionEl.innerHTML =
+            `<p class="caption-summary">${entry[2]}</p>` +
+            `<p class="caption-detail">${entry[3]}</p>`;
+    }
+
+    // http.cat が画像を用意している全ステータスコード（2026年7月時点）
+    // [コード, 英語名, 一行説明, 詳細解説]
+    const STATUS_CODES = [
+        [100, 'Continue', '継続してリクエストを送信してよい',
+            'クライアントが「Expect: 100-continue」ヘッダー付きでリクエストした際に、サーバーが「ここまで問題ないので本文を送ってよい」と返す中間レスポンス。大きなファイルをアップロードする前に、受け入れてもらえるかを先に確認する用途で使われます。'],
+        [101, 'Switching Protocols', 'プロトコルを切り替える',
+            'クライアントのUpgradeヘッダーによる要求を受け入れ、サーバーが通信プロトコルを切り替えることを示します。代表例はHTTPからWebSocketへの切り替えで、チャットなどのリアルタイム通信の接続開始時に使われます。'],
+        [102, 'Processing', '処理中（WebDAV）',
+            'サーバーがリクエストを受け取り処理中だが、まだ完了していないことを示します。ファイル共有プロトコルWebDAVの拡張で、時間のかかる処理でクライアントがタイムアウトするのを防ぐために送られました。現在はほぼ使われていません。'],
+        [103, 'Early Hints', '先行ヒント（リソースの事前読み込み用）',
+            '最終的なレスポンスを返す前に、読み込むことになるリソース（CSSやJSなど）のヒントをLinkヘッダーで先行して伝えます。ブラウザはサーバーの本応答を待っている間にリソースの読み込みを始められるため、ページ表示を高速化できます。'],
+        [200, 'OK', '成功',
+            'リクエストが成功したことを示す、最も基本的なステータスコード。GETならリソースの内容が、POSTなら処理結果がレスポンスとして返されます。普段Webを見ているとき、ほとんどの通信はこのコードです。'],
+        [201, 'Created', 'リソースの作成に成功',
+            'リクエストが成功し、新しいリソースが作成されたことを示します。ユーザー登録や投稿の作成などのAPIレスポンスとして使われ、作成されたリソースのURLがLocationヘッダーで返されることが多いです。'],
+        [202, 'Accepted', '受理された（処理は未完了）',
+            'リクエストは受け付けたが、処理はまだ完了していないことを示します。動画の変換やバッチ処理など、結果がすぐに出ない非同期処理で「受け付けました、あとで処理します」という意味で使われます。'],
+        [203, 'Non-Authoritative Information', 'プロキシ経由で変更された情報',
+            'リクエストは成功したものの、返された内容が途中のプロキシなどによってオリジナルから変更されていることを示します。実際に使われることはほとんどありません。'],
+        [204, 'No Content', '成功したが返す内容がない',
+            'リクエストは成功したが、返すべきコンテンツがないことを示します。データの保存や削除が成功して、画面を何も変える必要がない場合などにAPIがよく返します。'],
+        [205, 'Reset Content', '成功、フォームなどをリセット',
+            'リクエストは成功したので、入力フォームなどの表示をリセットするようクライアントに求めるコードです。フォーム送信後に入力欄をクリアする用途を想定していますが、ほとんど使われていません。'],
+        [206, 'Partial Content', '部分的な内容（範囲リクエスト）',
+            'Rangeヘッダーで指定された「一部分だけ」を返したことを示します。動画のシーク再生（途中から見る）や、大きなファイルのダウンロード再開（レジューム）を支えている縁の下の力持ちです。'],
+        [207, 'Multi-Status', '複数のステータス（WebDAV）',
+            '複数のリソースに対する操作の結果を、XML形式でまとめて返すことを示します。WebDAVの拡張で、複数ファイルの一括操作などで各ファイルの成功・失敗を個別に伝えるために使われます。'],
+        [208, 'Already Reported', '報告済み（WebDAV）',
+            '同じリソースがすでに前の応答で報告済みであることを示します。WebDAVの拡張で、同じものを何度も列挙するムダを避けるために使われます。一般のWebではまず見かけません。'],
+        [214, 'Transformation Applied', 'プロキシが内容を変換した（非標準）',
+            '途中のプロキシが画像の再圧縮などレスポンスの内容に変換を加えたことを示す非標準のコード。本来はWarningヘッダーの値として定義されていたものです。'],
+        [226, 'IM Used', '差分が適用された',
+            'サーバーがリソース全体ではなく、前回からの差分（デルタ）だけを返したことを示します。通信量を節約するための仕様（RFC 3229）ですが、対応している実装はほとんどありません。'],
+        [300, 'Multiple Choices', '複数の選択肢がある',
+            'リクエストされたリソースに複数の選択肢（言語違い・形式違いなど）があり、どれが欲しいかクライアントに選択を求めるコードです。実際に使われることはまれです。'],
+        [301, 'Moved Permanently', '恒久的に移動した',
+            'リソースが恒久的に新しいURLへ移動したことを示します。移動先はLocationヘッダーで通知され、検索エンジンも新URLを正として登録し直します。サイトの引越しやhttp→httpsへの統一などで使われる定番コードです。'],
+        [302, 'Found', '一時的に移動した',
+            'リソースが一時的に別のURLにあることを示します。ログイン後のリダイレクトなど、Webで最もよく使われる転送コードです。本来は「一時的」な移動用ですが、慣習的に幅広く使われています。'],
+        [303, 'See Other', '別のURLを参照',
+            '「結果は別のURLをGETで取得してください」と指示するコードです。フォーム送信（POST)後に結果ページへ転送する「POST-Redirect-GET」パターンで使われ、ページ再読み込みによる二重送信を防ぎます。'],
+        [304, 'Not Modified', '未更新（キャッシュを使用）',
+            'リソースがクライアントの持っているキャッシュから更新されていないことを示します。ブラウザは手元のキャッシュをそのまま使うため、通信量を大幅に節約できます。ページの2回目以降の表示が速いのはこの仕組みのおかげです。'],
+        [305, 'Use Proxy', 'プロキシを使用せよ（非推奨）',
+            '「指定した代理サーバー（プロキシ）経由でのみアクセスできます」とサーバーが返すコード。悪意あるプロキシへ誘導されると通信を盗み見られる危険があるため非推奨となり、現代のブラウザは無視します。'],
+        [307, 'Temporary Redirect', '一時的リダイレクト（メソッド維持）',
+            '一時的なリダイレクトを示します。302と似ていますが、転送時にHTTPメソッドを変えてはいけない（POSTはPOSTのまま送り直す）ことが保証されている点が異なります。'],
+        [308, 'Permanent Redirect', '恒久的リダイレクト（メソッド維持）',
+            '恒久的なリダイレクトを示します。301と似ていますが、307と同様にHTTPメソッドの変更が禁止されています。APIのURL移転などで使われます。'],
+        [400, 'Bad Request', 'リクエストが不正',
+            'リクエストの内容が不正で、サーバーが理解できないことを示します。パラメータの形式間違い、壊れたJSON、不正なヘッダーなど、クライアント側の間違い全般に対して返される代表的なエラーです。'],
+        [401, 'Unauthorized', '認証が必要',
+            '認証されていないため、リソースにアクセスできないことを示します。名前は「Unauthorized（未承認）」ですが実際の意味は「未認証」で、ログインやAPIキーの提示が必要です。認証済みなのに権限がない場合は403になります。'],
+        [402, 'Payment Required', '支払いが必要',
+            '「支払いが必要です」という意味で、将来のオンライン決済用に予約されたコード。長らく使い道がありませんでしたが、近年はAPIの課金制限や有料コンテンツで独自に使うサービスも出てきています。'],
+        [403, 'Forbidden', 'アクセス禁止',
+            'サーバーがリクエストを理解したうえで、アクセスを拒否したことを示します。401と違って認証し直しても結果は変わりません。権限不足、IPアドレス制限、公開範囲の設定などが原因です。'],
+        [404, 'Not Found', 'ページが見つからない',
+            'リクエストされたリソースがサーバー上に見つからないことを示す、世界で一番有名なエラーコード。URLの打ち間違いや、削除・移動されたページへのアクセスで返されます。'],
+        [405, 'Method Not Allowed', '許可されていないメソッド',
+            'リクエストに使ったHTTPメソッド（GET・POST・DELETEなど）が、このリソースでは許可されていないことを示します。使えるメソッドの一覧はAllowヘッダーで通知されます。'],
+        [406, 'Not Acceptable', '受理できない形式',
+            'クライアントがAcceptヘッダーで「この形式・この言語で欲しい」と指定した条件を、サーバーが満たせないことを示します。実際にはあまり見かけないコードです。'],
+        [407, 'Proxy Authentication Required', 'プロキシ認証が必要',
+            'プロキシサーバーでの認証が必要なことを示します。401のプロキシ版で、認証付きプロキシを経由する社内ネットワークなどで発生します。'],
+        [408, 'Request Timeout', 'リクエストがタイムアウト',
+            'クライアントが一定時間内にリクエストを送りきらなかったため、サーバーが接続を打ち切ったことを示します。回線が不安定なときや、接続だけして何も送らない場合に発生します。'],
+        [409, 'Conflict', '競合が発生',
+            'リクエストがリソースの現在の状態と矛盾（競合）していることを示します。2人が同じデータを同時に編集した場合や、すでに存在する名前で作成しようとした場合などに返されます。'],
+        [410, 'Gone', '恒久的に削除された',
+            'リソースが恒久的に削除され、もう戻らないことを示します。404と違い「以前は存在したが意図的に消した」ことを明示できるので、検索エンジンに削除を伝える用途にも役立ちます。'],
+        [411, 'Length Required', 'Content-Lengthの指定が必要',
+            'ボディのサイズを示すContent-Lengthヘッダーがないリクエストを、サーバーが拒否したことを示します。サイズが事前にわからないデータを受け付けない設定の場合に返されます。'],
+        [412, 'Precondition Failed', '前提条件が不成立',
+            'If-Matchなどの条件付きリクエストで、指定した前提条件が満たされなかったことを示します。「他の人が先に更新していたら上書きしない」という楽観的ロックの仕組みで使われます。'],
+        [413, 'Payload Too Large', 'データが大きすぎる',
+            'リクエストのボディがサーバーの上限を超えていることを示します。ファイルアップロードのサイズ制限オーバーが典型例です。'],
+        [414, 'Request-URI Too Long', 'URIが長すぎる',
+            'URLが長すぎてサーバーが処理できないことを示します。GETパラメータに大量のデータを詰め込んでしまった場合などに発生します。'],
+        [415, 'Unsupported Media Type', '未対応のメディア形式',
+            'リクエストのデータ形式（Content-Type）にサーバーが対応していないことを示します。JSONを期待するAPIにXMLを送った場合や、対応外の画像形式をアップロードした場合などに返されます。'],
+        [416, 'Request Range Not Satisfiable', '指定範囲が不正',
+            'Rangeヘッダーで指定された範囲が不正（ファイルサイズを超えているなど）であることを示します。ダウンロードの再開に失敗したときなどに発生します。'],
+        [417, 'Expectation Failed', 'Expectヘッダーに対応できない',
+            'Expectヘッダーで指定された期待に、サーバーが応えられないことを示します。実際にはほぼ「Expect: 100-continue」に対応していない場合にしか登場しません。'],
+        [418, "I'm a teapot", '私はティーポット（ジョーク）',
+            '「私はティーポットなのでコーヒーは淹れられません」という意味のジョークコード。1998年のエイプリルフールに公開されたRFC 2324（コーヒーポット制御プロトコル）が由来です。実用性はゼロですが、多くのフレームワークが遊び心で実装しています。'],
+        [419, 'Page Expired', 'ページの有効期限切れ（非標準）',
+            '非標準コード。PHPフレームワークのLaravelなどが、CSRFトークンの期限切れ時に返します。フォームを長時間開きっぱなしにしてから送信した場合などに見られます。'],
+        [420, 'Enhance Your Calm', '落ち着いて（旧Twitter・非標準）',
+            '非標準コード。旧Twitter APIが「アクセスしすぎ」のレート制限時に返していました。「落ち着け」というユーモアを込めたコードで、現在の標準は429です。'],
+        [421, 'Misdirected Request', '誤った宛先へのリクエスト',
+            'リクエストが、それに応答できないサーバーへ送られてしまったことを示します。HTTP/2の接続再利用で、別ドメイン宛のリクエストが同じ接続に混ざってしまった場合などに発生します。'],
+        [422, 'Unprocessable Entity', '処理できない内容',
+            'リクエストの形式は正しいものの、内容が意味的に処理できないことを示します。「必須項目が空」「メールアドレスの形式が違う」などのバリデーションエラーでAPIがよく返すコードです。'],
+        [423, 'Locked', 'ロックされている（WebDAV）',
+            'リソースがロックされていてアクセスできないことを示します。WebDAVの拡張で、他の人が編集中のファイルなどに対して返されます。'],
+        [424, 'Failed Dependency', '依存する処理が失敗（WebDAV）',
+            '依存していた別のリクエストが失敗したため、このリクエストも実行できなかったことを示します。WebDAVの拡張で、一連の操作の途中が失敗した場合に使われます。'],
+        [425, 'Too Early', '時期尚早（リプレイ攻撃防止）',
+            '「再送攻撃（リプレイ攻撃）のおそれがあるため、まだこのリクエストを処理したくない」ことを示します。TLS 1.3の0-RTT（接続確立前にデータを送る高速化機能）に関連する比較的新しいコードです。'],
+        [426, 'Upgrade Required', 'プロトコルの更新が必要',
+            '現在のプロトコルではリクエストを受け付けられず、より新しいプロトコルへのアップグレードが必要なことを示します。どのプロトコルにすべきかはUpgradeヘッダーで通知されます。'],
+        [428, 'Precondition Required', '前提条件の指定が必要',
+            '「If-Matchなどの条件付きリクエストでないと受け付けません」とサーバーが要求するコードです。複数人が同じデータを更新する際の上書き事故（更新のロスト）を防ぐために使われます。'],
+        [429, 'Too Many Requests', 'リクエストが多すぎる',
+            '一定時間内のリクエスト数が多すぎることを示します。APIのレート制限で最もよく見かけるコードで、Retry-Afterヘッダーで「あと何秒待てば再試行できるか」が通知されることもあります。'],
+        [431, 'Request Header Fields Too Large', 'ヘッダーが大きすぎる',
+            'リクエストヘッダーが大きすぎて、サーバーが処理を拒否したことを示します。肥大化したCookieが原因になっていることが多いエラーです。'],
+        [444, 'No Response', '応答なしで切断（nginx）',
+            'Webサーバーnginx独自のコード。サーバーがレスポンスを一切返さずに接続を閉じたことをログ上で示します。不正なリクエストを黙って切り捨てる設定で使われます。'],
+        [450, 'Blocked by Windows Parental Controls', 'ペアレンタルコントロールでブロック',
+            'Microsoft独自の非標準コード。Windowsのペアレンタルコントロール（保護者による制限）機能が、ページへのアクセスをブロックした際に返されます。'],
+        [451, 'Unavailable For Legal Reasons', '法的理由により利用不可',
+            '政府の検閲や著作権侵害の削除命令など、法的な理由でアクセスできないことを示します。コード番号は、焚書社会を描いた小説「華氏451度」にちなんで選ばれました。'],
+        [495, 'SSL Certificate Error', 'SSL証明書エラー（nginx）',
+            'nginx独自のコード。クライアント証明書の検証でエラーが発生したことを示します。'],
+        [496, 'SSL Certificate Required', 'SSL証明書が必要（nginx）',
+            'nginx独自のコード。クライアント証明書の提示が必要なのに、提示されなかったことを示します。'],
+        [497, 'HTTP Request Sent to HTTPS Port', 'HTTPSポートにHTTPを送信（nginx）',
+            'nginx独自のコード。HTTPS用のポートに、暗号化されていない平文のHTTPリクエストが送られてきたことを示します。URLのhttps://をhttp://と書き間違えたときなどに発生します。'],
+        [498, 'Token expired/invalid', 'トークンが期限切れ・無効',
+            '非標準コード。地図サービスのArcGISなどが使用し、アクセストークンが期限切れまたは無効であることを示します。'],
+        [499, 'Client Closed Request', 'クライアントが接続を切断（nginx）',
+            'nginx独自のコード。サーバーが応答を返す前に、クライアント側が接続を切った（ブラウザを閉じた・リクエストをキャンセルした）ことをログ上で示します。'],
+        [500, 'Internal Server Error', 'サーバー内部エラー',
+            'サーバー内部で予期しないエラーが発生したことを示します。プログラムのバグ、設定ミス、例外の未処理など原因はさまざまで、「サーバー側で何かが壊れた」ことを表す代表的なコードです。'],
+        [501, 'Not Implemented', '未実装の機能',
+            'リクエストされた機能（HTTPメソッドなど）を、サーバーが実装していないことを示します。500が「壊れている」なのに対し、501は「そもそも作られていない」という意味です。'],
+        [502, 'Bad Gateway', '不正なゲートウェイ応答',
+            '中継役のサーバー（リバースプロキシやロードバランサー）が、その後ろにいる本来のサーバーから不正な応答を受け取ったことを示します。アプリケーションサーバーの停止やクラッシュが典型的な原因です。'],
+        [503, 'Service Unavailable', 'サービス利用不可（過負荷・メンテナンス）',
+            'サーバーが一時的にリクエストを処理できないことを示します。アクセス集中による過負荷やメンテナンス中に返され、Retry-Afterヘッダーで復旧見込みを伝えることもできます。チケット販売サイトなどでおなじみのコードです。'],
+        [504, 'Gateway Timeout', 'ゲートウェイがタイムアウト',
+            '中継役のサーバーが、後ろにいる本来のサーバーからの応答を時間内に受け取れなかったことを示します。重すぎる処理やデータベースの応答遅延が典型的な原因です。'],
+        [506, 'Variant Also Negotiates', 'サーバーの内部設定エラー',
+            'コンテンツネゴシエーション（最適な形式を選ぶ仕組み）の設定が循環参照になっているという、サーバー内部の設定エラーを示します。まず見かけることはありません。'],
+        [507, 'Insufficient Storage', '容量不足（WebDAV）',
+            'サーバーのストレージ容量が不足していて、リクエストを処理できないことを示します。WebDAVの拡張で、ファイル保存先の空きがない場合などに返されます。'],
+        [508, 'Loop Detected', '無限ループを検出（WebDAV）',
+            'リクエストの処理中に無限ループを検出し、処理を打ち切ったことを示します。WebDAVの拡張で、フォルダ構造が自分自身を参照してしまっている場合などに発生します。'],
+        [509, 'Bandwidth Limit Exceeded', '帯域制限を超過',
+            '非標準コード。サーバー（主に共用レンタルサーバー）が月間・日間の転送量上限を超えたことを示します。'],
+        [510, 'Not Extended', '拡張が必要',
+            'リクエストに必要な拡張情報が足りないことを示します。HTTP拡張フレームワーク（RFC 2774）用のコードで、実際にはほぼ使われていません。'],
+        [511, 'Network Authentication Required', 'ネットワーク認証が必要（Wi-Fiログイン等）',
+            'ネットワークに接続するための認証が必要なことを示します。カフェやホテルのWi-Fiにつなぐと最初にログインページが表示される、あの仕組み（キャプティブポータル）で使われます。'],
+        [521, 'Web Server Is Down', 'Webサーバーがダウン（Cloudflare）',
+            'CDNサービスCloudflare独自のコード。Cloudflareがオリジン（本来のWebサーバー）に接続しようとしたものの、サーバーがダウンしていて接続を拒否されたことを示します。'],
+        [522, 'Connection Timed Out', '接続タイムアウト（Cloudflare）',
+            'Cloudflare独自のコード。Cloudflareとオリジンサーバーの間の接続がタイムアウトしたことを示します。サーバーの過負荷やファイアウォールの設定が原因になりがちです。'],
+        [523, 'Origin Is Unreachable', 'オリジンに到達できない（Cloudflare）',
+            'Cloudflare独自のコード。オリジンサーバーにそもそも到達できないことを示します。DNSの設定ミスや経路の問題が典型的な原因です。'],
+        [525, 'SSL Handshake Failed', 'SSLハンドシェイク失敗（Cloudflare）',
+            'Cloudflare独自のコード。Cloudflareとオリジンサーバーの間のSSL/TLSハンドシェイク（暗号化通信の確立）に失敗したことを示します。オリジン側の証明書設定の問題などが原因です。'],
+        [530, 'Site Frozen', 'サイトが凍結されている',
+            '非標準コード。ホスティングサービス（Pantheonなど）が、サイトを凍結（利用停止）したことを示します。Cloudflareも530を別の意味（DNS関連エラー）で使っています。'],
+        [599, 'Network Connect Timeout Error', 'ネットワーク接続タイムアウト（非標準）',
+            '非標準コード。一部のプロキシが、ネットワーク接続のタイムアウトを通知するために使います。正式なHTTP仕様には存在しません。']
+    ];
+
+    const GROUP_NAMES = {
+        1: '1xx — Informational（情報）',
+        2: '2xx — Success（成功）',
+        3: '3xx — Redirection（リダイレクト）',
+        4: '4xx — Client Error（クライアントエラー）',
+        5: '5xx — Server Error（サーバーエラー）'
+    };
+
+    function selectCode(code) {
+        document.getElementById('statusCode').value = code;
+        searchCat();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function buildCodeList() {
+        const listEl = document.getElementById('codeList');
+        let currentGroup = null;
+        let grid = null;
+
+        for (const [code, name, desc] of STATUS_CODES) {
+            const group = Math.floor(code / 100);
+            if (group !== currentGroup) {
+                currentGroup = group;
+                const title = document.createElement('div');
+                title.className = 'group-title';
+                title.textContent = GROUP_NAMES[group];
+                listEl.appendChild(title);
+                grid = document.createElement('div');
+                grid.className = 'code-grid';
+                listEl.appendChild(grid);
+            }
+            const item = document.createElement('div');
+            item.className = `code-item c${group}`;
+            item.innerHTML = `<span class="code">${code}</span><span class="name">${name}</span><span class="desc">${desc}</span>`;
+            item.onclick = () => selectCode(code);
+            grid.appendChild(item);
+        }
+    }
+
+    buildCodeList();
+    updateCaption(404);
 </script>
 
 </body>
