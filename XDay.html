@@ -930,7 +930,7 @@
         <ul class="howto-list">
           <li>画面の一番下のフォームに<strong>イベント名</strong>・<strong>日付</strong>・<strong>時刻</strong>を入力する。</li>
           <li><span class="howto-key">追加</span> ボタンを押すとカードが追加され、カウントダウンが始まる。</li>
-          <li>日・時・分・秒がリアルタイムで自動更新される。</li>
+          <li>日・時・分がリアルタイムで自動更新される。</li>
         </ul>
       </div>
 
@@ -1242,11 +1242,10 @@
       const dF = makeFlapEl('DAY', true);
       const hF = makeFlapEl('HRS', false);
       const mF = makeFlapEl('MIN', false);
-      const sF = makeFlapEl('SEC', false);
 
       const sep = () => { const s = document.createElement('div'); s.className = 'flap-sep'; s.textContent = ':'; return s; };
-      right.append(dF.el, sep(), hF.el, sep(), mF.el, sep(), sF.el);
-      flapMap[ev.id] = { d: dF.unit, h: hF.unit, m: mF.unit, s: sF.unit };
+      right.append(dF.el, sep(), hF.el, sep(), mF.el);
+      flapMap[ev.id] = { d: dF.unit, h: hF.unit, m: mF.unit };
     }
 
     // 削除
@@ -1281,7 +1280,6 @@
       u.d.init(pad3(Math.floor(diff / 86400000)));
       u.h.init(pad(Math.floor((diff % 86400000) / 3600000)));
       u.m.init(pad(Math.floor((diff % 3600000) / 60000)));
-      u.s.init(pad(Math.floor((diff % 60000) / 1000)));
     });
   }
 
@@ -1312,7 +1310,6 @@
       u.d.set(pad3(Math.floor(diff / 86400000)));
       u.h.set(pad(Math.floor((diff % 86400000) / 3600000)));
       u.m.set(pad(Math.floor((diff % 3600000) / 60000)));
-      u.s.set(pad(Math.floor((diff % 60000) / 1000)));
     });
   }
 
