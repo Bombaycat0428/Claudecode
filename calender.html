@@ -3,116 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>毎日書き込める！天気予報付きカレンダー</title>
+    <title>My Weather Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* colors — DESIGN-figma.md tokens */
+            --color-primary: #000000;
+            --color-on-primary: #ffffff;
+            --color-ink: #000000;
+            --color-canvas: #ffffff;
+            --color-hairline: #e6e6e6;
+            --color-hairline-soft: #f1f1f1;
+            --color-surface-soft: #f7f7f5;
+            --color-block-lime: #dceeb1;
+            --color-block-lilac: #c5b0f4;
+            --color-block-cream: #f4ecd6;
+            --color-block-mint: #c8e6cd;
+            --color-block-coral: #f3c9b6;
+            --color-block-navy: #1f1d3d;
+            --color-accent-magenta: #ff3d8b;
+
+            /* radius */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 24px;
+            --radius-pill: 50px;
+            --radius-full: 9999px;
+
+            /* spacing (8px base) */
+            --space-xxs: 4px;
+            --space-xs: 8px;
+            --space-sm: 12px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-xxl: 48px;
+
+            --font-sans: 'Inter', 'figmaSans Fallback', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', 'figmaMono Fallback', 'SF Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* ---- ページ全体の背景が当日の天気に合わせて変わる ---- */
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f7f6;
+            font-family: var(--font-sans);
+            font-weight: 320;
+            color: var(--color-ink);
+            background-color: var(--color-block-lime);
+            margin: 0;
+            padding: var(--space-xl) var(--space-md);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        body.theme-lime  { background-color: var(--color-block-lime); }
+        body.theme-cream { background-color: var(--color-block-cream); }
+        body.theme-mint  { background-color: var(--color-block-mint); }
+        body.theme-lilac { background-color: var(--color-block-lilac); }
+        body.theme-snow  { background-color: var(--color-surface-soft); }
+        body.theme-navy  { background-color: var(--color-block-navy); color: #ffffff; }
+
+        .page {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* ---- ヒーロー見出し（背景は持たず、ページの色にそのまま乗る） ---- */
+        .hero-block {
+            padding: var(--space-lg) 0 var(--space-xxl);
+            text-align: center;
+        }
+        .eyebrow {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.54px;
+            text-transform: uppercase;
+            margin: 0 0 var(--space-xs);
+            opacity: 0.75;
+        }
+        .display-title {
+            font-family: var(--font-sans);
+            font-weight: 340;
+            font-size: 40px;
+            line-height: 1.1;
+            letter-spacing: -0.9px;
             margin: 0;
         }
-        .container {
-            max-width: 950px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .header-controls {
+
+        /* ---- Toolbar (white canvas, returns from color block) ---- */
+        .toolbar {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-xxl);
         }
-        select {
-            padding: 8px 12px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        .pill-select {
+            font-family: var(--font-sans);
+            font-weight: 480;
+            font-size: 15px;
+            color: var(--color-ink);
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            border-radius: var(--radius-pill);
+            padding: 10px 20px;
+            cursor: pointer;
         }
+        .pill-select:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        /* ---- Calendar card ---- */
+        .calendar-card {
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+        }
+
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            gap: var(--space-xs);
+        }
+
+        .weekday-row {
+            margin-bottom: var(--space-sm);
         }
         .weekday-header {
             text-align: center;
-            font-weight: bold;
-            padding: 10px 0;
-            background-color: #eee;
-            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.4px;
+            padding: var(--space-xs) 0;
+            color: var(--color-ink);
         }
+        .weekday-header.is-sunday { color: var(--color-accent-magenta); }
+        .weekday-header.is-saturday { font-weight: 700; }
+
         .day-cell {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            min-height: 120px;
-            padding: 8px;
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            border-radius: var(--radius-md);
+            min-height: 128px;
+            padding: var(--space-xs);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            transition: background-color 0.15s ease;
         }
+        .day-cell.is-empty {
+            background-color: var(--color-surface-soft);
+            border-color: var(--color-hairline-soft);
+        }
+        .day-cell.is-today {
+            background-color: var(--color-block-lime);
+            border-color: var(--color-block-lime);
+        }
+
         .day-number {
-            font-weight: bold;
-            font-size: 14px;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--color-ink);
         }
-        .holiday-label {
-            font-size: 11px;
-            color: #ff3b30;
-            font-weight: bold;
-            margin: 2px 0;
+
+        .holiday-chip {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            background-color: var(--color-block-coral);
+            color: var(--color-ink);
+            border-radius: var(--radius-full);
+            padding: 2px 8px;
+            margin: var(--space-xxs) 0;
         }
-        /* 天気情報の表示スタイル */
-        .weather-info {
-            display: flex;
+
+        .weather-chip {
+            display: inline-flex;
             align-items: center;
+            gap: 4px;
+            font-family: var(--font-mono);
             font-size: 11px;
-            color: #555;
-            margin: 2px 0;
-            background: #f0f8ff;
-            border-radius: 4px;
-            padding: 2px;
+            font-weight: 500;
+            background-color: var(--color-block-mint);
+            color: var(--color-ink);
+            border-radius: var(--radius-full);
+            padding: 2px 8px;
+            margin: var(--space-xxs) 0;
+            width: fit-content;
         }
-        .weather-icon {
-            width: 24px;
-            height: 24px;
+        .weather-chip .weather-icon {
+            font-size: 14px;
+            line-height: 1;
         }
+
         .plan-input {
             width: 100%;
             box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 4px;
+            font-family: var(--font-sans);
+            font-weight: 330;
             font-size: 12px;
+            color: var(--color-ink);
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            border-radius: var(--radius-md);
+            padding: 6px 8px;
             margin-top: auto;
         }
+        .plan-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
         .save-btn {
-            font-size: 10px;
-            background: #34c759;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 5px;
-            cursor: pointer;
-            margin-top: 4px;
+            display: block;
             width: 100%;
+            font-family: var(--font-sans);
+            font-weight: 480;
+            font-size: 11px;
+            color: var(--color-ink);
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            border-radius: var(--radius-pill);
+            padding: 4px 8px;
+            cursor: pointer;
+            margin-top: var(--space-xxs);
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .save-btn:hover {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+            border-color: var(--color-primary);
+        }
+
+        @media (max-width: 560px) {
+            .display-title { font-size: 28px; }
+            .hero-block { padding: var(--space-lg); }
+            .day-cell { min-height: 96px; padding: 4px; }
+            .weekday-header { font-size: 11px; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="text-align: center; margin-top: 0;">📅 マイ・天気カレンダー</h1>
-    
-    <div class="header-controls">
-        <select id="yearSelect" onchange="initCalendar()">
+<div class="page">
+    <header class="hero-block">
+        <p class="eyebrow">Tokyo · 16-day forecast</p>
+        <h1 class="display-title">📅 My Weather Calendar</h1>
+    </header>
+
+    <div class="toolbar">
+        <select id="yearSelect" class="pill-select" onchange="initCalendar()">
             <option value="2025">2025年</option>
             <option value="2026" selected>2026年</option>
             <option value="2027">2027年</option>
         </select>
 
-        <select id="monthSelect" onchange="initCalendar()">
+        <select id="monthSelect" class="pill-select" onchange="initCalendar()">
             <option value="1">1月</option>
             <option value="2">2月</option>
             <option value="3">3月</option>
@@ -128,23 +281,25 @@
         </select>
     </div>
 
-    <div class="calendar-grid" style="margin-bottom: 8px;">
-        <div class="weekday-header" style="color: #ff3b30;">日</div>
-        <div class="weekday-header">月</div>
-        <div class="weekday-header">火</div>
-        <div class="weekday-header">水</div>
-        <div class="weekday-header">木</div>
-        <div class="weekday-header">金</div>
-        <div class="weekday-header" style="color: #0071e3;">土</div>
-    </div>
+    <div class="calendar-card">
+        <div class="calendar-grid weekday-row">
+            <div class="weekday-header is-sunday">日</div>
+            <div class="weekday-header">月</div>
+            <div class="weekday-header">火</div>
+            <div class="weekday-header">水</div>
+            <div class="weekday-header">木</div>
+            <div class="weekday-header">金</div>
+            <div class="weekday-header is-saturday">土</div>
+        </div>
 
-    <div id="calendarDays" class="calendar-grid"></div>
+        <div id="calendarDays" class="calendar-grid"></div>
+    </div>
 </div>
 
 <script>
-    // 取得したAPIキーをここに貼り付けてください
-    const OPENWEATHER_API_KEY = 'YOUR_API_KEY'; 
-    const CITY_NAME = 'Tokyo'; // 天気を取得したい都市名
+    // 天気予報を取得する地点の緯度・経度（Open-Meteoは登録・APIキー不要）
+    const LATITUDE = 35.6895;  // 東京
+    const LONGITUDE = 139.6917; // 東京
 
     let holidayData = [];
     let weatherData = {}; // 日付をキーにした天気情報の格納用
@@ -174,39 +329,105 @@
             holidayData = [];
         }
 
-        // 2. 天気予報データの取得 (APIキーが設定されている場合のみ)
-        if (OPENWEATHER_API_KEY !== 'YOUR_API_KEY' && OPENWEATHER_API_KEY !== '') {
-            await fetchWeatherData();
-        }
+        // 2. 天気予報データの取得（Open-Meteo：登録・APIキー不要）
+        await fetchWeatherData();
 
-        // 3. カレンダー描画
+        // 3. 当日の天気に合わせてヒーローブロックの色を切り替え
+        updateHeroTheme();
+
+        // 4. カレンダー描画
         generateDays(year, month);
     }
 
-    // OpenWeather APIから5日間の天気予報を取得して整理する関数
+    // Open-Meteo APIから天気予報を取得して整理する関数（登録・APIキー不要）
     async function fetchWeatherData() {
         try {
-            const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${CITY_NAME}&appid=${OPENWEATHER_API_KEY}&units=metric&lang=ja`);
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&forecast_days=16`;
+            const response = await fetch(url);
             const data = await response.json();
-            
-            weatherData = {};
-            // 3時間ごとのデータから、各日の昼頃（12:00など）の天気を抽出して1日1つにする
-            data.list.forEach(item => {
-                const dateText = item.dt_txt.split(' ')[0]; // YYYY-MM-DD 部分
-                const timeText = item.dt_txt.split(' ')[1]; // HH:MM:SS 部分
 
-                // 12:00に一番近いデータをその日の代表天気とする
-                if (!weatherData[dateText] || timeText.startsWith("12")) {
-                    weatherData[dateText] = {
-                        temp: Math.round(item.main.temp),
-                        icon: item.weather[0].icon,
-                        description: item.weather[0].description
-                    };
-                }
+            const freshData = {};
+            // 日ごとの天気コード・最高/最低気温を1日1つのデータにまとめる
+            data.daily.time.forEach((dateText, i) => {
+                const code = data.daily.weathercode[i];
+                freshData[dateText] = {
+                    code: code,
+                    tempMax: Math.round(data.daily.temperature_2m_max[i]),
+                    tempMin: Math.round(data.daily.temperature_2m_min[i]),
+                    ...getWeatherInfo(code)
+                };
             });
+
+            saveWeatherHistory(freshData); // 過去分として蓄積保存（通り過ぎた日も残す）
+            weatherData = { ...loadWeatherHistory(), ...freshData }; // 蓄積データ＋最新予報をマージ
         } catch (error) {
             console.error('天気データの取得失敗:', error);
+            weatherData = loadWeatherHistory(); // 通信失敗時も保存済み分だけは表示する
         }
+    }
+
+    // 天気データをlocalStorageから読み込む
+    function loadWeatherHistory() {
+        try {
+            return JSON.parse(localStorage.getItem('weatherHistory')) || {};
+        } catch (error) {
+            return {};
+        }
+    }
+
+    // 取得した天気データをlocalStorageに蓄積保存する
+    function saveWeatherHistory(newData) {
+        const merged = { ...loadWeatherHistory(), ...newData };
+        localStorage.setItem('weatherHistory', JSON.stringify(merged));
+    }
+
+    // WMO天気コードを絵文字・説明文に変換する対応表
+    function getWeatherInfo(code) {
+        const table = {
+            0: { emoji: '☀️', description: '快晴' },
+            1: { emoji: '🌤️', description: 'ほぼ晴れ' },
+            2: { emoji: '⛅', description: '一部曇り' },
+            3: { emoji: '☁️', description: '曇り' },
+            45: { emoji: '🌫️', description: '霧' },
+            48: { emoji: '🌫️', description: '霧氷' },
+            51: { emoji: '🌦️', description: '弱い霧雨' },
+            53: { emoji: '🌦️', description: '霧雨' },
+            55: { emoji: '🌦️', description: '強い霧雨' },
+            61: { emoji: '🌧️', description: '弱い雨' },
+            63: { emoji: '🌧️', description: '雨' },
+            65: { emoji: '🌧️', description: '強い雨' },
+            71: { emoji: '🌨️', description: '弱い雪' },
+            73: { emoji: '🌨️', description: '雪' },
+            75: { emoji: '🌨️', description: '強い雪' },
+            80: { emoji: '🌦️', description: 'にわか雨' },
+            81: { emoji: '🌧️', description: 'にわか雨(強)' },
+            82: { emoji: '⛈️', description: '激しいにわか雨' },
+            95: { emoji: '⛈️', description: '雷雨' },
+            96: { emoji: '⛈️', description: '雷雨(雹)' },
+            99: { emoji: '⛈️', description: '雷雨(強い雹)' }
+        };
+        return table[code] || { emoji: '❓', description: '不明' };
+    }
+
+    // 天気コードを、既存のFigmaカラーブロック（lime/cream/mint/lilac/snow/navy）のテーマ名に変換
+    function getHeroTheme(code) {
+        if (code === 0 || code === 1) return 'theme-lime';   // 快晴・ほぼ晴れ
+        if (code === 2) return 'theme-cream';                 // 一部曇り
+        if (code === 3 || code === 45 || code === 48) return 'theme-mint'; // 曇り・霧
+        if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return 'theme-lilac'; // 霧雨・雨・にわか雨
+        if (code === 71 || code === 73 || code === 75) return 'theme-snow'; // 雪
+        if (code === 95 || code === 96 || code === 99) return 'theme-navy'; // 雷雨
+        return 'theme-lime';
+    }
+
+    // 当日の天気に合わせてページ全体（background-color）のテーマを切り替える
+    function updateHeroTheme() {
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const todayWeather = weatherData[todayStr];
+
+        document.body.classList.remove('theme-lime', 'theme-cream', 'theme-mint', 'theme-lilac', 'theme-snow', 'theme-navy');
+        document.body.classList.add(todayWeather ? getHeroTheme(todayWeather.code) : 'theme-lime');
     }
 
     function generateDays(year, month) {
@@ -216,34 +437,36 @@
         const firstDayIndex = new Date(year, month - 1, 1).getDay();
         const totalDays = new Date(year, month, 0).getDate();
 
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
         for (let i = 0; i < firstDayIndex; i++) {
             const emptyCell = document.createElement('div');
-            emptyCell.className = 'day-cell';
-            emptyCell.style.backgroundColor = '#f9f9f9';
+            emptyCell.className = 'day-cell is-empty';
             container.appendChild(emptyCell);
         }
 
         for (let day = 1; day <= totalDays; day++) {
             const dayCell = document.createElement('div');
-            dayCell.className = 'day-cell';
 
             const formattedMonth = String(month).padStart(2, '0');
             const formattedDay = String(day).padStart(2, '0');
             const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
 
+            dayCell.className = 'day-cell' + (dateStr === todayStr ? ' is-today' : '');
+
             // 祝日データ
             const holiday = holidayData.find(h => h.date === dateStr);
-            const holidayText = holiday ? `<div class="holiday-label">${holiday.localName}</div>` : '';
+            const holidayText = holiday ? `<div class="holiday-chip">${holiday.localName}</div>` : '';
 
             // 天気データがあるか確認してHTMLを作成
             let weatherText = '';
             if (weatherData[dateStr]) {
                 const weather = weatherData[dateStr];
-                const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}.png`;
                 weatherText = `
-                    <div class="weather-info" title="${weather.description}">
-                        <img class="weather-icon" src="${iconUrl}" alt="${weather.description}">
-                        <span>${weather.temp}℃</span>
+                    <div class="weather-chip" title="${weather.description}">
+                        <span class="weather-icon">${weather.emoji}</span>
+                        <span>${weather.tempMax}°/${weather.tempMin}°</span>
                     </div>
                 `;
             }
