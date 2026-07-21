@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR — 画像文字読み取り（Dark Glass）</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --glass: rgba(15, 15, 26, 0.45);
+    --glass-strong: rgba(15, 15, 26, 0.35);
+    --glass-border: rgba(255, 255, 255, 0.16);
+    --text: #ffffff;
+    --sub: rgba(255, 255, 255, 0.72);
+    --faint: rgba(255, 255, 255, 0.5);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+    background-color: hsl(22 95% 56%);
+    background-image:
+      radial-gradient(at 20% 20%, hsl(38 95% 51%), transparent 50%),
+      radial-gradient(at 80% 0%,  hsl(2 95% 51%), transparent 50%),
+      radial-gradient(at 70% 90%, hsl(328 95% 57%), transparent 50%),
+      radial-gradient(at 10% 80%, hsl(196 95% 51%), transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.7;
+    padding: 48px 24px 64px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 48px; }
+  h1 {
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--text);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+  }
+  .subtitle { color: var(--sub); margin-top: 8px; font-size: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 28px;
+    color: #fff;
+  }
+  .card h2 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 18px;
+  }
+
+  /* --- ドロップゾーン --- */
+  .dropzone {
+    border: 1.5px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    padding: 44px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    color: var(--sub);
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .dropzone .dz-icon { font-size: 34px; margin-bottom: 10px; opacity: 0.7; }
+  .dropzone .dz-main { font-size: 16px; color: var(--text); }
+  .dropzone .dz-hint { font-size: 14px; margin-top: 8px; color: var(--faint); }
+  .dropzone.has-image { padding: 16px; }
+  .dropzone img {
+    max-width: 100%;
+    max-height: 340px;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+  }
+  #fileInput { display: none; }
+
+  /* --- 設定行 --- */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-top: 20px;
+  }
+  select {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    padding: 10px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    background: var(--glass-strong);
+    cursor: pointer;
+  }
+  .btn {
+    font-family: inherit;
+    font-size: 15px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+  .btn-primary { background: rgba(255, 255, 255, 0.92); color: #1E1E2E; font-weight: 600; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  /* --- 進捗 --- */
+  .progress-wrap { margin-top: 20px; display: none; }
+  .progress-wrap.active { display: block; }
+  .progress-label { font-size: 14px; color: var(--sub); margin-bottom: 8px; }
+  .progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.18);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: width 0.25s;
+  }
+
+  /* --- 結果 --- */
+  .result-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .result-head h2 { margin-bottom: 0; }
+  .result-actions { display: flex; gap: 10px; }
+  textarea {
+    width: 100%;
+    min-height: 320px;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text);
+    padding: 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--glass-strong);
+    resize: vertical;
+  }
+  textarea::placeholder { color: var(--faint); }
+  textarea:focus { outline: 2px solid rgba(255, 255, 255, 0.4); }
+  .result-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--sub);
+  }
+  label.opt { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: hsl(196 95% 51%);
+    cursor: pointer;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(255, 255, 255, 0.94);
+    color: #1E1E2E;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>OCR</h1>
+    <p class="subtitle">画像から文字を読み取ってテキストにします</p>
+  </header>
+
+  <div class="grid">
+    <!-- 左：画像入力 -->
+    <div class="card">
+      <h2>IMAGE</h2>
+      <div class="dropzone" id="dropzone">
+        <div class="dz-icon">🖼</div>
+        <div class="dz-main">画像をドラッグ＆ドロップ</div>
+        <div class="dz-hint">クリックして選択、または Ctrl+V で貼り付け</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="controls">
+        <select id="langSelect" title="認識する言語">
+          <option value="jpn+eng">日本語＋英語</option>
+          <option value="jpn">日本語のみ</option>
+          <option value="eng">英語のみ</option>
+        </select>
+        <button class="btn btn-primary" id="runBtn" disabled>読み取り開始</button>
+        <button class="btn btn-ghost" id="resetBtn">クリア</button>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label" id="progressLabel">準備中…</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </div>
+
+    <!-- 右：結果 -->
+    <div class="card">
+      <div class="result-head">
+        <h2>RESULT</h2>
+        <div class="result-actions">
+          <button class="btn btn-ghost" id="copyBtn" disabled>コピー</button>
+        </div>
+      </div>
+      <textarea id="resultText" placeholder="読み取り結果がここに表示されます" spellcheck="false"></textarea>
+      <div class="result-foot">
+        <label class="opt">
+          <input type="checkbox" id="trimSpaces" checked>
+          日本語の間の余分な空白を除去
+        </label>
+        <span id="charCount"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const langSelect = document.getElementById('langSelect');
+  const runBtn = document.getElementById('runBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const resultText = document.getElementById('resultText');
+  const trimSpaces = document.getElementById('trimSpaces');
+  const charCount = document.getElementById('charCount');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressLabel = document.getElementById('progressLabel');
+  const progressFill = document.getElementById('progressFill');
+  const toast = document.getElementById('toast');
+
+  let currentImage = null;   // dataURL
+  let rawText = '';          // OCRの生テキスト
+  let worker = null;
+  let workerLang = null;
+  let running = false;
+
+  const STATUS_JA = {
+    'loading tesseract core': 'OCRエンジンを読み込み中…',
+    'initializing tesseract': 'OCRエンジンを初期化中…',
+    'loading language traineddata': '言語データをダウンロード中…（初回は少し時間がかかります）',
+    'initializing api': '認識エンジンを準備中…',
+    'recognizing text': '文字を認識中…',
+  };
+
+  // --- 画像の受け取り ---
+  function setImage(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('画像ファイルを指定してください');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      currentImage = e.target.result;
+      dropzone.classList.add('has-image');
+      dropzone.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = currentImage;
+      img.alt = '読み取り対象の画像';
+      dropzone.appendChild(img);
+      runBtn.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => setImage(fileInput.files[0]));
+
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    setImage(e.dataTransfer.files[0]);
+  });
+
+  document.addEventListener('paste', e => {
+    for (const item of e.clipboardData.items) {
+      if (item.type.startsWith('image/')) {
+        setImage(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  // --- OCR実行 ---
+  async function getWorker(lang) {
+    if (worker && workerLang === lang) return worker;
+    if (worker) await worker.terminate();
+    workerLang = lang;
+    worker = await Tesseract.createWorker(lang, 1, {
+      logger: m => {
+        const label = STATUS_JA[m.status] || m.status;
+        progressLabel.textContent = label;
+        if (m.status === 'recognizing text') {
+          progressFill.style.width = `${Math.round(m.progress * 100)}%`;
+        }
+      },
+    });
+    return worker;
+  }
+
+  runBtn.addEventListener('click', async () => {
+    if (!currentImage || running) return;
+    running = true;
+    runBtn.disabled = true;
+    progressWrap.classList.add('active');
+    progressFill.style.width = '0%';
+    try {
+      const w = await getWorker(langSelect.value);
+      const { data } = await w.recognize(currentImage);
+      rawText = data.text.trim();
+      renderResult();
+      progressLabel.textContent = '完了';
+      progressFill.style.width = '100%';
+    } catch (err) {
+      console.error(err);
+      progressLabel.textContent = '読み取りに失敗しました。通信環境を確認して再度お試しください。';
+    } finally {
+      running = false;
+      runBtn.disabled = false;
+    }
+  });
+
+  // --- 結果表示 ---
+  // 日本語の文字（漢字・かな・全角記号）の間に入った余分な空白を除去する
+  const JA = '[\\u3000-\\u30FF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\uFF01-\\uFF60ー]';
+  const jaSpaceRe = new RegExp(`(${JA})[ \\t\\u3000]+(?=${JA})`, 'g');
+
+  function renderResult() {
+    let text = rawText;
+    if (trimSpaces.checked) text = text.replace(jaSpaceRe, '$1');
+    resultText.value = text;
+    updateCount();
+    copyBtn.disabled = !text;
+  }
+
+  function updateCount() {
+    const n = resultText.value.length;
+    charCount.textContent = n ? `${n} 文字` : '';
+  }
+
+  trimSpaces.addEventListener('change', renderResult);
+  resultText.addEventListener('input', () => {
+    rawText = resultText.value;
+    updateCount();
+    copyBtn.disabled = !resultText.value;
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(resultText.value);
+      showToast('コピーしました');
+    } catch {
+      resultText.select();
+      document.execCommand('copy');
+      showToast('コピーしました');
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    currentImage = null;
+    rawText = '';
+    fileInput.value = '';
+    resultText.value = '';
+    updateCount();
+    copyBtn.disabled = true;
+    runBtn.disabled = true;
+    progressWrap.classList.remove('active');
+    progressFill.style.width = '0%';
+    dropzone.classList.remove('has-image');
+    dropzone.innerHTML = `
+      <div class="dz-icon">🖼</div>
+      <div class="dz-main">画像をドラッグ＆ドロップ</div>
+      <div class="dz-hint">クリックして選択、または Ctrl+V で貼り付け</div>`;
+  });
+
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+})();
+</script>
+</body>
+</html>
