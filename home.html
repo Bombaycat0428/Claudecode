@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows Home ローカルアカウント追加手順</title>
+<style>
+  :root{
+    --ink:#1a1d24; --paper:#f7f4ee; --line:#d8d2c4;
+    --accent:#2d6a4f; --accent-soft:#e3efe8; --warn:#8a5a00; --warn-soft:#faf1dd;
+    --mono:"SFMono-Regular",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Segoe UI","Yu Gothic UI","Meiryo",sans-serif;
+    line-height:1.75; padding:2.2rem 1.2rem; max-width:760px; margin:0 auto;
+  }
+  header{border-bottom:2px solid var(--ink); padding-bottom:1rem; margin-bottom:2rem}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:.4rem}
+  h1{font-size:1.7rem; font-weight:700; line-height:1.3}
+  h2{
+    font-size:1.15rem; margin:2.4rem 0 1rem; padding-left:.7rem;
+    border-left:4px solid var(--accent);
+  }
+  ol.steps{list-style:none; counter-reset:s}
+  ol.steps>li{
+    counter-increment:s; position:relative;
+    padding:0 0 1.1rem 2.6rem; margin-bottom:.2rem;
+  }
+  ol.steps>li::before{
+    content:counter(s); position:absolute; left:0; top:.05rem;
+    width:1.8rem; height:1.8rem; background:var(--accent); color:#fff;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:.9rem; font-weight:600;
+  }
+  code{font-family:var(--mono); background:var(--accent-soft); padding:.1rem .4rem; border-radius:4px; font-size:.9em}
+  .path{font-family:var(--mono); background:#fff; border:1px solid var(--line); padding:.5rem .8rem; border-radius:6px; display:inline-block; margin:.3rem 0; font-size:.85rem}
+  .note{background:var(--warn-soft); border-left:4px solid var(--warn); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1.4rem 0; font-size:.92rem}
+  .note strong{color:var(--warn)}
+  .tip{background:var(--accent-soft); border-left:4px solid var(--accent); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1.4rem 0; font-size:.92rem}
+  footer{margin-top:2.5rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.8rem; color:#6b6656}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Windows Home / IT Ops</div>
+  <h1>ローカルアカウントを追加する手順</h1>
+</header>
+
+<h2>設定画面から追加</h2>
+<ol class="steps">
+  <li><code>Win + I</code> で <strong>設定</strong> を開く</li>
+  <li><strong>アカウント</strong> → <strong>他のユーザー</strong> を選ぶ
+    <div class="path">設定 &gt; アカウント &gt; 他のユーザー</div>
+  </li>
+  <li><strong>その他のユーザーを追加する</strong> の「アカウントを追加」をクリック</li>
+  <li>Microsoftアカウント入力画面が出るので、<br>
+    <strong>このユーザーのサインイン情報がありません</strong> をクリック</li>
+  <li><strong>Microsoftアカウントを持たないユーザーを追加する</strong> をクリック</li>
+  <li>ユーザー名・パスワード・秘密の質問を入力して <strong>次へ</strong></li>
+  <li>完了。一覧に新しいローカルアカウントが表示される</li>
+</ol>
+
+<div class="note">
+  <strong>ポイント：</strong>手順4・5を飛ばすとMicrosoftアカウント必須になってしまいます。「サインイン情報がありません」→「Microsoftアカウントを持たない〜」の2段構えが必ずローカルアカウントに落とすルートです。
+</div>
+
+<h2>管理者に昇格させたい場合</h2>
+<ol class="steps">
+  <li>「他のユーザー」一覧で対象アカウントをクリック</li>
+  <li><strong>アカウントの種類の変更</strong> をクリック</li>
+  <li>種類を <strong>管理者</strong> に変更 → OK</li>
+</ol>
+
+<div class="tip">
+  <strong>コマンド派向け：</strong>管理者権限のPowerShellなら一発です。<br>
+  <span class="path">net user ユーザー名 パスワード /add</span><br>
+  管理者に昇格：<br>
+  <span class="path">net localgroup Administrators ユーザー名 /add</span>
+</div>
+
+<div class="note">
+  <strong>運用メモ：</strong>共有アカウント運用だとプロファイル／履歴が混ざってカオスになりがち。新規PCから1人1ローカルアカウントにしておくと切り分けが楽です（既存機はそのままでOK）。
+</div>
+
+<footer>Windows 11/10 Home 共通手順。バージョンによりメニュー文言が多少異なる場合あり。</footer>
+</body>
+</html>
