@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本史マップ | Japan History Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper:      #F7F2E6;
+    --paper-deep: #EFE6D2;
+    --card:       #FFFDF8;
+    --ink:        #2A241D;
+    --ink-soft:   #756A5A;
+    --ink-faint:  #A69A85;
+    --line:       rgba(42,36,29,0.12);
+    --line-soft:  rgba(42,36,29,0.07);
+    --accent:     #B3402E;
+    --accent-soft:rgba(179,64,46,0.10);
+    --pref-fill:  #E3D9C0;
+    --pref-hover: #D5C7A4;
+    --pref-stroke:#F7F2E6;
+
+    --serif: 'Shippori Mincho', serif;
+    --sans:  'Noto Sans JP', sans-serif;
+    --mono:  'Space Mono', monospace;
+
+    --r: 14px;
+    --r-sm: 8px;
+  }
+
+  html { font-size: 106.25%; } /* base 17px */
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  a { color: inherit; }
+
+  .page {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── header ── */
+  header { margin-bottom: 34px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+  }
+
+  .lede {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    max-width: 62ch;
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  .stat-row b { color: var(--ink); font-size: 1rem; }
+
+  /* ── search + filters ── */
+  .toolbar {
+    margin: 28px 0 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 12px 20px;
+    max-width: 480px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .search-box svg { flex-shrink: 0; opacity: 0.5; }
+  .search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 0.98rem;
+    color: var(--ink);
+    width: 100%;
+  }
+  .search-box input::placeholder { color: var(--ink-faint); }
+
+  .era-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .era-chip {
+    --c: #999;
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: inherit;
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px 7px 10px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+    user-select: none;
+  }
+  .era-chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .era-chip .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--c);
+    flex-shrink: 0;
+  }
+  .era-chip .en {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+  }
+  .era-chip:hover { border-color: var(--c); color: var(--ink); }
+  .era-chip.active {
+    background: var(--c);
+    border-color: var(--c);
+    color: #fff;
+  }
+  .era-chip.active .en { color: rgba(255,255,255,0.75); }
+  .era-chip.all { font-weight: 700; }
+
+  /* ── main grid ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 24px;
+  }
+
+  /* ── map ── */
+  .map-card { position: sticky; top: 24px; }
+  @media (max-width: 880px) { .map-card { position: static; } }
+
+  .map-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .map-head h2 {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .map-legend {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+  }
+
+  #mapHolder {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper-deep);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  #mapHolder svg { width: 100%; height: 100%; display: block; }
+  #mapHolder [data-code] { cursor: pointer; transition: opacity .15s; }
+  #mapHolder .pref-selected { filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+
+  .map-note {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+  .map-fallback {
+    display: none;
+    padding: 30px 16px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+  }
+
+  .pref-picker {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pref-picker label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .pref-picker select {
+    font-family: var(--sans);
+    font-size: 0.94rem;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+  }
+
+  /* ── side panel ── */
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .panel-head h2 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .panel-head .sub {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+  .back-btn {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .back-btn:hover { opacity: 0.8; }
+
+  .intro-copy { color: var(--ink-soft); font-size: 0.92rem; margin-bottom: 18px; }
+  .intro-copy strong { color: var(--ink); }
+
+  .event-list { display: flex; flex-direction: column; gap: 12px; max-height: 640px; overflow-y: auto; padding-right: 4px; }
+  .event-list:not(.scrollcap) { max-height: none; }
+
+  .ev-card {
+    --c: #999;
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--c);
+    border-radius: var(--r-sm);
+    padding: 14px 16px;
+    cursor: pointer;
+    background: var(--paper);
+    transition: background .15s, border-color .15s;
+  }
+  .ev-card:hover { background: var(--paper-deep); }
+  .ev-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .ev-card .row1 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  .ev-card .icon { font-size: 1rem; }
+  .ev-card .year { font-family: var(--mono); font-size: 0.75rem; color: var(--c); font-weight: 700; }
+  .ev-card .title { font-family: var(--serif); font-weight: 700; font-size: 1.02rem; }
+  .ev-card .pref-tag {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    margin-left: auto;
+  }
+  .ev-card .desc { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.65; }
+  .ev-card .era-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--c);
+    background: color-mix(in srgb, var(--c) 14%, transparent);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+
+  .empty-note { color: var(--ink-faint); font-size: 0.88rem; padding: 20px 4px; text-align: center; }
+
+  .pick-list { display: flex; flex-direction: column; gap: 10px; }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer a { text-decoration: underline; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <div class="eyebrow">JAPAN HISTORY MAP</div>
+    <h1>日本史マップ</h1>
+    <p class="lede">都道府県をクリックすると、その土地で起きた歴史の出来事が見られます。時代で絞り込んだり、キーワードで検索したりしながら、地図で日本史をたどってみましょう。</p>
+    <div class="stat-row">
+      <span><b id="statEvents">-</b> 件の出来事</span>
+      <span><b id="statPrefs">-</b> の都道府県に記録あり</span>
+      <span><b>11</b> 時代を収録</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" aria-label="出来事・人物・都道府県名で検索" placeholder="出来事・人物・都道府県名で検索（例：関ヶ原 / 龍馬 / 京都）">
+    </label>
+    <div class="era-bar" id="eraBar"></div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="card map-card">
+      <div class="map-head">
+        <h2>MAP</h2>
+        <span class="map-legend" id="mapLegend">全時代を表示中</span>
+      </div>
+      <div id="mapHolder"><span style="font-family:var(--mono);font-size:0.78rem;color:var(--ink-faint);">地図を読み込み中…</span></div>
+      <div class="map-fallback" id="mapFallback">
+        地図データの読み込みに失敗しました（オフライン環境の可能性があります）。<br>
+        下のプルダウンから都道府県を選んで出来事を探せます。
+      </div>
+      <p class="map-note">色のついた都道府県には、選んだ時代の出来事があります</p>
+      <div class="pref-picker">
+        <label for="prefSelect">都道府県から探す / SELECT PREFECTURE</label>
+        <select id="prefSelect">
+          <option value="">— 都道府県を選択 —</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="panel-head">
+        <div>
+          <h2 id="panelTitle">日本史をめぐる</h2>
+          <div class="sub" id="panelSub">PICK A PREFECTURE OR AN ERA</div>
+        </div>
+        <button class="back-btn" id="backBtn" style="display:none;">全体に戻る</button>
+      </div>
+      <div id="panelBody" aria-live="polite"></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>Map: 「日本地図.svg」(Wikipedia, GFDL) を基にした <a href="https://github.com/geolonia/japanese-prefectures" target="_blank" rel="noopener">Geolonia 都道府県SVG</a> を利用</span>
+    <span>個人制作の学習アプリです。年代・内容は学校教育レベルの一般的な通説に基づきます</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  var PREF_NAMES = [null,
+    "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+    "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+    "新潟県","富山県","石川県","福井県","山梨県","長野県",
+    "岐阜県","静岡県","愛知県","三重県",
+    "滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県",
+    "鳥取県","島根県","岡山県","広島県","山口県",
+    "徳島県","香川県","愛媛県","高知県",
+    "福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"
+  ];
+
+  var ERAS = [
+    { id:"jomon",     ja:"縄文・弥生",       en:"JOMON / YAYOI",         c:"#7A5A38" },
+    { id:"kofun",     ja:"古墳・飛鳥",       en:"KOFUN / ASUKA",         c:"#4C6FB1" },
+    { id:"nara",      ja:"奈良",             en:"NARA",                  c:"#C99A2E" },
+    { id:"heian",     ja:"平安",             en:"HEIAN",                 c:"#8A6BA8" },
+    { id:"kamakura",  ja:"鎌倉",             en:"KAMAKURA",              c:"#4C7A78" },
+    { id:"muromachi", ja:"室町・戦国",       en:"MUROMACHI / SENGOKU",   c:"#963B36" },
+    { id:"azuchi",    ja:"安土桃山",         en:"AZUCHI-MOMOYAMA",       c:"#C08A2E" },
+    { id:"edo",       ja:"江戸",             en:"EDO",                   c:"#2E4E75" },
+    { id:"meiji",     ja:"明治",             en:"MEIJI",                 c:"#7C3F35" },
+    { id:"taisho",    ja:"大正・昭和戦前",   en:"TAISHO / EARLY SHOWA",  c:"#3E5C40" },
+    { id:"modern",    ja:"戦後〜現代",       en:"POSTWAR–PRESENT",       c:"#556270" }
+  ];
+  var ERA_MAP = {};
+  ERAS.forEach(function(e){ ERA_MAP[e.id] = e; });
+
+  // era, year(表示用), pref(都道府県コード), title, icon, desc
+  var EVENTS = [
+    // 縄文・弥生
+    {era:"jomon", year:"約5500年前〜", pref:2, title:"三内丸山遺跡", icon:"🏺", desc:"大規模な縄文集落の跡。竪穴住居や巨大な掘立柱建物の跡が見つかり、定住生活の様子を伝える代表的な遺跡。"},
+    {era:"jomon", year:"縄文時代", pref:12, title:"加曽利貝塚", icon:"🏺", desc:"日本最大級の貝塚。縄文人が食べた貝殻や土器が積み重なり、当時の暮らしと環境を知る手がかりになっている。"},
+    {era:"jomon", year:"弥生時代", pref:41, title:"吉野ヶ里遺跡", icon:"🏺", desc:"濠や物見やぐらを備えた大規模な環濠集落跡。倭国大乱期のクニの姿を伝え、邪馬台国との関係も議論される。"},
+    {era:"jomon", year:"弥生時代", pref:22, title:"登呂遺跡", icon:"🏺", desc:"広い水田跡と集落跡が発見された弥生時代の遺跡。稲作を中心とした当時の農耕社会を具体的に伝えている。"},
+
+    // 古墳・飛鳥
+    {era:"kofun", year:"5世紀頃", pref:27, title:"大仙古墳（仁徳天皇陵古墳）", icon:"⛰️", desc:"日本最大の前方後円墳。巨大な古墳を築けるほどの権力を持つヤマト政権が、この頃には大きな力を持っていたことを示す。"},
+    {era:"kofun", year:"5世紀頃", pref:11, title:"稲荷山古墳と鉄剣", icon:"⛰️", desc:"出土した鉄剣に「ワカタケル大王」の銘文が刻まれ、ヤマト政権の勢力が関東にまで及んでいたことを示す貴重な史料。"},
+    {era:"kofun", year:"神話の時代", pref:32, title:"出雲大社", icon:"⛩️", desc:"『古事記』の国譲り神話の舞台とされる古社。近年の発掘で、伝承通りの巨大な柱跡が見つかり注目を集めた。"},
+    {era:"kofun", year:"7世紀", pref:29, title:"法隆寺", icon:"⛩️", desc:"聖徳太子ゆかりの寺院で、現存する世界最古の木造建築群。飛鳥文化の仏教美術を今に伝える。"},
+    {era:"kofun", year:"7世紀", pref:29, title:"飛鳥寺と飛鳥京", icon:"⛩️", desc:"蘇我氏が建立した日本最初期の本格的仏教寺院。周辺の飛鳥の地は、当時の政治の中心地だった。"},
+    {era:"kofun", year:"645年", pref:29, title:"乙巳の変・大化の改新", icon:"📜", desc:"中大兄皇子と中臣鎌足が権勢を誇った蘇我氏を打倒。天皇中心の中央集権国家づくりが本格的に始まった。"},
+
+    // 奈良
+    {era:"nara", year:"710年", pref:29, title:"平城京遷都", icon:"📜", desc:"唐の都・長安にならって造られた本格的な都。律令国家の中心として、政治・文化の舞台になった。"},
+    {era:"nara", year:"752年", pref:29, title:"東大寺と大仏開眼", icon:"⛩️", desc:"聖武天皇が国家の安泰を願い建立した東大寺の大仏。当時の技術と信仰の大きさを物語る国家事業だった。"},
+
+    // 平安
+    {era:"heian", year:"794年", pref:26, title:"平安京遷都", icon:"📜", desc:"桓武天皇が長岡京から遷都。以後1000年以上にわたり日本の都であり続け、貴族文化が花開く舞台となった。"},
+    {era:"heian", year:"平安後期", pref:3, title:"中尊寺金色堂", icon:"⛩️", desc:"奥州藤原氏が平泉に築いた黄金の御堂。京の都に劣らぬ独自の文化圏が東北に栄えたことを伝える。"},
+    {era:"heian", year:"1156・1159年", pref:26, title:"保元の乱・平治の乱", icon:"⚔️", desc:"皇室・貴族の対立に武士が動員された争乱。この戦いを経て平清盛ら武士が政治の表舞台に台頭していく。"},
+    {era:"heian", year:"1184年", pref:28, title:"一ノ谷の戦い", icon:"⚔️", desc:"源義経の奇襲「鵯越の逆落とし」で知られる源平合戦の戦い。平氏は本拠地を追われ西へ退いた。"},
+    {era:"heian", year:"1185年", pref:37, title:"屋島の戦い", icon:"⚔️", desc:"源氏軍が瀬戸内海の要衝・屋島を急襲。那須与一の扇の的の逸話でも知られる源平合戦終盤の戦い。"},
+    {era:"heian", year:"1185年", pref:35, title:"壇ノ浦の戦い", icon:"⚔️", desc:"源平合戦最後の戦い。平氏一門は海上での戦いに敗れ滅亡し、幼い安徳天皇も入水した。"},
+
+    // 鎌倉
+    {era:"kamakura", year:"1185/1192年", pref:14, title:"鎌倉幕府の成立", icon:"🏯", desc:"源頼朝が鎌倉に武家政権を樹立。守護・地頭の設置や征夷大将軍就任を経て、武士による政治が本格化した。"},
+    {era:"kamakura", year:"1221年", pref:26, title:"承久の乱", icon:"⚔️", desc:"後鳥羽上皇が幕府打倒を図るも失敗。幕府の優位が確立し、朝廷監視のため京都に六波羅探題が置かれた。"},
+    {era:"kamakura", year:"1274・1281年", pref:40, title:"元寇（文永・弘安の役）", icon:"⚔️", desc:"モンゴル帝国（元）が二度にわたり博多湾に来襲。御家人たちの奮戦と暴風雨により撃退したが、幕府の財政は苦しくなった。"},
+    {era:"kamakura", year:"1333年", pref:14, title:"鎌倉幕府の滅亡", icon:"🏯", desc:"新田義貞らの攻撃により鎌倉が陥落し、幕府は滅亡。後醍醐天皇による建武の新政へとつながる。"},
+
+    // 室町・戦国
+    {era:"muromachi", year:"1336年〜", pref:29, title:"建武の新政と南朝", icon:"📜", desc:"後醍醐天皇が吉野に南朝を開き、京都の北朝と対立。以後半世紀以上続く南北朝の動乱の舞台となった。"},
+    {era:"muromachi", year:"14世紀末", pref:26, title:"金閣（鹿苑寺）", icon:"⛩️", desc:"三代将軍・足利義満が建てた別荘。北山文化を象徴する黄金の楼閣として、室町幕府の全盛期を今に伝える。"},
+    {era:"muromachi", year:"15世紀後半", pref:26, title:"銀閣（慈照寺）", icon:"⛩️", desc:"八代将軍・足利義政が建てた東山山荘。簡素で洗練された東山文化を象徴し、書院造の源流ともいわれる。"},
+    {era:"muromachi", year:"1467〜77年", pref:26, title:"応仁の乱", icon:"⚔️", desc:"将軍家の跡継ぎ争いなどから京都で始まった大乱。11年に及ぶ戦乱で京の町は荒廃し、戦国時代の幕開けとなった。"},
+    {era:"muromachi", year:"戦国時代", pref:15, title:"上杉謙信と春日山城", icon:"🏯", desc:"「越後の龍」上杉謙信の本拠地。義を重んじる姿勢で知られ、宿敵・武田信玄と川中島で幾度も戦った。"},
+    {era:"muromachi", year:"戦国時代", pref:19, title:"武田信玄と甲府", icon:"🏯", desc:"「甲斐の虎」武田信玄が本拠とした地。強力な騎馬軍団と分国法「甲州法度之次第」で知られる戦国屈指の大名。"},
+    {era:"muromachi", year:"1553〜64年", pref:20, title:"川中島の戦い", icon:"⚔️", desc:"武田信玄と上杉謙信が北信濃の覇権を巡り5度にわたり激突。決着はつかず、戦国時代屈指の名勝負として語り継がれる。"},
+    {era:"muromachi", year:"1560年", pref:23, title:"桶狭間の戦い", icon:"⚔️", desc:"織田信長が大軍を率いる今川義元を奇襲し討ち取った戦い。信長が全国にその名を轟かせる転機となった。"},
+    {era:"muromachi", year:"1543年", pref:46, title:"鉄砲伝来", icon:"⛴️", desc:"種子島に漂着したポルトガル人により鉄砲がもたらされた。以後国内で急速に普及し、戦の戦い方を大きく変えた。"},
+    {era:"muromachi", year:"1549年", pref:46, title:"キリスト教伝来", icon:"⛴️", desc:"宣教師フランシスコ・ザビエルが鹿児島に上陸し布教を開始。西日本を中心にキリシタン大名や信者が増えていった。"},
+    {era:"muromachi", year:"1575年", pref:23, title:"長篠の戦い", icon:"⚔️", desc:"織田・徳川連合軍が鉄砲を効果的に活用し、武田軍の騎馬隊を打ち破った戦い。新戦術の威力を示した。"},
+    {era:"muromachi", year:"戦国時代", pref:44, title:"大友宗麟とキリシタン文化", icon:"⛴️", desc:"豊後（大分）を治めたキリシタン大名。西洋の文物を積極的に取り入れ、南蛮貿易の窓口のひとつとなった。"},
+
+    // 安土桃山
+    {era:"azuchi", year:"1579年", pref:25, title:"安土城", icon:"🏯", desc:"織田信長が築いた壮麗な城。天主を備えた城郭建築は以後の城づくりに大きな影響を与えた。"},
+    {era:"azuchi", year:"1582年", pref:26, title:"本能寺の変", icon:"⚔️", desc:"家臣・明智光秀の謀反により織田信長が京都本能寺で自害。天下統一を目前にした信長の突然の最期だった。"},
+    {era:"azuchi", year:"1583年〜", pref:27, title:"大坂城", icon:"🏯", desc:"豊臣秀吉が築いた天下統一の象徴。壮大な規模を誇り、以後の政権の拠点として重要な役割を果たした。"},
+    {era:"azuchi", year:"1590年", pref:14, title:"小田原征伐", icon:"⚔️", desc:"秀吉が北条氏の小田原城を包囲し降伏させた戦い。これにより秀吉による天下統一が完成した。"},
+    {era:"azuchi", year:"1592・97年", pref:41, title:"文禄・慶長の役と名護屋城", icon:"⛴️", desc:"秀吉が朝鮮出兵の拠点として築いた名護屋城。二度の出兵は失敗に終わり、豊臣政権衰退の一因となった。"},
+    {era:"azuchi", year:"1600年", pref:21, title:"関ヶ原の戦い", icon:"⚔️", desc:"徳川家康率いる東軍と石田三成率いる西軍が激突した天下分け目の戦い。家康の勝利が江戸幕府開設への道を開いた。"},
+
+    // 江戸
+    {era:"edo", year:"1603年", pref:13, title:"江戸幕府の開府", icon:"🏯", desc:"徳川家康が征夷大将軍に任じられ江戸に幕府を開く。以後260年余り続く江戸時代が始まった。"},
+    {era:"edo", year:"1614・15年", pref:27, title:"大坂の陣", icon:"⚔️", desc:"徳川方が豊臣方の大坂城を攻め落とした戦い。豊臣家は滅亡し、徳川による支配が名実ともに確立した。"},
+    {era:"edo", year:"1617年〜", pref:9, title:"日光東照宮", icon:"⛩️", desc:"徳川家康を神として祀る霊廟。豪華絢爛な彫刻装飾で知られ、徳川幕府の権威を象徴する建築物となった。"},
+    {era:"edo", year:"江戸時代", pref:17, title:"金沢城と加賀百万石", icon:"🏯", desc:"前田家が治めた加賀藩の居城。江戸期最大級の石高を誇り、独自の華やかな文化「加賀百万石」が育まれた。"},
+    {era:"edo", year:"1601〜09年", pref:28, title:"姫路城", icon:"🏯", desc:"白漆喰の壁が美しい「白鷺城」。池田輝政が大改修を行い、現存する日本最大級の城郭建築として知られる。"},
+    {era:"edo", year:"1601〜07年", pref:43, title:"熊本城", icon:"🏯", desc:"築城の名手・加藤清正が築いた堅固な城。実践的な工夫が随所にみられ、名城として高く評価されている。"},
+    {era:"edo", year:"1637〜38年", pref:42, title:"島原・天草一揆", icon:"⚔️", desc:"重税とキリシタン弾圧に苦しむ農民らが天草四郎を中心に蜂起。幕府が鎮圧後、禁教政策と鎖国は一段と強まった。"},
+    {era:"edo", year:"1641年〜", pref:42, title:"出島", icon:"⛴️", desc:"鎖国政策のもと、オランダ商館が置かれた人工島。海外との窓口として西洋の学問や技術が伝えられ続けた。"},
+    {era:"edo", year:"江戸時代", pref:1, title:"蝦夷地と松前藩", icon:"⛴️", desc:"アイヌの人々との交易を担った松前藩が置かれた地。江戸幕府にとって北方の重要な拠点だった。"},
+    {era:"edo", year:"1701〜03年", pref:28, title:"忠臣蔵・赤穂事件", icon:"⚔️", desc:"赤穂藩主・浅野長矩の刃傷事件をきっかけに、家臣の大石内蔵助ら47人が吉良邸に討ち入った事件。後世の物語の題材にもなった。"},
+    {era:"edo", year:"1774年", pref:13, title:"解体新書と蘭学", icon:"📜", desc:"杉田玄白・前野良沢らがオランダ語の解剖書を翻訳出版。蘭学が発展し、西洋の学問への関心が広がった。"},
+    {era:"edo", year:"幕末", pref:39, title:"坂本龍馬と土佐", icon:"⚔️", desc:"土佐藩の下級武士の家に生まれた龍馬は、脱藩後に薩長同盟の仲介や新しい国家構想の提言に奔走した。"},
+    {era:"edo", year:"1853年", pref:14, title:"黒船来航", icon:"⛴️", desc:"アメリカのペリー艦隊が浦賀に来航し開国を要求。長い鎖国体制が揺らぎ、幕末の激動が始まった。"},
+    {era:"edo", year:"1860年", pref:13, title:"桜田門外の変", icon:"⚔️", desc:"大老・井伊直弼が江戸城桜田門外で水戸浪士らに暗殺された事件。幕府の権威に大きな打撃を与えた。"},
+
+    // 明治
+    {era:"meiji", year:"1866年", pref:26, title:"薩長同盟", icon:"📜", desc:"犬猿の仲だった薩摩・長州両藩が、坂本龍馬らの仲介で倒幕へ向け同盟を結んだ。明治維新の大きな転機となった。"},
+    {era:"meiji", year:"1867年", pref:26, title:"大政奉還", icon:"📜", desc:"十五代将軍・徳川慶喜が政権を朝廷に返上。260年余り続いた江戸幕府による統治が事実上終わりを告げた。"},
+    {era:"meiji", year:"1868年", pref:26, title:"鳥羽・伏見の戦い", icon:"⚔️", desc:"旧幕府軍と新政府軍が京都近郊で衝突。戊辰戦争の幕開けとなり、以後戦いの舞台は北へと移っていった。"},
+    {era:"meiji", year:"1868年", pref:13, title:"江戸城無血開城", icon:"🏯", desc:"勝海舟と西郷隆盛の会談により、江戸総攻撃が回避され江戸城は無血のまま明け渡された。江戸を戦火から救った決断だった。"},
+    {era:"meiji", year:"1868年", pref:7, title:"会津戦争", icon:"⚔️", desc:"会津藩が新政府軍と激しく戦った戊辰戦争の激戦地。白虎隊の悲劇でも知られる。"},
+    {era:"meiji", year:"1869年", pref:1, title:"五稜郭の戦い", icon:"🏯", desc:"榎本武揚ら旧幕府軍が最後の拠点とした星形の要塞。ここでの降伏をもって戊辰戦争は終結した。"},
+    {era:"meiji", year:"1871年", pref:13, title:"廃藩置県", icon:"📜", desc:"全国の藩を廃止し府県を置いた大改革。中央集権的な近代国家づくりが本格的に始まった。"},
+    {era:"meiji", year:"1877年", pref:46, title:"西南戦争", icon:"⚔️", desc:"西郷隆盛を担いだ士族らが起こした最大の反乱。政府軍に鎮圧され、以後武力による士族反乱は終息した。"},
+    {era:"meiji", year:"1889年", pref:13, title:"大日本帝国憲法発布", icon:"📜", desc:"アジア初の近代憲法として発布。天皇主権のもと、帝国議会を持つ立憲国家の体制が整えられた。"},
+    {era:"meiji", year:"1895年", pref:35, title:"日清戦争と下関条約", icon:"📜", desc:"日清戦争の講和条約が下関で締結され、日本は台湾などを獲得。国際的な地位を大きく高める契機となった。"},
+
+    // 大正・昭和戦前
+    {era:"taisho", year:"1923年", pref:13, title:"関東大震災", icon:"🌊", desc:"マグニチュード7.9の大地震が首都圏を襲い甚大な被害をもたらした。東京・横浜は壊滅的な打撃を受け、その後の都市計画に影響を与えた。"},
+    {era:"taisho", year:"1941年", pref:13, title:"太平洋戦争開戦", icon:"💥", desc:"日本がハワイ真珠湾などを攻撃し、アメリカ・イギリスとの戦争へ突入。開戦の決定は東京で下された。"},
+    {era:"taisho", year:"1945年3月", pref:13, title:"東京大空襲", icon:"💥", desc:"アメリカ軍による大規模な焼夷弾攻撃で下町一帯が焼け野原となり、一夜で多くの犠牲者を出した。"},
+    {era:"taisho", year:"1945年", pref:47, title:"沖縄戦", icon:"💥", desc:"国内で唯一、地上戦が行われた戦場となった沖縄。住民を巻き込んだ激しい戦闘で多数の犠牲者が出た。"},
+    {era:"taisho", year:"1945年8月6日", pref:34, title:"広島原爆投下", icon:"💥", desc:"人類史上初めて実戦で原子爆弾が投下され、街は壊滅した。今も平和を訴える祈りの地となっている。"},
+    {era:"taisho", year:"1945年8月9日", pref:42, title:"長崎原爆投下", icon:"💥", desc:"広島に続き長崎にも原子爆弾が投下された。甚大な被害をもたらし、日本の降伏を早める要因のひとつとなった。"},
+    {era:"taisho", year:"1945年8月15日", pref:13, title:"終戦・玉音放送", icon:"📜", desc:"昭和天皇によるラジオ放送でポツダム宣言受諾が国民に伝えられた。長い戦争が終わり、戦後日本の出発点となった。"},
+
+    // 戦後〜現代
+    {era:"modern", year:"1946年", pref:13, title:"日本国憲法公布", icon:"📜", desc:"国民主権・平和主義・基本的人権の尊重を柱とする新しい憲法が公布された。翌年施行され戦後日本の基礎となった。"},
+    {era:"modern", year:"1958年", pref:13, title:"東京タワー完成", icon:"🗼", desc:"高度経済成長期を象徴する電波塔として完成。復興を遂げた日本の新しいシンボルとなった。"},
+    {era:"modern", year:"1964年", pref:13, title:"東京オリンピック", icon:"🎌", desc:"アジア初の夏季オリンピック開催。同時期に東海道新幹線も開業し、日本の戦後復興を世界に示す機会となった。"},
+    {era:"modern", year:"1970年", pref:27, title:"大阪万博", icon:"🎌", desc:"「人類の進歩と調和」をテーマに開催された日本万国博覧会。高度経済成長期を象徴する一大イベントとなった。"},
+    {era:"modern", year:"1972年", pref:47, title:"沖縄本土復帰", icon:"📜", desc:"アメリカの統治下にあった沖縄が日本に返還された。戦後27年を経て、沖縄は再び日本の一部となった。"},
+    {era:"modern", year:"1995年", pref:28, title:"阪神・淡路大震災", icon:"🌊", desc:"神戸市を中心に大きな被害をもたらした大地震。都市直下型地震の恐ろしさを示し、防災意識を大きく変えた。"},
+    {era:"modern", year:"2011年", pref:4, title:"東日本大震災", icon:"🌊", desc:"巨大地震と津波が東北地方の太平洋沿岸を襲い、甚大な被害をもたらした。宮城・岩手・福島を中心に大きな傷跡を残した。"}
+  ];
+
+  var MAP_SVG_URL = "https://cdn.jsdelivr.net/gh/geolonia/japanese-prefectures/map-full.svg";
+
+  // ── DOM refs ──
+  var eraBar = document.getElementById("eraBar");
+  var mapHolder = document.getElementById("mapHolder");
+  var mapFallback = document.getElementById("mapFallback");
+  var mapLegend = document.getElementById("mapLegend");
+  var prefSelect = document.getElementById("prefSelect");
+  var searchInput = document.getElementById("searchInput");
+  var panelTitle = document.getElementById("panelTitle");
+  var panelSub = document.getElementById("panelSub");
+  var panelBody = document.getElementById("panelBody");
+  var backBtn = document.getElementById("backBtn");
+
+  var state = { era: null, pref: null, query: "" };
+  var prefEls = {}; // code -> element
+
+  function readStateFromURL(){
+    var params = new URLSearchParams(location.search);
+    var era = params.get("era");
+    var pref = params.get("pref");
+    var q = params.get("q");
+    if (era && ERA_MAP[era]) state.era = era;
+    if (pref && /^[0-9]+$/.test(pref)){
+      var code = parseInt(pref, 10);
+      if (code >= 1 && code <= 47) state.pref = code;
+    }
+    if (q) state.query = q;
+  }
+
+  function syncURL(){
+    var params = new URLSearchParams();
+    if (state.era) params.set("era", state.era);
+    if (state.pref) params.set("pref", state.pref);
+    if (state.query) params.set("q", state.query);
+    var qs = params.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+  }
+
+  readStateFromURL();
+
+  // ── build era chips ──
+  var allChip = document.createElement("button");
+  allChip.type = "button";
+  allChip.className = "era-chip all active";
+  allChip.innerHTML = '<span class="dot" style="background:var(--ink-faint)"></span>すべての時代';
+  allChip.addEventListener("click", function(){ setEra(null); });
+  eraBar.appendChild(allChip);
+
+  ERAS.forEach(function(e){
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "era-chip";
+    chip.style.setProperty("--c", e.c);
+    chip.innerHTML = '<span class="dot"></span>' + e.ja + '<span class="en">' + e.en + '</span>';
+    chip.addEventListener("click", function(){ setEra(e.id === state.era ? null : e.id); });
+    chip._eraId = e.id;
+    eraBar.appendChild(chip);
+  });
+
+  function refreshEraChips(){
+    var chips = eraBar.querySelectorAll(".era-chip");
+    chips.forEach(function(c){
+      var isAll = c.classList.contains("all");
+      var active = isAll ? state.era === null : c._eraId === state.era;
+      c.classList.toggle("active", active);
+    });
+  }
+
+  // ── build prefecture <select> (works even if map fails to load) ──
+  var countsByPref = {};
+  EVENTS.forEach(function(ev){ countsByPref[ev.pref] = (countsByPref[ev.pref]||0) + 1; });
+  for (var i = 1; i <= 47; i++){
+    var opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = PREF_NAMES[i] + (countsByPref[i] ? "（" + countsByPref[i] + "）" : "");
+    prefSelect.appendChild(opt);
+  }
+  if (state.pref) prefSelect.value = state.pref;
+  if (state.query) searchInput.value = state.query;
+  prefSelect.addEventListener("change", function(){
+    if (prefSelect.value) setPref(parseInt(prefSelect.value, 10));
+    else setPref(null);
+  });
+
+  document.getElementById("statEvents").textContent = EVENTS.length;
+  document.getElementById("statPrefs").textContent = Object.keys(countsByPref).length;
+
+  // ── load map ──
+  fetch(MAP_SVG_URL)
+    .then(function(res){ if (!res.ok) throw new Error("map fetch failed"); return res.text(); })
+    .then(function(svgText){
+      svgText = svgText.replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<script[\s\S]*?<\/script>/gi, "");
+      mapHolder.innerHTML = svgText;
+      var svg = mapHolder.querySelector("svg");
+      if (!svg) throw new Error("no svg root");
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
+      var groups = svg.querySelectorAll("[data-code]");
+      groups.forEach(function(g){
+        var code = parseInt(g.getAttribute("data-code"), 10);
+        if (!code) return;
+        prefEls[code] = g;
+        g.querySelectorAll("path,polygon,polyline,circle").forEach(function(shape){
+          shape.style.stroke = "var(--pref-stroke)";
+          shape.style.strokeWidth = "1.4";
+          shape.style.strokeLinejoin = "round";
+        });
+        g.addEventListener("click", function(){
+          setPref(state.pref === code ? null : code);
+        });
+        g.addEventListener("mouseenter", function(){
+          if (state.pref !== code) paintPref(code, true);
+        });
+        g.addEventListener("mouseleave", function(){
+          if (state.pref !== code) paintPref(code, false);
+        });
+      });
+      paintMap();
+    })
+    .catch(function(){
+      mapHolder.style.display = "none";
+      mapFallback.style.display = "block";
+    });
+
+  function fillFor(code){
+    if (state.pref === code) return "var(--accent)";
+    var hasEventInEra = EVENTS.some(function(ev){ return ev.pref === code && (!state.era || ev.era === state.era); });
+    if (state.era){
+      return hasEventInEra ? ERA_MAP[state.era].c : "var(--pref-fill)";
+    }
+    return hasEventInEra ? "var(--pref-hover)" : "var(--pref-fill)";
+  }
+
+  function paintPref(code, hover){
+    var g = prefEls[code];
+    if (!g) return;
+    var color = hover && state.pref !== code ? "var(--pref-hover)" : fillFor(code);
+    g.querySelectorAll("path,polygon,polyline,circle").forEach(function(shape){
+      shape.style.fill = color;
+      shape.style.opacity = state.era && !hover ? (colorIsActive(code) ? "1" : "0.55") : "1";
+    });
+  }
+
+  function colorIsActive(code){
+    if (!state.era) return true;
+    return EVENTS.some(function(ev){ return ev.pref === code && ev.era === state.era; });
+  }
+
+  function paintMap(){
+    for (var code in prefEls){ paintPref(parseInt(code, 10), false); }
+  }
+
+  function setEra(id){
+    state.era = id;
+    refreshEraChips();
+    mapLegend.textContent = id ? (ERA_MAP[id].ja + "の出来事を表示中") : "全時代を表示中";
+    paintMap();
+    render();
+  }
+
+  function setPref(code){
+    state.pref = code;
+    prefSelect.value = code || "";
+    paintMap();
+    render();
+  }
+
+  searchInput.addEventListener("input", function(){
+    state.query = searchInput.value.trim();
+    if (state.query) { state.pref = null; prefSelect.value = ""; paintMap(); }
+    render();
+  });
+
+  backBtn.addEventListener("click", function(){
+    state.pref = null;
+    state.query = "";
+    searchInput.value = "";
+    prefSelect.value = "";
+    paintMap();
+    render();
+  });
+
+  function matchesQuery(ev, q){
+    if (!q) return true;
+    var hay = (ev.title + " " + ev.desc + " " + PREF_NAMES[ev.pref] + " " + ERA_MAP[ev.era].ja).toLowerCase();
+    return hay.indexOf(q.toLowerCase()) !== -1;
+  }
+
+  function eventsFor(){
+    return EVENTS.filter(function(ev){
+      if (state.pref && ev.pref !== state.pref) return false;
+      if (state.era && ev.era !== state.era) return false;
+      if (state.query && !matchesQuery(ev, state.query)) return false;
+      return true;
+    });
+  }
+
+  function evCard(ev){
+    var card = document.createElement("button");
+    card.type = "button";
+    card.className = "ev-card";
+    card.style.setProperty("--c", ERA_MAP[ev.era].c);
+    card.innerHTML =
+      '<div class="row1"><span class="icon">' + ev.icon + '</span>' +
+      '<span class="year">' + ev.year + '</span>' +
+      '<span class="title">' + ev.title + '</span>' +
+      '<span class="pref-tag">' + PREF_NAMES[ev.pref] + '</span></div>' +
+      '<div class="desc">' + ev.desc + '</div>' +
+      '<span class="era-tag">' + ERA_MAP[ev.era].ja + '</span>';
+    card.addEventListener("click", function(){
+      setPref(ev.pref);
+    });
+    return card;
+  }
+
+  function render(){
+    syncURL();
+    panelBody.innerHTML = "";
+    var showBack = !!(state.pref || state.query);
+    backBtn.style.display = showBack ? "inline-block" : "none";
+
+    var list = eventsFor().slice().sort(function(a,b){ return a.pref - b.pref; });
+
+    if (state.pref){
+      panelTitle.textContent = PREF_NAMES[state.pref];
+      panelSub.textContent = (state.era ? ERA_MAP[state.era].ja + " ／ " : "") + list.length + "件の出来事";
+    } else if (state.query){
+      panelTitle.textContent = "「" + state.query + "」の検索結果";
+      panelSub.textContent = list.length + "件ヒット";
+    } else if (state.era){
+      panelTitle.textContent = ERA_MAP[state.era].ja;
+      panelSub.textContent = ERA_MAP[state.era].en + " ／ " + list.length + "件の出来事";
+    } else {
+      panelTitle.textContent = "日本史をめぐる";
+      panelSub.textContent = "PICK A PREFECTURE OR AN ERA";
+      var intro = document.createElement("p");
+      intro.className = "intro-copy";
+      intro.innerHTML = "地図の都道府県をクリックするか、上の<strong>時代フィルター</strong>を選んでみましょう。まずは気になる時代から、いくつかの出来事をピックアップしました。";
+      panelBody.appendChild(intro);
+    }
+
+    if (list.length === 0){
+      var empty = document.createElement("p");
+      empty.className = "empty-note";
+      empty.textContent = "この条件に一致する出来事はまだ記録されていません。別の都道府県や時代も見てみましょう。";
+      panelBody.appendChild(empty);
+      return;
+    }
+
+    var wrap = document.createElement("div");
+    wrap.className = "event-list" + (list.length > 6 ? " scrollcap" : "");
+
+    var displayList = list;
+    if (!state.pref && !state.query && !state.era){
+      // default view: a curated pickup across eras
+      displayList = pickHighlights();
+    } else {
+      displayList = list.slice().sort(function(a,b){ return ERAS.findIndex(function(e){return e.id===a.era;}) - ERAS.findIndex(function(e){return e.id===b.era;}); });
+    }
+
+    displayList.forEach(function(ev){ wrap.appendChild(evCard(ev)); });
+    panelBody.appendChild(wrap);
+  }
+
+  function pickHighlights(){
+    // one representative event per era, in chronological era order
+    var picked = [];
+    ERAS.forEach(function(e){
+      var ev = EVENTS.filter(function(x){ return x.era === e.id; })[0];
+      if (ev) picked.push(ev);
+    });
+    return picked;
+  }
+
+  refreshEraChips();
+  render();
+
+})();
+</script>
+</body>
+</html>
