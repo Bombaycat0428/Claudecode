@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL Encoder / Decoder — URLエンコード変換</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mist-a: #e9edf9;
+    --mist-b: #fbf1e6;
+    --ink: #171b2e;
+    --ink-soft: #5a5f75;
+    --ink-faint: #9297ab;
+    --accent: #e8951c;
+    --accent-deep: #b56f0f;
+    --accent-soft: rgba(232,149,28,0.14);
+    --glass: rgba(255,255,255,0.56);
+    --glass-strong: rgba(255,255,255,0.8);
+    --glass-border: rgba(255,255,255,0.9);
+    --line: rgba(23,27,46,0.11);
+    --line-soft: rgba(23,27,46,0.07);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Space Grotesk", sans-serif;
+    background-image:
+      url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNTAnIGhlaWdodD0nMTUwJz48dGV4dCB4PSc0JyB5PSczNicgZm9udC1mYW1pbHk9J21vbm9zcGFjZScgZm9udC1zaXplPScyMicgZmlsbD0nIzE3MWIyZScgZmlsbC1vcGFjaXR5PScwLjA1JyB0cmFuc2Zvcm09J3JvdGF0ZSgtOSA0IDM2KSc+JTwvdGV4dD48dGV4dCB4PSc3OCcgeT0nMjQnIGZvbnQtZmFtaWx5PSdtb25vc3BhY2UnIGZvbnQtc2l6ZT0nMTMnIGZpbGw9JyNlODk1MWMnIGZpbGwtb3BhY2l0eT0nMC4wOCcgdHJhbnNmb3JtPSdyb3RhdGUoNyA3OCAyNCknPiUzRjwvdGV4dD48dGV4dCB4PScyNCcgeT0nOTYnIGZvbnQtZmFtaWx5PSdtb25vc3BhY2UnIGZvbnQtc2l6ZT0nMTMnIGZpbGw9JyMxNzFiMmUnIGZpbGwtb3BhY2l0eT0nMC4wNDUnIHRyYW5zZm9ybT0ncm90YXRlKC02IDI0IDk2KSc+JTI2PC90ZXh0Pjx0ZXh0IHg9JzEwMCcgeT0nMTI4JyBmb250LWZhbWlseT0nbW9ub3NwYWNlJyBmb250LXNpemU9JzE5JyBmaWxsPScjMTcxYjJlJyBmaWxsLW9wYWNpdHk9JzAuMDUnIHRyYW5zZm9ybT0ncm90YXRlKDEwIDEwMCAxMjgpJz4lPC90ZXh0Pjx0ZXh0IHg9JzU1JyB5PSc2MCcgZm9udC1mYW1pbHk9J21vbm9zcGFjZScgZm9udC1zaXplPScxMScgZmlsbD0nIzE3MWIyZScgZmlsbC1vcGFjaXR5PScwLjA0JyB0cmFuc2Zvcm09J3JvdGF0ZSgtNCA1NSA2MCknPiUyMDwvdGV4dD48L3N2Zz4="),
+      linear-gradient(135deg, var(--mist-a) 0%, var(--mist-b) 100%);
+    background-repeat: repeat, no-repeat;
+    background-size: 150px 150px, cover;
+    background-attachment: fixed, fixed;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    max-width: 1120px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 32px 22px;
+    flex-wrap: wrap;
+  }
+
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .pct-badge {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    background: linear-gradient(150deg, var(--glass-strong), var(--glass));
+    border: 1px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 700;
+    font-size: 21px;
+    color: var(--accent-deep);
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 10px 22px -10px rgba(23,27,46,0.35);
+  }
+  .title-text h1 {
+    margin: 0 0 5px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .title-text h1 .slash { color: var(--ink-faint); font-weight: 500; margin: 0 2px; }
+  .title-text p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .mode-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+  }
+  .mode-seg {
+    display: flex;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    box-shadow: 0 6px 18px -10px rgba(23,27,46,0.3);
+  }
+  .mode-seg button {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .mode-seg button.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #fff;
+    box-shadow: 0 3px 10px -3px rgba(181,111,15,0.6);
+  }
+  .mode-note {
+    font-size: 11px;
+    color: var(--ink-faint);
+    max-width: 260px;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  button:focus-visible,
+  .copy-btn:focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+
+  .panes {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 56px 1fr;
+    gap: 0;
+    max-width: 1120px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
+    min-height: 0;
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 14px 34px -18px rgba(23,27,46,0.28);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .pane:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 14px 34px -18px rgba(23,27,46,0.28);
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .pane-label-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .label-en {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .label-ja {
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .label-stats {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink-soft);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { color: var(--accent-deep); border-color: var(--accent); background: var(--accent-soft); }
+  .copy-btn.copied { color: #fff; background: var(--accent); border-color: var(--accent-deep); }
+
+  textarea {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 16px 18px 20px;
+  }
+  textarea::placeholder { color: var(--ink-faint); }
+
+  .pane-error {
+    padding: 0 18px 12px;
+    font-size: 11.5px;
+    color: var(--accent-deep);
+    display: none;
+  }
+  .pane-error.show { display: block; }
+
+  .gutter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wire {
+    position: relative;
+    width: 40px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wire-track {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    border-radius: 2px;
+    background: linear-gradient(to right, rgba(23,27,46,0.16), var(--accent) 50%, rgba(23,27,46,0.16));
+    opacity: 0.55;
+  }
+  .wire-node {
+    position: relative;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: var(--glass-strong);
+    border: 1.5px solid var(--accent);
+    color: var(--accent-deep);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .wire.flow-right .wire-node,
+  .wire.flow-left .wire-node {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-deep);
+  }
+  .wire.flow-right .wire-node { animation: flow-right 0.55s cubic-bezier(.4,0,.2,1); }
+  .wire.flow-left .wire-node { animation: flow-left 0.55s cubic-bezier(.4,0,.2,1); }
+  @keyframes flow-right {
+    0%   { transform: translateX(-11px) scale(0.85); }
+    55%  { transform: translateX(11px) scale(1.18); }
+    100% { transform: translateX(0) scale(1); }
+  }
+  @keyframes flow-left {
+    0%   { transform: translateX(11px) scale(0.85); }
+    55%  { transform: translateX(-11px) scale(1.18); }
+    100% { transform: translateX(0) scale(1); }
+  }
+
+  .breakdown {
+    max-width: 1120px;
+    width: 100%;
+    margin: 20px auto 36px;
+    padding: 0 32px;
+  }
+  .breakdown-label {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .breakdown-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-height: 34px;
+  }
+  .breakdown-empty {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding: 7px 0;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    animation: chip-in 0.2s ease both;
+  }
+  @keyframes chip-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chip-char { color: var(--ink); font-weight: 500; }
+  .chip-arrow { color: var(--ink-faint); font-size: 10px; }
+  .chip-code { color: var(--accent-deep); font-weight: 700; letter-spacing: 0.02em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    header { padding: 26px 20px 16px; }
+    .mode-toggle { align-items: flex-start; }
+    .mode-note { text-align: left; }
+    .panes {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(200px, 1fr) auto minmax(200px, 1fr);
+      padding: 0 20px;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .wire { width: 100%; max-width: 180px; margin: 0 auto; }
+    .breakdown { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title-group">
+      <div class="pct-badge" aria-hidden="true">%</div>
+      <div class="title-text">
+        <h1>URL Encoder<span class="slash">/</span>Decoder</h1>
+        <p>どちらの欄に入力しても、もう一方に自動で変換されます</p>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <div class="mode-seg" id="modeSeg">
+        <button type="button" class="active" data-mode="component">Component</button>
+        <button type="button" data-mode="full">Full URI</button>
+      </div>
+      <div class="mode-note" id="modeNote">クエリパラメータの値など、単一の文字列を強めに変換します</div>
+    </div>
+  </header>
+
+  <div class="panes">
+    <section class="pane">
+      <div class="pane-label">
+        <div class="pane-label-main">
+          <span class="label-en">Plain text</span>
+          <span class="label-ja">元のテキスト</span>
+        </div>
+        <button class="copy-btn" id="copyPlain">COPY</button>
+      </div>
+      <textarea id="plainText" placeholder="ここに文字列を入力してください（日本語・記号もOK）" spellcheck="false"></textarea>
+      <div class="pane-label" style="border-bottom:none; border-top:1px solid var(--line-soft); padding-top:8px; padding-bottom:8px;">
+        <span class="label-stats" id="plainStats">0 文字 ・ UTF-8 0 バイト</span>
+      </div>
+    </section>
+
+    <div class="gutter" aria-hidden="true">
+      <div class="wire" id="wire">
+        <span class="wire-track"></span>
+        <span class="wire-node" id="wireNode">%</span>
+      </div>
+    </div>
+
+    <section class="pane">
+      <div class="pane-label">
+        <div class="pane-label-main">
+          <span class="label-en">Encoded</span>
+          <span class="label-ja">エンコード後</span>
+        </div>
+        <button class="copy-btn" id="copyEncoded">COPY</button>
+      </div>
+      <textarea id="encodedText" placeholder="ここにエンコード済みの文字列を貼り付けるとデコードされます" spellcheck="false"></textarea>
+      <div class="pane-error" id="decodeError">⚠ 不正なパーセントエンコードです（%の後は2桁の16進数が必要です）</div>
+      <div class="pane-label" style="border-bottom:none; border-top:1px solid var(--line-soft); padding-top:8px; padding-bottom:8px;">
+        <span class="label-stats" id="encodedStats">0 文字</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-label">変換された文字</div>
+    <div class="breakdown-row" id="breakdownRow">
+      <div class="breakdown-empty" id="breakdownEmpty">記号や日本語などを入力すると、1文字ずつの変換内容がここに表示されます</div>
+    </div>
+  </div>
+
+<script>
+  const plainText = document.getElementById('plainText');
+  const encodedText = document.getElementById('encodedText');
+  const plainStats = document.getElementById('plainStats');
+  const encodedStats = document.getElementById('encodedStats');
+  const decodeError = document.getElementById('decodeError');
+  const wire = document.getElementById('wire');
+  const breakdownRow = document.getElementById('breakdownRow');
+  const modeSeg = document.getElementById('modeSeg');
+  const modeNote = document.getElementById('modeNote');
+
+  const MODE_NOTES = {
+    component: 'クエリパラメータの値など、単一の文字列を強めに変換します',
+    full: 'URL全体を保ったまま、記号を最小限だけ変換します（ / : ? # など はそのまま）',
+  };
+
+  let mode = 'component';
+  let syncing = false;
+  let pulseTimer = null;
+
+  function doEncode(str) {
+    return mode === 'component' ? encodeURIComponent(str) : encodeURI(str);
+  }
+  function doDecode(str) {
+    return mode === 'component' ? decodeURIComponent(str) : decodeURI(str);
+  }
+
+  function byteLength(str) {
+    return new TextEncoder().encode(str).length;
+  }
+
+  function pulseGutter(direction) {
+    clearTimeout(pulseTimer);
+    wire.classList.remove('flow-right', 'flow-left');
+    void wire.offsetWidth;
+    const cls = direction === 'decode' ? 'flow-left' : 'flow-right';
+    wire.classList.add(cls);
+    pulseTimer = setTimeout(() => wire.classList.remove(cls), 550);
+  }
+
+  function updateStats() {
+    plainStats.textContent = `${[...plainText.value].length} 文字 ・ UTF-8 ${byteLength(plainText.value)} バイト`;
+    encodedStats.textContent = `${[...encodedText.value].length} 文字`;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function updateBreakdown() {
+    const chars = [...plainText.value];
+    const chips = [];
+    for (const ch of chars) {
+      const enc = doEncode(ch);
+      if (enc !== ch) {
+        const shown = ch === ' ' ? '␣' : ch === '\n' ? '⏎' : ch;
+        chips.push(`<span class="chip"><span class="chip-char">${escapeHtml(shown)}</span><span class="chip-arrow">&rarr;</span><span class="chip-code">${enc}</span></span>`);
+      }
+    }
+    if (chips.length) {
+      breakdownRow.innerHTML = chips.join('');
+    } else {
+      breakdownRow.innerHTML = '<div class="breakdown-empty">記号や日本語などを入力すると、1文字ずつの変換内容がここに表示されます</div>';
+    }
+  }
+
+  function syncFromPlain() {
+    if (syncing) return;
+    syncing = true;
+    encodedText.value = doEncode(plainText.value);
+    decodeError.classList.remove('show');
+    syncing = false;
+    updateStats();
+    updateBreakdown();
+    pulseGutter('encode');
+  }
+
+  function syncFromEncoded() {
+    if (syncing) return;
+    syncing = true;
+    try {
+      plainText.value = doDecode(encodedText.value);
+      decodeError.classList.remove('show');
+    } catch (e) {
+      decodeError.classList.add('show');
+    }
+    syncing = false;
+    updateStats();
+    updateBreakdown();
+    pulseGutter('decode');
+  }
+
+  plainText.addEventListener('input', syncFromPlain);
+  encodedText.addEventListener('input', syncFromEncoded);
+
+  modeSeg.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-mode]');
+    if (!btn) return;
+    mode = btn.dataset.mode;
+    modeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    modeNote.textContent = MODE_NOTES[mode];
+    syncFromPlain();
+  });
+
+  function flashCopied(btn) {
+    const original = btn.textContent;
+    btn.textContent = 'COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1100);
+  }
+
+  document.getElementById('copyPlain').addEventListener('click', async e => {
+    await navigator.clipboard.writeText(plainText.value);
+    flashCopied(e.currentTarget);
+  });
+  document.getElementById('copyEncoded').addEventListener('click', async e => {
+    await navigator.clipboard.writeText(encodedText.value);
+    flashCopied(e.currentTarget);
+  });
+
+  // ── Init ───────────────────────────────────────────────
+  plainText.value = 'https://example.com/検索?q=東京 タワー&page=1';
+  syncFromPlain();
+</script>
+</body>
+</html>
