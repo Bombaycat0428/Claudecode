@@ -9,8 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --mist-a: #e9edf9;
-    --mist-b: #fbf1e6;
+    --mist-a: hsl(168 88% 50%);
+    --mist-mid: hsl(205 98% 50%);
+    --mist-b: hsl(284 80% 56%);
     --ink: #171b2e;
     --ink-soft: #5a5f75;
     --ink-faint: #9297ab;
@@ -35,7 +36,7 @@
     font-family: "Zen Kaku Gothic New", "Space Grotesk", sans-serif;
     background-image:
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNTAnIGhlaWdodD0nMTUwJz48dGV4dCB4PSc0JyB5PSczNicgZm9udC1mYW1pbHk9J21vbm9zcGFjZScgZm9udC1zaXplPScyMicgZmlsbD0nIzE3MWIyZScgZmlsbC1vcGFjaXR5PScwLjA1JyB0cmFuc2Zvcm09J3JvdGF0ZSgtOSA0IDM2KSc+JTwvdGV4dD48dGV4dCB4PSc3OCcgeT0nMjQnIGZvbnQtZmFtaWx5PSdtb25vc3BhY2UnIGZvbnQtc2l6ZT0nMTMnIGZpbGw9JyNlODk1MWMnIGZpbGwtb3BhY2l0eT0nMC4wOCcgdHJhbnNmb3JtPSdyb3RhdGUoNyA3OCAyNCknPiUzRjwvdGV4dD48dGV4dCB4PScyNCcgeT0nOTYnIGZvbnQtZmFtaWx5PSdtb25vc3BhY2UnIGZvbnQtc2l6ZT0nMTMnIGZpbGw9JyMxNzFiMmUnIGZpbGwtb3BhY2l0eT0nMC4wNDUnIHRyYW5zZm9ybT0ncm90YXRlKC02IDI0IDk2KSc+JTI2PC90ZXh0Pjx0ZXh0IHg9JzEwMCcgeT0nMTI4JyBmb250LWZhbWlseT0nbW9ub3NwYWNlJyBmb250LXNpemU9JzE5JyBmaWxsPScjMTcxYjJlJyBmaWxsLW9wYWNpdHk9JzAuMDUnIHRyYW5zZm9ybT0ncm90YXRlKDEwIDEwMCAxMjgpJz4lPC90ZXh0Pjx0ZXh0IHg9JzU1JyB5PSc2MCcgZm9udC1mYW1pbHk9J21vbm9zcGFjZScgZm9udC1zaXplPScxMScgZmlsbD0nIzE3MWIyZScgZmlsbC1vcGFjaXR5PScwLjA0JyB0cmFuc2Zvcm09J3JvdGF0ZSgtNCA1NSA2MCknPiUyMDwvdGV4dD48L3N2Zz4="),
-      linear-gradient(135deg, var(--mist-a) 0%, var(--mist-b) 100%);
+      linear-gradient(155deg, var(--mist-a), var(--mist-mid), var(--mist-b));
     background-repeat: repeat, no-repeat;
     background-size: 150px 150px, cover;
     background-attachment: fixed, fixed;
@@ -124,10 +125,16 @@
   }
   .mode-note {
     font-size: 11px;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
     max-width: 260px;
     text-align: right;
     line-height: 1.5;
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 6px 11px;
   }
 
   button:focus-visible,
@@ -304,13 +311,20 @@
     padding: 0 32px;
   }
   .breakdown-label {
+    display: inline-block;
     font-family: "Space Grotesk", sans-serif;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
     margin-bottom: 10px;
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 5px 10px;
   }
   .breakdown-row {
     display: flex;
