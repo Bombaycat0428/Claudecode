@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 防御: CSPでinline以外のスクリプト/外部リソースを制限（デモ用に緩め） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>Fresh Squeeze — 安全なジュースショップ</title>
+<style>
+  :root{
+    --ink:#20241b; --paper:#fdfbf3; --line:#e2ddc9;
+    --lime:#5a8f2f; --lime-soft:#eaf3dc; --citrus:#e08a1e; --berry:#a3324d;
+    --mono:"SFMono-Regular",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:"Segoe UI","Yu Gothic UI",sans-serif;line-height:1.6}
+  header{background:var(--lime);color:#fff;padding:1rem 1.4rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+  header .logo{font-weight:800;font-size:1.3rem;letter-spacing:.02em}
+  header .logo span{color:var(--citrus)}
+  .cart-btn{background:#fff;color:var(--lime);border:none;padding:.5rem 1rem;border-radius:999px;font-weight:700;cursor:pointer;font-size:.95rem}
+  main{max-width:960px;margin:0 auto;padding:1.6rem 1.2rem}
+  .auth-bar{background:var(--lime-soft);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1.6rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+  .auth-bar input{padding:.5rem .7rem;border:1px solid var(--line);border-radius:6px;font-size:.9rem;min-width:150px}
+  .auth-bar button{padding:.5rem 1rem;border:none;border-radius:6px;background:var(--lime);color:#fff;font-weight:600;cursor:pointer}
+  .auth-bar button.ghost{background:#fff;color:var(--lime);border:1px solid var(--lime)}
+  .who{font-weight:700;color:var(--lime)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.2rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .thumb{height:120px;display:flex;align-items:center;justify-content:center;font-size:3rem}
+  .card-body{padding:.9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+  .card h3{font-size:1rem}
+  .price{color:var(--citrus);font-weight:800;font-size:1.1rem}
+  .add{margin-top:auto;background:var(--citrus);color:#fff;border:none;padding:.5rem;border-radius:6px;font-weight:700;cursor:pointer}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(340px,90vw);background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);transform:translateX(100%);transition:.25s;padding:1.2rem;z-index:20;overflow-y:auto}
+  .drawer.open{transform:translateX(0)}
+  .drawer h2{margin-bottom:1rem;border-bottom:2px solid var(--lime);padding-bottom:.5rem}
+  .line{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+  .line button{background:var(--berry);color:#fff;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer}
+  .total{font-weight:800;font-size:1.2rem;margin-top:1rem;text-align:right}
+  .checkout{width:100%;margin-top:1rem;background:var(--lime);color:#fff;border:none;padding:.8rem;border-radius:8px;font-weight:700;cursor:pointer}
+  .checkout:disabled{background:#bbb;cursor:not-allowed}
+  .close{float:right;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink)}
+  .msg{font-size:.85rem;padding:.4rem 0;color:var(--berry)}
+  .note{background:var(--lime-soft);border-left:4px solid var(--lime);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:1.6rem 0;font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Fresh<span>Squeeze</span> 🍊</div>
+  <button class="cart-btn" id="cartToggle">🛒 カート (<span id="cartCount">0</span>)</button>
+</header>
+
+<main>
+  <div class="auth-bar" id="authBar"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="note">
+    このデモの防御ポイント：①出力は全て <code>textContent</code>／エスケープ経由で挿入（XSS対策）②パスワードは平文比較せずハッシュ照合を模擬 ③価格・数量はクライアント値を信用せずマスターデータから再計算 ④CSPヘッダ設定済み。※本番は必ずサーバー側で検証すること。
+  </div>
+</main>
+
+<div class="drawer" id="drawer">
+  <button class="close" id="closeDrawer">×</button>
+  <h2>🛒 カート</h2>
+  <div id="cartLines"></div>
+  <div class="total" id="total">合計 ¥0</div>
+  <button class="checkout" id="checkout" disabled>ログインして購入</button>
+  <div class="msg" id="checkoutMsg"></div>
+</div>
+
+<script>
+// ===== 商品マスター（価格の正=サーバー相当。カートはIDと数量だけ持つ） =====
+const PRODUCTS = [
+  { id: "p1", name: "オレンジジュース",   price: 480, emoji: "🍊" },
+  { id: "p2", name: "アップルジュース",   price: 450, emoji: "🍎" },
+  { id: "p3", name: "グレープジュース",   price: 520, emoji: "🍇" },
+  { id: "p4", name: "レモンスカッシュ",   price: 400, emoji: "🍋" },
+  { id: "p5", name: "スイカスムージー",   price: 600, emoji: "🍉" },
+  { id: "p6", name: "ミックスベリー",     price: 580, emoji: "🫐" },
+];
+
+// ===== 疑似ユーザーDB。パスワードはハッシュで保持（平文を置かない） =====
+// 実運用はサーバー側でbcrypt等。ここはデモなのでSubtleCryptoでSHA-256+固定salt。
+const USER_DB = {
+  // "demo123" のSHA-256("fixed-salt|demo123")
+  "user@example.com": { name: "デモユーザー", hash: null }
+};
+async function sha256(str){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+(async()=>{ USER_DB["user@example.com"].hash = await sha256("fixed-salt|demo123"); })();
+
+let currentUser = null;
+const cart = {}; // { productId: qty }
+
+// ---- 安全なDOM生成ヘルパ（innerHTMLで文字列連結しない）----
+function el(tag, props={}, ...children){
+  const e = document.createElement(tag);
+  for(const [k,v] of Object.entries(props)){
+    if(k === "class") e.className = v;
+    else if(k.startsWith("on")) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
+  }
+  for(const c of children) e.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return e;
+}
+
+function renderProducts(){
+  const grid = document.getElementById("grid");
+  grid.replaceChildren();
+  for(const p of PRODUCTS){
+    grid.append(
+      el("div",{class:"card"},
+        el("div",{class:"thumb"}, p.emoji),
+        el("div",{class:"card-body"},
+          el("h3",{}, p.name),                 // textNode経由なのでXSS不可
+          el("div",{class:"price"}, "¥"+p.price),
+          el("button",{class:"add", onclick:()=>addToCart(p.id)}, "カートに追加")
+        )
+      )
+    );
+  }
+}
+
+function renderAuth(){
+  const bar = document.getElementById("authBar");
+  bar.replaceChildren();
+  if(currentUser){
+    bar.append(
+      el("span",{}, "ようこそ、"),
+      el("span",{class:"who"}, currentUser.name),   // DBの名前もtextNodeで安全
+      el("span",{}, " さん"),
+      el("button",{class:"ghost", onclick:logout}, "ログアウト")
+    );
+  } else {
+    const email = el("input",{type:"email", placeholder:"user@example.com", id:"email"});
+    const pw = el("input",{type:"password", placeholder:"demo123", id:"pw"});
+    bar.append(
+      email, pw,
+      el("button",{onclick:()=>login(email.value, pw.value)}, "ログイン"),
+      el("span",{class:"msg", id:"loginMsg"})
+    );
+  }
+  updateCheckoutState();
+}
+
+async function login(email, pw){
+  const msg = document.getElementById("loginMsg");
+  const user = USER_DB[email];
+  const attemptHash = await sha256("fixed-salt|"+pw);
+  // 防御: ユーザー有無で分岐せず、一律「不一致」を返す（列挙攻撃対策の模擬）
+  if(!user || user.hash !== attemptHash){
+    msg.textContent = "メールまたはパスワードが違います";
+    return;
+  }
+  currentUser = { email, name: user.name };
+  renderAuth();
+}
+function logout(){ currentUser = null; renderAuth(); }
+
+function addToCart(id){
+  cart[id] = (cart[id]||0) + 1;
+  renderCart();
+}
+function changeQty(id, delta){
+  cart[id] = (cart[id]||0) + delta;
+  if(cart[id] <= 0) delete cart[id];
+  renderCart();
+}
+
+function calcTotal(){
+  // 防御: 価格はマスターから引く。クライアントが送った価格は一切信用しない
+  let total = 0;
+  for(const [id, qty] of Object.entries(cart)){
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(p && Number.isInteger(qty) && qty>0) total += p.price * qty;
+  }
+  return total;
+}
+
+function renderCart(){
+  const lines = document.getElementById("cartLines");
+  lines.replaceChildren();
+  let count = 0;
+  for(const [id, qty] of Object.entries(cart)){
+    const p = PRODUCTS.find(x=>x.id===id);
+    count += qty;
+    lines.append(
+      el("div",{class:"line"},
+        el("span",{}, `${p.name} ×${qty}`),
+        el("span",{},
+          el("span",{}, "¥"+(p.price*qty)+"  "),
+          el("button",{onclick:()=>changeQty(id,-1)}, "−")
+        )
+      )
+    );
+  }
+  document.getElementById("cartCount").textContent = count;
+  document.getElementById("total").textContent = "合計 ¥"+calcTotal();
+  updateCheckoutState();
+}
+
+function updateCheckoutState(){
+  const btn = document.getElementById("checkout");
+  const hasItems = Object.keys(cart).length > 0;
+  if(!currentUser){ btn.disabled = true; btn.textContent = "ログインして購入"; }
+  else if(!hasItems){ btn.disabled = true; btn.textContent = "カートが空です"; }
+  else { btn.disabled = false; btn.textContent = "購入する (¥"+calcTotal()+")"; }
+}
+
+document.getElementById("checkout").addEventListener("click", ()=>{
+  // 防御: 本番ではここでサーバーに {productId, qty} のみ送信。
+  //        金額はサーバーが再計算し、CSRFトークンも付ける。
+  document.getElementById("checkoutMsg").textContent =
+    `注文を受け付けました（合計 ¥${calcTotal()}）※デモのため決済は行いません`;
+  for(const k of Object.keys(cart)) delete cart[k];
+  renderCart();
+});
+
+// drawer開閉
+document.getElementById("cartToggle").onclick = ()=>document.getElementById("drawer").classList.add("open");
+document.getElementById("closeDrawer").onclick = ()=>document.getElementById("drawer").classList.remove("open");
+
+renderProducts();
+renderAuth();
+renderCart();
+</script>
+</body>
+</html>
