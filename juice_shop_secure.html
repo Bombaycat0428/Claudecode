@@ -29,8 +29,17 @@
   .thumb{height:120px;display:flex;align-items:center;justify-content:center;font-size:3rem}
   .card-body{padding:.9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
   .card h3{font-size:1rem}
-  .price{color:var(--citrus);font-weight:800;font-size:1.1rem}
-  .add{margin-top:auto;background:var(--citrus);color:#fff;border:none;padding:.5rem;border-radius:6px;font-weight:700;cursor:pointer}
+  .price{color:var(--citrus);font-weight:800;font-size:1.1rem;margin-bottom:.5rem}
+  .add{margin-top:auto;font-weight:700;cursor:pointer}
+  .bnto-btn-gradient {
+    background: linear-gradient(120deg, hsl(43 100% 50%), hsl(5 100% 65%));
+    color: #fff; border: none;
+    padding: 13px 28px;
+    border-radius: 30px;
+    box-shadow: 0 8px 20px hsl(5 100% 65% / 0.42);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .bnto-btn-gradient:hover { transform: translateY(-3px); }
   .drawer{position:fixed;top:0;right:0;height:100%;width:min(340px,90vw);background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);transform:translateX(100%);transition:.25s;padding:1.2rem;z-index:20;overflow-y:auto}
   .drawer.open{transform:translateX(0)}
   .drawer h2{margin-bottom:1rem;border-bottom:2px solid var(--lime);padding-bottom:.5rem}
@@ -42,6 +51,10 @@
   .close{float:right;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink)}
   .msg{font-size:.85rem;padding:.4rem 0;color:var(--berry)}
   .note{background:var(--lime-soft);border-left:4px solid var(--lime);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:1.6rem 0;font-size:.85rem}
+  .note strong{display:block;margin-bottom:.5rem;font-size:.95rem}
+  .note ul{margin:0 0 .6rem 1.2rem}
+  .note li{margin-bottom:.5rem}
+  .note p{margin:0;color:var(--berry)}
 </style>
 </head>
 <body>
@@ -55,7 +68,14 @@
   <div class="grid" id="grid"></div>
 
   <div class="note">
-    このデモの防御ポイント：①出力は全て <code>textContent</code>／エスケープ経由で挿入（XSS対策）②パスワードは平文比較せずハッシュ照合を模擬 ③価格・数量はクライアント値を信用せずマスターデータから再計算 ④CSPヘッダ設定済み。※本番は必ずサーバー側で検証すること。
+    <strong>このデモの防御ポイント</strong>
+    <ul>
+      <li><b>①XSS対策</b>：商品名やユーザー名は <code>innerHTML</code> ではなく <code>textContent</code>（DOM操作）で挿入。文字列がHTMLタグとして解釈されないため、悪意あるスクリプトを埋め込まれても実行されません。</li>
+      <li><b>②パスワードのハッシュ照合</b>：平文パスワードは保存・比較せず、<code>SHA-256</code>でハッシュ化した値のみを保持。メール不一致・パスワード不一致を同じエラーメッセージにし、アカウントの存在を推測されないようにしています。</li>
+      <li><b>③価格・数量の再計算</b>：カートは商品IDと数量だけを保持し、金額は毎回マスターデータ（<code>PRODUCTS</code>）から計算し直します。クライアントが送ってきた価格を信用しないため、価格改ざんによる不正購入を防ぎます。</li>
+      <li><b>④CSPヘッダ</b>：<code>Content-Security-Policy</code> で外部リソースの読み込みを制限し、①が万一突破された場合の多層防御として機能します。</li>
+    </ul>
+    <p>※本番運用ではこれらの検証を必ずサーバー側でも行うこと。クライアント側の対策だけでは不十分です。</p>
   </div>
 </main>
 
@@ -91,7 +111,26 @@ async function sha256(str){
 }
 (async()=>{ USER_DB["user@example.com"].hash = await sha256("fixed-salt|demo123"); })();
 
+// ===== 新規登録アカウントはlocalStorageに保存（デモ用アカウントは対象外） =====
+const LS_KEY = "freshSqueezeUsers";
+function loadStoredUsers(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    Object.assign(USER_DB, stored);
+  }catch(e){ /* 壊れたデータは無視 */ }
+}
+function saveStoredUsers(){
+  const toSave = {};
+  for(const [email, data] of Object.entries(USER_DB)){
+    if(email === "user@example.com") continue;
+    toSave[email] = data;
+  }
+  localStorage.setItem(LS_KEY, JSON.stringify(toSave));
+}
+loadStoredUsers();
+
 let currentUser = null;
+let authMode = "login"; // "login" | "signup"
 const cart = {}; // { productId: qty }
 
 // ---- 安全なDOM生成ヘルパ（innerHTMLで文字列連結しない）----
@@ -116,7 +155,7 @@ function renderProducts(){
         el("div",{class:"card-body"},
           el("h3",{}, p.name),                 // textNode経由なのでXSS不可
           el("div",{class:"price"}, "¥"+p.price),
-          el("button",{class:"add", onclick:()=>addToCart(p.id)}, "カートに追加")
+          el("button",{class:"add bnto-btn-gradient", onclick:()=>addToCart(p.id)}, "カートに追加")
         )
       )
     );
@@ -133,12 +172,23 @@ function renderAuth(){
       el("span",{}, " さん"),
       el("button",{class:"ghost", onclick:logout}, "ログアウト")
     );
+  } else if(authMode === "signup"){
+    const name = el("input",{type:"text", placeholder:"お名前", id:"suName", autocomplete:"off"});
+    const email = el("input",{type:"email", placeholder:"user@example.com", id:"suEmail", autocomplete:"off"});
+    const pw = el("input",{type:"password", placeholder:"8文字以上", id:"suPw", autocomplete:"off"});
+    bar.append(
+      name, email, pw,
+      el("button",{onclick:()=>signup(name.value, email.value, pw.value)}, "登録する"),
+      el("button",{class:"ghost", onclick:()=>{authMode="login"; renderAuth();}}, "ログインに戻る"),
+      el("span",{class:"msg", id:"loginMsg"})
+    );
   } else {
-    const email = el("input",{type:"email", placeholder:"user@example.com", id:"email"});
-    const pw = el("input",{type:"password", placeholder:"demo123", id:"pw"});
+    const email = el("input",{type:"email", placeholder:"user@example.com", id:"email", autocomplete:"off"});
+    const pw = el("input",{type:"password", placeholder:"demo123", id:"pw", autocomplete:"off"});
     bar.append(
       email, pw,
       el("button",{onclick:()=>login(email.value, pw.value)}, "ログイン"),
+      el("button",{class:"ghost", onclick:()=>{authMode="signup"; renderAuth();}}, "新規登録"),
       el("span",{class:"msg", id:"loginMsg"})
     );
   }
@@ -147,6 +197,7 @@ function renderAuth(){
 
 async function login(email, pw){
   const msg = document.getElementById("loginMsg");
+  email = email.trim().toLowerCase();
   const user = USER_DB[email];
   const attemptHash = await sha256("fixed-salt|"+pw);
   // 防御: ユーザー有無で分岐せず、一律「不一致」を返す（列挙攻撃対策の模擬）
@@ -155,9 +206,31 @@ async function login(email, pw){
     return;
   }
   currentUser = { email, name: user.name };
+  authMode = "login";
   renderAuth();
 }
 function logout(){ currentUser = null; renderAuth(); }
+
+async function signup(name, email, pw){
+  const msg = document.getElementById("loginMsg");
+  name = name.trim();
+  email = email.trim().toLowerCase();
+  // 簡易バリデーション（UX向け。信頼できる検証は本来サーバー側で行う）
+  if(!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || pw.length < 8){
+    msg.textContent = "お名前・メール・8文字以上のパスワードを入力してください";
+    return;
+  }
+  if(USER_DB[email]){
+    msg.textContent = "このメールは既に登録されています";
+    return;
+  }
+  const hash = await sha256("fixed-salt|"+pw);
+  USER_DB[email] = { name, hash };
+  saveStoredUsers();
+  currentUser = { email, name };
+  authMode = "login";
+  renderAuth();
+}
 
 function addToCart(id){
   cart[id] = (cart[id]||0) + 1;
