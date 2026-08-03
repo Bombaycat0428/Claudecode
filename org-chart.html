@@ -733,7 +733,7 @@
   function updateCount() {
     const persons   = nodes.filter(isCountablePerson);
     const regular   = persons.filter(n => (n.category || '社員') === '社員').length;
-    const ap        = persons.filter(n => n.category === 'AP').length;
+    const ap        = persons.filter(n => n.category === 'パート').length;
     const leave     = persons.filter(n => n.category === '育休').length;
     const depts     = nodes.filter(n => n.type === 'dept').length;
     const refs      = nodes.filter(n => n.type === 'ref').length;
