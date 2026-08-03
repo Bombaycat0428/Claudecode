@@ -669,7 +669,7 @@
     '#7a4560', '#8a7968', '#3f8f8f', '#b6503f',
   ];
   const REF_COLOR = '#8b6d4a';
-  const PERSON_CATEGORIES = ['社員', 'AP', '育休'];
+  const PERSON_CATEGORIES = ['社員', 'パート', '育休'];
   let nodes = [];
 
   function load() {
@@ -687,7 +687,7 @@
       { id: 'd1', name: '営業部',     title: '',    parentId: 'n1', color: '#4f9e8c', type: 'dept' },
       { id: 'd2', name: '開発部',     title: '',    parentId: 'n1', color: '#c98a3f', type: 'dept' },
       { id: 'n2', name: '営業部長',   title: 'Sales Manager', parentId: 'd1', color: '#4f9e8c', type: 'person' },
-      { id: 'n4', name: '営業担当',   title: 'Sales',         parentId: 'd1', color: '#4f9e8c', type: 'person', category: 'AP' },
+      { id: 'n4', name: '営業担当',   title: 'Sales',         parentId: 'd1', color: '#4f9e8c', type: 'person', category: 'パート' },
       { id: 'n3', name: '開発部長',   title: 'Dev Manager',   parentId: 'd2', color: '#c98a3f', type: 'person' },
       { id: 'n5', name: 'エンジニア', title: 'Engineer',      parentId: 'd2', color: '#c98a3f', type: 'person' },
     ];
@@ -740,7 +740,7 @@
     const companies = nodes.filter(n => n.type === 'company').length;
     const total = persons.length;
     const pad = n => String(n).padStart(2, '0');
-    let html = `<b>${pad(total)}</b> TOTAL / <b>${pad(regular)}</b> 社員 / <b>${pad(ap)}</b> AP / <b>${pad(leave)}</b> 育休 / <b>${pad(depts)}</b> dept`;
+    let html = `<b>${pad(total)}</b> TOTAL / <b>${pad(regular)}</b> 社員 / <b>${pad(ap)}</b> パート / <b>${pad(leave)}</b> 育休 / <b>${pad(depts)}</b> dept`;
     if (companies) html += ` / <b>${pad(companies)}</b> company`;
     if (refs) html += ` / <b>${pad(refs)}</b> concurrent`;
     document.getElementById('nodeCount').innerHTML = html;
