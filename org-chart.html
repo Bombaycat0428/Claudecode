@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Org Chart — 組織図エディタ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --canvas:        #faf9f5;
+    --surface-soft:  #f5f0e8;
+    --surface-card:  #efe9de;
+    --surface-strong:#e8e0d2;
+    --surface-dark:  #181715;
+    --ink:           #141413;
+    --body:          #3d3d3a;
+    --muted:         #6c6a64;
+    --muted-soft:    #8e8b82;
+    --hairline:      #e6dfd8;
+    --primary:       #cc785c;
+    --primary-active:#a9583e;
+    --on-primary:    #ffffff;
+    --on-dark:       #faf9f5;
+    --on-dark-soft:  #a09d96;
+    --accent-teal:   #5db8a6;
+    --error:         #c64545;
+    --line:          rgba(60,58,52,0.22);
+    --font-sans:  "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-serif: "Cormorant Garamond", "Noto Serif JP", Georgia, serif;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font-sans);
+    color: var(--body);
+    font-size: 16px;
+    background: var(--canvas);
+  }
+
+  ::selection { background: rgba(204,120,92,0.22); color: var(--ink); }
+
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ── toolbar ── */
+  #toolbar {
+    flex-shrink: 0;
+    background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
+    padding: 14px 24px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .logo-mark { color: var(--primary); flex-shrink: 0; }
+
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tool-btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 9px 16px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .tool-btn:hover { background: var(--surface-soft); border-color: var(--muted-soft); }
+  .tool-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .tool-btn.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .tool-btn.primary:hover { background: var(--primary-active); border-color: var(--primary-active); }
+  .tool-btn.danger:hover { color: var(--error); border-color: var(--error); background: rgba(198,69,69,0.06); }
+
+  .count {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .count b { color: var(--ink); font-weight: 600; }
+
+  /* ── legend / hint ── */
+  #hint {
+    flex-shrink: 0;
+    padding: 10px 24px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface-soft);
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  #hint .item { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  #hint .glyph {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    background: var(--surface-strong);
+    color: var(--body);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  #hint .divider { width: 1px; height: 12px; background: var(--hairline); }
+
+  /* ── canvas ── */
+  #canvas {
+    flex: 1;
+    overflow: auto;
+    padding: 56px 40px 120px;
+    cursor: grab;
+    background-color: var(--canvas);
+    background-image:
+      linear-gradient(rgba(60,58,52,0.08) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(60,58,52,0.08) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+  #canvas.panning { cursor: grabbing; user-select: none; }
+
+  #emptyMsg {
+    margin: 80px auto 0;
+    width: fit-content;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 2.1;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 40px 52px;
+    background: var(--surface-soft);
+  }
+
+  /* ── pure-CSS org tree ── */
+  .tree, .tree ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+  }
+  .tree ul { padding-top: 34px; position: relative; }
+  .tree {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  /* ── zoom control ── */
+  #zoomControl {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(20,20,19,0.14);
+    overflow: hidden;
+    z-index: 50;
+  }
+  .zoom-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .zoom-btn:hover { background: var(--surface-soft); }
+  .zoom-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+  .zoom-btn:disabled { opacity: 0.3; cursor: default; }
+  .zoom-btn:disabled:hover { background: none; }
+  #zoomLevel {
+    min-width: 46px;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    user-select: none;
+    cursor: pointer;
+    border-left: 1px solid var(--hairline);
+    border-right: 1px solid var(--hairline);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+  }
+  #zoomLevel:hover { color: var(--ink); }
+
+  @media (max-width: 640px) {
+    #zoomControl { right: 14px; bottom: 14px; }
+  }
+
+  .tree li {
+    position: relative;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: nodeReveal 0.45s ease both;
+    animation-delay: calc(var(--depth, 0) * 70ms);
+  }
+
+  @keyframes nodeReveal {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tree li::before, .tree li::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 50%;
+    width: 50%; height: 34px;
+    border-top: 1.5px solid var(--line);
+  }
+  .tree li::after { right: auto; left: 50%; border-left: 1.5px solid var(--line); }
+  .tree li::before { border-right: 1.5px solid var(--line); }
+  .tree > li::before, .tree > li::after { display: none; }
+  .tree li:only-child::before, .tree li:only-child::after { display: none; }
+  .tree li:only-child { padding-top: 0; }
+  .tree li:first-child::before { border: none; }
+  .tree li:last-child::after { border: none; }
+  .tree li:last-child::before { border-radius: 0 0 0 6px; }
+  .tree li:first-child::after { border-radius: 0 0 6px 0; }
+
+  .tree ul::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    width: 0; height: 34px;
+    border-left: 1.5px solid var(--line);
+  }
+
+  .tier-tag {
+    position: absolute;
+    top: 15px; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface-strong);
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 9px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ── card ── */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-card);
+    border-radius: 12px;
+    padding: 18px 20px 13px;
+    min-width: 176px;
+    position: relative;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(20,20,19,0.07);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .node:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(20,20,19,0.12); }
+  .node:active { cursor: grabbing; }
+  .node.dragging { opacity: 0.35; }
+
+  .node.drop-left  { box-shadow: inset 3px 0 0 0 var(--primary), 0 6px 18px rgba(20,20,19,0.12); }
+  .node.drop-right { box-shadow: inset -3px 0 0 0 var(--primary), 0 6px 18px rgba(20,20,19,0.12); }
+  .node.drop-center {
+    background: var(--primary);
+    box-shadow: 0 10px 26px rgba(204,120,92,0.38);
+  }
+  .node.drop-center .node-name,
+  .node.drop-center .node-title,
+  .node.drop-center .node-eyebrow,
+  .node.drop-center .dept-count,
+  .node.drop-center .company-count { color: var(--on-primary) !important; background: transparent !important; }
+  .node.drop-center .node-name::placeholder,
+  .node.drop-center .node-title::placeholder { color: rgba(255,255,255,0.7); }
+  .node.drop-center .dept-count::before,
+  .node.drop-center .company-count::before { background: var(--on-primary); }
+
+  .node-avatar {
+    width: 38px; height: 38px;
+    border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--on-primary);
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    pointer-events: none;
+  }
+
+  /* ── department card variant ── */
+  .node.dept {
+    --node-tint: var(--primary);
+    background: color-mix(in srgb, var(--node-tint) 12%, var(--surface-soft));
+    border: 1px solid color-mix(in srgb, var(--node-tint) 30%, var(--hairline));
+    padding: 16px 20px 13px;
+  }
+  .node.dept:hover { border-color: color-mix(in srgb, var(--node-tint) 55%, var(--hairline)); }
+  .node.dept.drop-center { border-color: var(--primary-active); }
+
+  /* ── company card variant (holding company / subsidiary) ── */
+  .node.company {
+    background: var(--surface-dark);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  }
+  .node.company:hover { box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+  .node.company.drop-center { background: var(--primary); box-shadow: 0 10px 26px rgba(204,120,92,0.38); }
+  .node.company .node-eyebrow { color: var(--on-dark-soft); }
+  .node.company .node-icon { background: rgba(255,255,255,0.1); }
+  .node.company .node-name { color: var(--on-dark); }
+  .node.company .node-name::placeholder { color: var(--on-dark-soft); }
+  .node.company .node-name:focus { background: rgba(255,255,255,0.1); box-shadow: 0 0 0 1.5px var(--primary); }
+  .node.company .node-title { color: var(--on-dark-soft); }
+  .node.company .node-title::placeholder { color: rgba(160,157,150,0.6); }
+  .node.company .node-title:focus { background: rgba(255,255,255,0.1); box-shadow: 0 0 0 1.5px var(--primary); }
+  .node.company .node-btn { color: var(--on-dark-soft); }
+  .node.company .node-btn:hover { background: rgba(255,255,255,0.12); color: var(--on-dark); }
+  .node.company .node-btn:disabled { color: var(--on-dark-soft); }
+  .node.company .node-btn.del:hover { background: rgba(255,120,120,0.18); color: #ff9d9d; }
+
+  .company-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--on-dark-soft);
+    background: rgba(255,255,255,0.1);
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-top: 4px;
+  }
+  .company-count::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    flex-shrink: 0;
+  }
+
+  /* ── concurrent-post (兼任) card variant ── */
+  .node.ref {
+    --node-tint: #8b6d4a;
+    background: color-mix(in srgb, var(--node-tint) 16%, var(--canvas));
+    border: 1.5px dashed color-mix(in srgb, var(--node-tint) 45%, var(--hairline));
+    box-shadow: none;
+  }
+  .node.ref:hover { border-color: var(--node-tint); box-shadow: none; }
+  .node.ref.drop-center { border-color: var(--primary-active); }
+  .node.ref .node-avatar {
+    background: transparent;
+    border: 1.5px dashed currentColor;
+  }
+
+  .node-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-soft);
+    margin-bottom: 2px;
+  }
+
+  .node-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface-strong);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 5px;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .node.dept .node-name { font-size: 17px; }
+
+  .dept-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--surface-strong);
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-top: 4px;
+  }
+  .dept-count::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    flex-shrink: 0;
+  }
+
+  .node-name {
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    border: none;
+    background: transparent;
+    outline: none;
+    border-radius: 5px;
+    padding: 3px 4px;
+  }
+  .node-name:focus { background: rgba(255,255,255,0.6); box-shadow: 0 0 0 1.5px var(--primary); }
+  .node-name::placeholder { color: var(--muted-soft); }
+
+  .node-title {
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    outline: none;
+    border-radius: 5px;
+    padding: 2px 4px 4px;
+  }
+  .node-title:focus { background: rgba(255,255,255,0.6); box-shadow: 0 0 0 1.5px var(--primary); }
+  .node-title::placeholder { color: var(--muted-soft); }
+
+  .person-category {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    margin-top: 4px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface-strong);
+    color: var(--muted);
+    transition: filter 0.15s;
+  }
+  .person-category:hover { filter: brightness(0.96); }
+  .person-category[data-cat="AP"] {
+    background: color-mix(in srgb, var(--accent-teal) 24%, var(--surface-strong));
+    color: color-mix(in srgb, var(--accent-teal) 65%, var(--ink));
+  }
+  .person-category[data-cat="育休"] {
+    background: color-mix(in srgb, #b5717c 24%, var(--surface-strong));
+    color: color-mix(in srgb, #b5717c 65%, var(--ink));
+  }
+
+  .node-actions {
+    display: flex;
+    gap: 2px;
+    margin-top: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .node:hover .node-actions, .node:focus-within .node-actions { opacity: 1; }
+
+  .node-btn {
+    width: 24px; height: 24px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, background 0.15s;
+    padding: 0;
+  }
+  .node-btn:hover { background: rgba(20,20,19,0.07); color: var(--ink); }
+  .node-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .node-btn:disabled { opacity: 0.22; cursor: default; }
+  .node-btn:disabled:hover { background: none; color: var(--muted); }
+  .node-btn.del:hover { background: rgba(198,69,69,0.1); color: var(--error); }
+  .node-btn svg { pointer-events: none; }
+
+  /* ── color picker (shared) ── */
+  #colorPicker {
+    position: fixed;
+    z-index: 1000;
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(20,20,19,0.14);
+    display: none;
+    grid-template-columns: repeat(4, 26px);
+    gap: 6px;
+  }
+  .color-swatch {
+    width: 26px; height: 26px;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .color-swatch:hover { transform: scale(1.12); }
+  .color-swatch.active { border-color: var(--ink); }
+
+  /* ── add menu (dept / person) ── */
+  #addMenu {
+    position: fixed;
+    z-index: 1000;
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(20,20,19,0.14);
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 160px;
+  }
+  .add-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .add-menu-btn:hover { background: var(--surface-soft); }
+  .add-menu-btn .glyph { width: 16px; text-align: center; flex-shrink: 0; color: var(--muted); }
+
+  /* ── toast ── */
+  #toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-dark);
+    color: var(--on-dark);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 11px 20px;
+    border-radius: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 9999;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  #toast.show { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tree li { animation: none !important; }
+    .node, .tool-btn, .node-btn, .color-swatch { transition: none !important; }
+  }
+
+  @media (max-width: 640px) {
+    #toolbar { padding: 12px 14px; }
+    .count { width: 100%; margin-left: 0; order: 10; }
+    #hint { padding: 8px 14px; gap: 14px; }
+    #canvas { padding: 36px 14px 90px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="toolbar">
+    <div class="logo">
+      <svg class="logo-mark" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M7.5 1v13M1 7.5h13M2.9 2.9l9.2 9.2M12.1 2.9l-9.2 9.2"/>
+      </svg>
+      Org Chart
+    </div>
+    <div class="tools">
+      <button class="tool-btn" id="btnAddCompanyRoot">＋ 会社</button>
+      <button class="tool-btn" id="btnAddDeptRoot">＋ 部署</button>
+      <button class="tool-btn primary" id="btnAddPersonRoot">＋ 人</button>
+      <button class="tool-btn" id="btnAddRefRoot">＋ 兼任</button>
+      <button class="tool-btn" id="btnExport">Export</button>
+      <label class="tool-btn" for="importInput">Import</label>
+      <input type="file" id="importInput" accept=".json" style="display:none">
+      <button class="tool-btn danger" id="btnClear">全削除</button>
+    </div>
+    <div class="count" id="nodeCount"><b>00</b> people / <b>00</b> dept</div>
+  </div>
+
+  <div id="hint">
+    <span class="item"><span class="glyph">▣</span>中央にドロップ → 配下に異動</span>
+    <span class="divider"></span>
+    <span class="item"><span class="glyph">⇄</span>左右にドロップ → 並び順を入れ替え</span>
+  </div>
+
+  <div id="canvas">
+    <p id="emptyMsg" style="display:none">まだカードがありません。「＋ 部署」「＋ 人」から作成してください</p>
+    <ul class="tree" id="tree"></ul>
+  </div>
+
+  <div id="zoomControl">
+    <button class="zoom-btn" id="zoomOutBtn" title="縮小">－</button>
+    <span id="zoomLevel" title="クリックで100%に戻す">50%</span>
+    <button class="zoom-btn" id="zoomInBtn" title="拡大">＋</button>
+  </div>
+
+</div>
+<div id="toast"></div>
+<div id="colorPicker"></div>
+<div id="addMenu"></div>
+
+<script>
+  // ── Data ───────────────────────────────────────────────
+  const KEY = 'orgchart_nodes_v1';
+  const COLORS = [
+    '#cc785c', '#4f9e8c', '#c98a3f', '#8f5f7a',
+    '#5f7690', '#6d7d63', '#a85c47', '#4a4844',
+    '#ab9048', '#4a6b52', '#5c6a9e', '#b5717c',
+    '#7a4560', '#8a7968', '#3f8f8f', '#b6503f',
+  ];
+  const REF_COLOR = '#8b6d4a';
+  const PERSON_CATEGORIES = ['社員', 'AP', '育休'];
+  let nodes = [];
+
+  function load() {
+    try {
+      const r = JSON.parse(localStorage.getItem(KEY));
+      if (Array.isArray(r)) {
+        nodes = r;
+        nodes.forEach(n => { if (n.type === 'ref') n.color = REF_COLOR; });
+        return;
+      }
+    } catch (_) {}
+    // 初回のみサンプルデータを投入
+    nodes = [
+      { id: 'n1', name: '代表取締役', title: 'CEO', parentId: null, color: '#cc785c', type: 'person' },
+      { id: 'd1', name: '営業部',     title: '',    parentId: 'n1', color: '#4f9e8c', type: 'dept' },
+      { id: 'd2', name: '開発部',     title: '',    parentId: 'n1', color: '#c98a3f', type: 'dept' },
+      { id: 'n2', name: '営業部長',   title: 'Sales Manager', parentId: 'd1', color: '#4f9e8c', type: 'person' },
+      { id: 'n4', name: '営業担当',   title: 'Sales',         parentId: 'd1', color: '#4f9e8c', type: 'person', category: 'AP' },
+      { id: 'n3', name: '開発部長',   title: 'Dev Manager',   parentId: 'd2', color: '#c98a3f', type: 'person' },
+      { id: 'n5', name: 'エンジニア', title: 'Engineer',      parentId: 'd2', color: '#c98a3f', type: 'person' },
+    ];
+  }
+
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify(nodes));
+  }
+
+  function genId() {
+    return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function findNode(id) { return nodes.find(n => n.id === id); }
+
+  function getDescendantIds(id) {
+    const ids = [id];
+    let frontier = [id];
+    while (frontier.length) {
+      const next = nodes.filter(n => frontier.includes(n.parentId)).map(n => n.id);
+      ids.push(...next);
+      frontier = next;
+    }
+    return ids;
+  }
+
+  function isDescendant(ancestorId, nodeId) {
+    let cur = findNode(nodeId);
+    while (cur && cur.parentId) {
+      if (cur.parentId === ancestorId) return true;
+      cur = findNode(cur.parentId);
+    }
+    return false;
+  }
+
+  // ── Render ─────────────────────────────────────────────
+  const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function isCountablePerson(n) {
+    return !!n && n.type !== 'dept' && n.type !== 'ref' && n.type !== 'company';
+  }
+
+  function updateCount() {
+    const persons   = nodes.filter(isCountablePerson);
+    const regular   = persons.filter(n => (n.category || '社員') === '社員').length;
+    const ap        = persons.filter(n => n.category === 'AP').length;
+    const leave     = persons.filter(n => n.category === '育休').length;
+    const depts     = nodes.filter(n => n.type === 'dept').length;
+    const refs      = nodes.filter(n => n.type === 'ref').length;
+    const companies = nodes.filter(n => n.type === 'company').length;
+    const total = persons.length;
+    const pad = n => String(n).padStart(2, '0');
+    let html = `<b>${pad(total)}</b> TOTAL / <b>${pad(regular)}</b> 社員 / <b>${pad(ap)}</b> AP / <b>${pad(leave)}</b> 育休 / <b>${pad(depts)}</b> dept`;
+    if (companies) html += ` / <b>${pad(companies)}</b> company`;
+    if (refs) html += ` / <b>${pad(refs)}</b> concurrent`;
+    document.getElementById('nodeCount').innerHTML = html;
+  }
+
+  function countPeopleUnder(id) {
+    return getDescendantIds(id).slice(1)
+      .map(id => findNode(id))
+      .filter(isCountablePerson).length;
+  }
+
+  function countDeptsUnder(id) {
+    return getDescendantIds(id).slice(1)
+      .map(id => findNode(id))
+      .filter(n => n && n.type === 'dept').length;
+  }
+
+  function buildNodeEl(node) {
+    const type = node.type === 'dept' ? 'dept' : node.type === 'ref' ? 'ref' : node.type === 'company' ? 'company' : 'person';
+    const card = document.createElement('div');
+    card.className = 'node ' + type;
+    card.draggable = true;
+    card.dataset.id = node.id;
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'node-name';
+    nameInput.draggable = false;
+    nameInput.value = node.name || '';
+    nameInput.placeholder = type === 'dept' ? '部署名' : type === 'company' ? '会社名' : '名前';
+    nameInput.maxLength = 24;
+
+    const titleInput = document.createElement('input');
+    titleInput.className = 'node-title';
+    titleInput.draggable = false;
+    titleInput.value = node.title || '';
+    titleInput.placeholder = type === 'dept' ? '説明（任意）' : type === 'company' ? '説明（任意）' : '役職・肩書き';
+    titleInput.maxLength = 30;
+    titleInput.addEventListener('input', () => { node.title = titleInput.value; save(); });
+
+    const actions = document.createElement('div');
+    actions.className = 'node-actions';
+
+    const siblings = nodes.filter(n => n.parentId === node.parentId);
+    const siblingIdx = siblings.findIndex(n => n.id === node.id);
+
+    const leftBtn = document.createElement('button');
+    leftBtn.className = 'node-btn';
+    leftBtn.draggable = false;
+    leftBtn.title = '左と入れ替え';
+    leftBtn.textContent = '‹';
+    leftBtn.disabled = siblingIdx <= 0;
+    leftBtn.addEventListener('click', e => { e.stopPropagation(); moveSibling(node.id, -1); });
+
+    const rightBtn = document.createElement('button');
+    rightBtn.className = 'node-btn';
+    rightBtn.draggable = false;
+    rightBtn.title = '右と入れ替え';
+    rightBtn.textContent = '›';
+    rightBtn.disabled = siblingIdx >= siblings.length - 1;
+    rightBtn.addEventListener('click', e => { e.stopPropagation(); moveSibling(node.id, 1); });
+
+    const colorBtn = document.createElement('button');
+    colorBtn.className = 'node-btn';
+    colorBtn.draggable = false;
+    colorBtn.title = '色を変更';
+    colorBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13"><rect x="1.5" y="1.5" width="10" height="10" rx="2.5" fill="${node.color || '#cc785c'}" stroke="rgba(20,20,19,0.2)" stroke-width="1"/></svg>`;
+    colorBtn.addEventListener('click', e => { e.stopPropagation(); openColorPicker(node.id, colorBtn); });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'node-btn';
+    addBtn.draggable = false;
+    addBtn.title = '配下に追加';
+    addBtn.textContent = '＋';
+    addBtn.addEventListener('click', e => { e.stopPropagation(); openAddMenu(node.id, addBtn); });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'node-btn del';
+    delBtn.draggable = false;
+    delBtn.title = '削除';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); deleteNode(node.id); });
+
+    actions.append(leftBtn, colorBtn, addBtn, rightBtn, delBtn);
+
+    if (type === 'dept') {
+      card.style.setProperty('--node-tint', node.color || '#cc785c');
+
+      const eyebrow = document.createElement('div');
+      eyebrow.className = 'node-eyebrow';
+      eyebrow.textContent = 'Department';
+
+      const icon = document.createElement('div');
+      icon.className = 'node-icon';
+      icon.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="${node.color || '#cc785c'}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="7" height="7" rx="1.5"/><rect x="6.5" y="6.5" width="7" height="7" rx="1.5"/></svg>`;
+
+      const countEl = document.createElement('div');
+      countEl.className = 'dept-count';
+      countEl.textContent = `${countPeopleUnder(node.id)} people`;
+
+      card.append(eyebrow, icon, nameInput, titleInput, countEl, actions);
+      nameInput.addEventListener('input', () => { node.name = nameInput.value; save(); });
+    } else if (type === 'company') {
+      const eyebrow = document.createElement('div');
+      eyebrow.className = 'node-eyebrow';
+      eyebrow.textContent = 'Company';
+
+      const icon = document.createElement('div');
+      icon.className = 'node-icon';
+      icon.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="${node.color || '#cc785c'}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="1" width="11" height="13" rx="1"/><line x1="5" y1="4.5" x2="5" y2="4.5"/><line x1="10" y1="4.5" x2="10" y2="4.5"/><line x1="5" y1="7.5" x2="5" y2="7.5"/><line x1="10" y1="7.5" x2="10" y2="7.5"/><line x1="5" y1="10.5" x2="5" y2="10.5"/><line x1="10" y1="10.5" x2="10" y2="10.5"/></svg>`;
+
+      const countEl = document.createElement('div');
+      countEl.className = 'company-count';
+      countEl.textContent = `${countDeptsUnder(node.id)} dept · ${countPeopleUnder(node.id)} people`;
+
+      card.append(eyebrow, icon, nameInput, titleInput, countEl, actions);
+      nameInput.addEventListener('input', () => { node.name = nameInput.value; save(); });
+    } else if (type === 'ref') {
+      card.style.setProperty('--node-tint', node.color || REF_COLOR);
+
+      const eyebrow = document.createElement('div');
+      eyebrow.className = 'node-eyebrow';
+      eyebrow.textContent = '兼任';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'node-avatar';
+      avatar.style.color = node.color || REF_COLOR;
+      avatar.textContent = (node.name || '?').trim().charAt(0) || '?';
+      nameInput.addEventListener('input', () => {
+        node.name = nameInput.value;
+        avatar.textContent = (node.name || '?').trim().charAt(0) || '?';
+        save();
+      });
+
+      card.append(eyebrow, avatar, nameInput, titleInput, actions);
+    } else {
+      const avatar = document.createElement('div');
+      avatar.className = 'node-avatar';
+      avatar.style.background = node.color || '#cc785c';
+      avatar.textContent = (node.name || '?').trim().charAt(0) || '?';
+      nameInput.addEventListener('input', () => {
+        node.name = nameInput.value;
+        avatar.textContent = (node.name || '?').trim().charAt(0) || '?';
+        save();
+      });
+
+      const category = document.createElement('div');
+      category.className = 'person-category';
+      category.dataset.cat = node.category || '社員';
+      category.textContent = node.category || '社員';
+      category.title = 'クリックでカテゴリ切替';
+      category.addEventListener('click', e => {
+        e.stopPropagation();
+        const idx = PERSON_CATEGORIES.indexOf(node.category || '社員');
+        node.category = PERSON_CATEGORIES[(idx + 1) % PERSON_CATEGORIES.length];
+        save(); render();
+      });
+
+      card.append(avatar, nameInput, titleInput, category, actions);
+    }
+
+    wireDrag(card, node.id);
+    return card;
+  }
+
+  function renderChildren(parentId, depth) {
+    const kids = nodes.filter(n => n.parentId === parentId);
+    if (!kids.length) return null;
+    const ul = document.createElement('ul');
+    const tag = document.createElement('span');
+    tag.className = 'tier-tag';
+    tag.textContent = 'L' + depth;
+    ul.appendChild(tag);
+    kids.forEach(k => ul.appendChild(renderLi(k, depth)));
+    return ul;
+  }
+
+  function renderLi(node, depth) {
+    const li = document.createElement('li');
+    li.style.setProperty('--depth', depth);
+    li.appendChild(buildNodeEl(node));
+    const childUl = renderChildren(node.id, depth + 1);
+    if (childUl) li.appendChild(childUl);
+    return li;
+  }
+
+  function render() {
+    const tree = document.getElementById('tree');
+    tree.innerHTML = '';
+    const roots = nodes.filter(n => n.parentId === null);
+    document.getElementById('emptyMsg').style.display = roots.length ? 'none' : 'block';
+    roots.forEach(r => tree.appendChild(renderLi(r, 0)));
+    updateCount();
+  }
+
+  // ── Add / Delete ───────────────────────────────────────
+  function focusNodeName(id) {
+    setTimeout(() => {
+      const card = document.querySelector(`.node[data-id="${id}"]`);
+      const input = card && card.querySelector('.node-name');
+      if (input) { input.focus(); input.select(); }
+    }, 30);
+  }
+
+  function addRoot(type) {
+    const node = {
+      id: genId(),
+      name: type === 'dept' ? '新しい部署' : type === 'ref' ? '兼任メンバー' : type === 'company' ? '新しい会社' : '新しい役職',
+      title: '',
+      parentId: null,
+      color: type === 'ref' ? REF_COLOR : COLORS[nodes.length % COLORS.length],
+      type,
+    };
+    nodes.push(node);
+    save(); render();
+    focusNodeName(node.id);
+  }
+
+  function addChild(parentId, type) {
+    const parent = findNode(parentId);
+    const node = {
+      id: genId(),
+      name: type === 'dept' ? '新しい部署' : type === 'ref' ? '兼任メンバー' : type === 'company' ? '新しい会社' : '新しいメンバー',
+      title: '',
+      parentId,
+      color: type === 'ref' ? REF_COLOR : (parent && parent.color) || COLORS[nodes.length % COLORS.length],
+      type,
+    };
+    nodes.push(node);
+    save(); render();
+    focusNodeName(node.id);
+  }
+
+  function deleteNode(id) {
+    const node = findNode(id);
+    if (!node) return;
+    const ids = getDescendantIds(id);
+    const childCount = ids.length - 1;
+    const msg = childCount > 0
+      ? `「${node.name}」と配下の ${childCount} 件をまとめて削除しますか？`
+      : `「${node.name}」を削除しますか？`;
+    if (!confirm(msg)) return;
+    nodes = nodes.filter(n => !ids.includes(n.id));
+    save(); render();
+  }
+
+  function moveSibling(id, dir) {
+    const node = findNode(id);
+    if (!node) return;
+    const siblingIds = nodes.filter(n => n.parentId === node.parentId).map(n => n.id);
+    const idx = siblingIds.indexOf(id);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= siblingIds.length) return;
+    const swapId = siblingIds[swapIdx];
+    const aIdx = nodes.findIndex(n => n.id === id);
+    const bIdx = nodes.findIndex(n => n.id === swapId);
+    [nodes[aIdx], nodes[bIdx]] = [nodes[bIdx], nodes[aIdx]];
+    save(); render();
+  }
+
+  document.getElementById('btnAddCompanyRoot').addEventListener('click', () => addRoot('company'));
+  document.getElementById('btnAddDeptRoot').addEventListener('click', () => addRoot('dept'));
+  document.getElementById('btnAddPersonRoot').addEventListener('click', () => addRoot('person'));
+  document.getElementById('btnAddRefRoot').addEventListener('click', () => addRoot('ref'));
+
+  // ── Add menu (company / dept / person picker) ──────────
+  const addMenuEl = document.getElementById('addMenu');
+  let addMenuParentId = null;
+
+  addMenuEl.innerHTML = `
+    <button class="add-menu-btn" data-type="company"><span class="glyph">▣</span>会社を追加</button>
+    <button class="add-menu-btn" data-type="dept"><span class="glyph">▦</span>部署を追加</button>
+    <button class="add-menu-btn" data-type="person"><span class="glyph">◉</span>人を追加</button>
+    <button class="add-menu-btn" data-type="ref"><span class="glyph">⇌</span>兼任として追加</button>
+  `;
+  addMenuEl.querySelectorAll('.add-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!addMenuParentId) return;
+      addChild(addMenuParentId, btn.dataset.type);
+      closeAddMenu();
+    });
+  });
+
+  function openAddMenu(parentId, triggerEl) {
+    addMenuParentId = parentId;
+    addMenuEl.style.display = 'flex';
+    const rect = triggerEl.getBoundingClientRect();
+    const MW = 158, MH = 154;
+    let left = rect.right + 6;
+    let top  = rect.top - 10;
+    if (left + MW > window.innerWidth)  left = rect.left - MW - 6;
+    if (top  + MH > window.innerHeight) top  = window.innerHeight - MH - 8;
+    if (top < 4) top = 4;
+    addMenuEl.style.left = `${left}px`;
+    addMenuEl.style.top  = `${top}px`;
+  }
+
+  function closeAddMenu() {
+    addMenuEl.style.display = 'none';
+    addMenuParentId = null;
+  }
+
+  // ── Color picker ───────────────────────────────────────
+  const colorPickerEl = document.getElementById('colorPicker');
+  let colorPickerTargetId = null;
+
+  COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch';
+    sw.dataset.color = c;
+    sw.style.background = c;
+    sw.setAttribute('title', c);
+    sw.addEventListener('click', () => {
+      if (!colorPickerTargetId) return;
+      const node = findNode(colorPickerTargetId);
+      if (!node) return;
+      node.color = c;
+      save(); render();
+      closeColorPicker();
+    });
+    colorPickerEl.appendChild(sw);
+  });
+
+  function openColorPicker(nodeId, triggerEl) {
+    colorPickerTargetId = nodeId;
+    const node = findNode(nodeId);
+    const current = (node && node.color) || '#cc785c';
+    colorPickerEl.querySelectorAll('.color-swatch').forEach(sw =>
+      sw.classList.toggle('active', sw.dataset.color === current)
+    );
+    colorPickerEl.style.display = 'grid';
+    const rect = triggerEl.getBoundingClientRect();
+    const PW = 130, PH = 146;
+    let left = rect.right + 6;
+    let top  = rect.top - 10;
+    if (left + PW > window.innerWidth)  left = rect.left - PW - 6;
+    if (top  + PH > window.innerHeight) top  = window.innerHeight - PH - 8;
+    if (top < 4) top = 4;
+    colorPickerEl.style.left = `${left}px`;
+    colorPickerEl.style.top  = `${top}px`;
+  }
+
+  function closeColorPicker() {
+    colorPickerEl.style.display = 'none';
+    colorPickerTargetId = null;
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#colorPicker') && !e.target.closest('.node-btn')) closeColorPicker();
+    if (!e.target.closest('#addMenu') && !e.target.closest('.node-btn')) closeAddMenu();
+  });
+
+  // ── Drag & drop (reparent / reorder) ───────────────────
+  let draggedId = null;
+
+  function clearDropStyles() {
+    document.querySelectorAll('.node').forEach(el =>
+      el.classList.remove('drop-left', 'drop-right', 'drop-center')
+    );
+  }
+
+  function zoneOf(e, rect) {
+    const x = e.clientX - rect.left;
+    const ratio = x / rect.width;
+    if (ratio < 0.28) return 'left';
+    if (ratio > 0.72) return 'right';
+    return 'center';
+  }
+
+  function wireDrag(card, id) {
+    card.addEventListener('dragstart', e => {
+      draggedId = id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => card.classList.add('dragging'), 0);
+    });
+
+    card.addEventListener('dragend', () => {
+      draggedId = null;
+      card.classList.remove('dragging');
+      clearDropStyles();
+    });
+
+    card.addEventListener('dragover', e => {
+      if (!draggedId || draggedId === id) return;
+      e.preventDefault();
+      clearDropStyles();
+      const zone = zoneOf(e, card.getBoundingClientRect());
+      card.classList.add(zone === 'left' ? 'drop-left' : zone === 'right' ? 'drop-right' : 'drop-center');
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drop-left', 'drop-right', 'drop-center');
+    });
+
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearDropStyles();
+      if (!draggedId || draggedId === id) return;
+
+      if (isDescendant(draggedId, id)) {
+        showToast('配下のカードには移動できません');
+        draggedId = null;
+        return;
+      }
+
+      const zone = zoneOf(e, card.getBoundingClientRect());
+      const dragged = findNode(draggedId);
+      const target  = findNode(id);
+      const fromIdx = nodes.findIndex(n => n.id === draggedId);
+      const [moved] = nodes.splice(fromIdx, 1);
+
+      if (zone === 'center') {
+        moved.parentId = target.id;
+        nodes.push(moved);
+      } else {
+        moved.parentId = target.parentId;
+        const toIdx = nodes.findIndex(n => n.id === id);
+        nodes.splice(zone === 'left' ? toIdx : toIdx + 1, 0, moved);
+      }
+
+      draggedId = null;
+      save(); render();
+    });
+  }
+
+  // 空きスペースにドロップ → ルートに異動
+  const canvasEl = document.getElementById('canvas');
+  canvasEl.addEventListener('dragover', e => { if (draggedId) e.preventDefault(); });
+  canvasEl.addEventListener('drop', e => {
+    if (!draggedId) return;
+    e.preventDefault();
+    const fromIdx = nodes.findIndex(n => n.id === draggedId);
+    if (fromIdx === -1) return;
+    const [moved] = nodes.splice(fromIdx, 1);
+    moved.parentId = null;
+    nodes.push(moved);
+    draggedId = null;
+    save(); render();
+  });
+
+  // ── Canvas panning (drag the background to scroll) ─────
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0, panScrollLeft = 0, panScrollTop = 0;
+
+  canvasEl.addEventListener('mousedown', e => {
+    if (e.button !== 0 || e.target.closest('.node')) return;
+    isPanning = true;
+    canvasEl.classList.add('panning');
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    panScrollLeft = canvasEl.scrollLeft;
+    panScrollTop = canvasEl.scrollTop;
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    canvasEl.scrollLeft = panScrollLeft - (e.clientX - panStartX);
+    canvasEl.scrollTop  = panScrollTop  - (e.clientY - panStartY);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isPanning) return;
+    isPanning = false;
+    canvasEl.classList.remove('panning');
+  });
+
+  // ── Export / Import ────────────────────────────────────
+  document.getElementById('btnExport').addEventListener('click', () => {
+    if (!nodes.length) { showToast('データがありません'); return; }
+    const blob = new Blob([JSON.stringify(nodes, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `orgchart_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('エクスポートしました');
+  });
+
+  document.getElementById('importInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      let data;
+      try { data = JSON.parse(ev.target.result); }
+      catch (_) { showToast('読み込み失敗：JSONではありません'); return; }
+      if (!Array.isArray(data)) { showToast('読み込み失敗：正しい形式ではありません'); return; }
+      const valid = data.filter(n => n.id && n.name !== undefined && ('parentId' in n));
+      if (!valid.length) { showToast('有効なデータがありませんでした'); return; }
+      if (nodes.length > 0) {
+        if (!confirm(`現在の ${nodes.length} 件を削除して ${valid.length} 件に置き換えますか？`)) return;
+      }
+      nodes = valid;
+      save(); render();
+      showToast(`${valid.length} 件をインポートしました`);
+    };
+    reader.readAsText(file);
+  });
+
+  // ── Clear all ──────────────────────────────────────────
+  document.getElementById('btnClear').addEventListener('click', () => {
+    if (!nodes.length) { showToast('データがありません'); return; }
+    if (!confirm(`${nodes.length} 件をすべて削除しますか？`)) return;
+    nodes = [];
+    save(); render();
+  });
+
+  // ── Toast ──────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // ── Zoom control ───────────────────────────────────────
+  const ZOOM_MIN = 0.25, ZOOM_MAX = 1.5, ZOOM_STEP = 0.1, ZOOM_DEFAULT = 0.5;
+  let currentZoom = ZOOM_DEFAULT;
+  const treeEl = document.getElementById('tree');
+  const zoomLevelEl = document.getElementById('zoomLevel');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+
+  function applyZoom() {
+    treeEl.style.zoom = currentZoom;
+    zoomLevelEl.textContent = Math.round(currentZoom * 100) + '%';
+    zoomOutBtn.disabled = currentZoom <= ZOOM_MIN + 1e-9;
+    zoomInBtn.disabled = currentZoom >= ZOOM_MAX - 1e-9;
+  }
+
+  zoomInBtn.addEventListener('click', () => {
+    currentZoom = Math.min(ZOOM_MAX, +(currentZoom + ZOOM_STEP).toFixed(2));
+    applyZoom();
+  });
+  zoomOutBtn.addEventListener('click', () => {
+    currentZoom = Math.max(ZOOM_MIN, +(currentZoom - ZOOM_STEP).toFixed(2));
+    applyZoom();
+  });
+  zoomLevelEl.addEventListener('click', () => {
+    currentZoom = currentZoom === 1 ? ZOOM_DEFAULT : 1;
+    applyZoom();
+  });
+
+  // ── Init ───────────────────────────────────────────────
+  load();
+  render();
+  applyZoom();
+</script>
+</body>
+</html>
