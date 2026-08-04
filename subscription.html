@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subscription Manager — 契約中サブスクの月額を見える化</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef2f5;
+    --paper:rgba(255,255,255,.74);
+    --paper-solid:#fbfcfd;
+    --ink:#25303a;
+    --muted:#6b7a86;
+    --line:rgba(120,145,165,.26);
+    --accent:#4a7f9b;
+    --accent-dark:#335f76;
+    --accent-soft:rgba(74,127,155,.12);
+    --ok:#5c8a70;
+    --ok-soft:rgba(92,138,112,.13);
+    --warn:#b3624a;
+    --warn-soft:rgba(179,98,74,.12);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(circle at 12% 0%, rgba(74,127,155,.10), transparent 46%),
+      radial-gradient(circle at 88% 8%, rgba(92,138,112,.09), transparent 44%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.7;
+    min-height:100vh;
+  }
+  .page{max-width:1040px;margin:0 auto;padding:40px 20px 80px}
+  .num{font-family:"Space Grotesk","Noto Sans JP",sans-serif;font-variant-numeric:tabular-nums}
+
+  /* ---- Hero ---- */
+  .hero{padding:8px 4px 26px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .eyebrow{
+    font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.28em;
+    color:var(--accent-dark);font-weight:700;margin:0 0 10px;
+  }
+  h1{font-size:clamp(21px,3.4vw,30px);margin:0 0 12px;letter-spacing:.01em;font-weight:700}
+  .lead{color:var(--muted);font-size:14.5px;max-width:660px;margin:0}
+
+  /* ---- Summary ---- */
+  .summary{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;margin-bottom:30px;
+  }
+  .sum-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;backdrop-filter:blur(10px);
+    box-shadow:0 4px 18px rgba(60,90,110,.06);
+  }
+  .sum-card .label{
+    font-family:"Space Grotesk",sans-serif;font-size:10.5px;letter-spacing:.16em;
+    color:var(--muted);font-weight:600;text-transform:uppercase;display:block;
+  }
+  .sum-card .value{font-size:26px;font-weight:700;line-height:1.35;letter-spacing:-.01em}
+  .sum-card .value small{font-size:14px;font-weight:500;margin-left:2px}
+  .sum-card .sub{font-size:11.5px;color:var(--muted);display:block;margin-top:2px}
+  .sum-card.accent{background:linear-gradient(135deg,rgba(74,127,155,.13),rgba(255,255,255,.62))}
+  .sum-card.accent .value{color:var(--accent-dark)}
+
+  /* ---- Section head ---- */
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+  .sec-head h2{
+    font-family:"Space Grotesk",sans-serif;font-size:15px;letter-spacing:.03em;
+    margin:0;font-weight:600;
+  }
+  .sec-head .jp{font-size:12px;color:var(--muted)}
+
+  /* ---- Upcoming ---- */
+  .upcoming{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;backdrop-filter:blur(10px);margin-bottom:32px;
+  }
+  .up-list{display:flex;flex-direction:column;gap:2px}
+  .up-row{
+    display:flex;align-items:center;gap:12px;padding:9px 2px;
+    border-bottom:1px dashed var(--line);font-size:13.5px;
+  }
+  .up-row:last-child{border-bottom:none}
+  .up-date{
+    font-family:"Space Grotesk",sans-serif;font-size:12.5px;color:var(--muted);
+    min-width:62px;font-variant-numeric:tabular-nums;
+  }
+  .up-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .up-amount{font-family:"Space Grotesk",sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
+  .up-total{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);
+  }
+  .up-total b{font-family:"Space Grotesk",sans-serif;font-size:17px;color:var(--ink)}
+
+  /* ---- Toolbar ---- */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  #searchInput{
+    flex:1 1 220px;padding:10px 14px;border-radius:99px;
+    border:1px solid var(--line);background:var(--paper);
+    font-size:13.5px;color:var(--ink);outline:none;font-family:inherit;
+    backdrop-filter:blur(6px);
+  }
+  #searchInput:focus{border-color:var(--accent)}
+  #sortSelect{
+    padding:9px 12px;border-radius:99px;border:1px solid var(--line);
+    background:var(--paper);font-size:13px;color:var(--muted);
+    font-family:inherit;cursor:pointer;outline:none;
+  }
+  .btn{
+    font-family:"Space Grotesk","Noto Sans JP",sans-serif;font-size:13px;font-weight:500;
+    color:var(--accent-dark);background:var(--paper);
+    border:1px solid var(--line);border-radius:99px;padding:9px 16px;
+    cursor:pointer;backdrop-filter:blur(6px);transition:background .2s;white-space:nowrap;
+  }
+  .btn:hover{background:#fff}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.primary:hover{background:var(--accent-dark)}
+  .btn.ghost{color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .chip{
+    font-size:12.5px;padding:6px 13px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line);background:var(--paper);color:var(--muted);
+    transition:.2s;font-family:inherit;
+  }
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* ---- Grid / Cards ---- */
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:16px;margin-bottom:40px;
+  }
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;backdrop-filter:blur(10px);
+    box-shadow:0 4px 18px rgba(60,90,110,.06);
+    display:flex;flex-direction:column;gap:11px;transition:box-shadow .2s;
+  }
+  .card:hover{box-shadow:0 8px 26px rgba(60,90,110,.11)}
+  .card.paused{opacity:.62}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .card-title{font-weight:700;font-size:16px;line-height:1.4}
+  .card-title .plan{
+    display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px;
+  }
+  .cat-badge{
+    font-size:11px;color:var(--accent-dark);background:var(--accent-soft);
+    border-radius:99px;padding:3px 10px;flex-shrink:0;white-space:nowrap;
+  }
+  .price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .price{font-family:"Space Grotesk",sans-serif;font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .price-cycle{font-size:12px;color:var(--muted)}
+  .price-conv{font-size:11.5px;color:var(--muted)}
+  .meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px}
+  .meta-row>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta-row .label{color:var(--muted);font-size:11.5px}
+  .save-row{display:flex;justify-content:flex-end;margin-top:-4px}
+  .save-tag{
+    font-size:11px;color:var(--ok);background:var(--ok-soft);
+    border-radius:99px;padding:3px 10px;
+  }
+  .due{
+    font-family:"Space Grotesk",sans-serif;font-size:11.5px;border-radius:99px;
+    padding:3px 10px;background:rgba(0,0,0,.04);color:var(--muted);white-space:nowrap;
+  }
+  .due.soon{background:var(--warn-soft);color:var(--warn);font-weight:600}
+  .due.paused{background:var(--ok-soft);color:var(--ok)}
+  .card-note{
+    font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.5);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;line-height:1.55;
+  }
+  .card-actions{display:flex;gap:8px;margin-top:auto;padding-top:4px}
+  .card-actions button{
+    font-size:11.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;
+  }
+  .card-actions button:hover{background:rgba(0,0,0,.04)}
+  .card-actions .danger:hover{color:var(--warn);border-color:var(--warn)}
+  .empty-hint{
+    grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:34px 10px;
+  }
+
+  /* ---- Breakdown ---- */
+  .breakdown{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:24px;backdrop-filter:blur(10px);margin-bottom:30px;
+  }
+  .bar-row{margin-bottom:13px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar-label .amt{font-family:"Space Grotesk",sans-serif;color:var(--muted)}
+  .bar-track{height:8px;border-radius:99px;background:rgba(120,145,165,.16);overflow:hidden}
+  .bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s ease}
+
+  /* ---- Data actions / footer ---- */
+  .data-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:26px}
+  footer{
+    font-size:11.5px;color:var(--muted);text-align:center;line-height:1.9;
+    border-top:1px solid var(--line);padding-top:20px;
+  }
+
+  /* ---- Modal ---- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(28,40,50,.42);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+    backdrop-filter:blur(2px);
+  }
+  .modal-overlay.hidden{display:none}
+  .modal{
+    background:var(--paper-solid);border-radius:18px;padding:26px 24px;
+    max-width:470px;width:100%;max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(20,40,55,.28);
+  }
+  .modal h3{font-size:17px;margin:0 0 16px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--line);
+    font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;outline:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:52px}
+  .field-row{display:flex;gap:10px}
+  .field-row .field{flex:1}
+  .field-hint{font-size:11px;color:var(--muted);margin-top:3px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+  @media (max-width:520px){
+    .toolbar{flex-direction:column;align-items:stretch}
+    #searchInput,#sortSelect,.toolbar .btn{width:100%}
+    .field-row{flex-direction:column;gap:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">SUBSCRIPTION MANAGER</p>
+    <h1>契約中のサブスクを、月額と次の請求日で見える化</h1>
+    <p class="lead">毎月いくら払っているのか、次はいつ請求が来るのかを一覧で確認できます。休止中の契約や、解約したときに浮く年間コストも合わせて表示します。</p>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="upcoming">
+    <div class="sec-head">
+      <h2>Upcoming Payments</h2>
+      <span class="jp">今後30日の請求予定</span>
+    </div>
+    <div class="up-list" id="upcomingList"></div>
+    <div class="up-total" id="upcomingTotal"></div>
+  </section>
+
+  <div class="toolbar">
+    <input id="searchInput" type="text" placeholder="サービス名・プラン・メモで検索">
+    <select id="sortSelect">
+      <option value="due">次回請求日が近い順</option>
+      <option value="price">月額が高い順</option>
+      <option value="name">サービス名順</option>
+      <option value="added">登録が新しい順</option>
+    </select>
+    <button class="btn primary" id="addBtn">＋ サブスクを追加</button>
+  </div>
+  <div class="chips" id="categoryChips"></div>
+
+  <section class="grid" id="subGrid"></section>
+
+  <section class="breakdown">
+    <div class="sec-head">
+      <h2>Category Breakdown</h2>
+      <span class="jp">カテゴリ別の月額内訳（契約中のみ）</span>
+    </div>
+    <div id="breakdownBody"></div>
+  </section>
+
+  <div class="data-actions">
+    <button class="btn ghost" id="exportBtn">JSONで書き出す</button>
+    <button class="btn ghost" id="importBtn">JSONを読み込む</button>
+    <button class="btn ghost" id="resetBtn">サンプルデータに戻す</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+
+  <footer>
+    初期表示のサービス・金額はサンプルです。実際の料金は各サービスの公式サイトでご確認ください。<br>
+    登録したデータはこの端末のブラウザ内（localStorage）にのみ保存され、外部には送信されません。
+  </footer>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">サブスクを追加</h3>
+    <form id="subForm">
+      <div class="field">
+        <label for="fName">サービス名 <span style="color:var(--warn)">*</span></label>
+        <input id="fName" type="text" required placeholder="例：Netflix">
+      </div>
+      <div class="field">
+        <label for="fPlan">プラン名</label>
+        <input id="fPlan" type="text" placeholder="例：スタンダード">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fPrice">料金（円） <span style="color:var(--warn)">*</span></label>
+          <input id="fPrice" type="number" min="0" step="1" required placeholder="1590">
+        </div>
+        <div class="field">
+          <label for="fCycle">支払いサイクル</label>
+          <select id="fCycle">
+            <option value="monthly">毎月</option>
+            <option value="yearly">毎年</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fNext">次回請求日 <span style="color:var(--warn)">*</span></label>
+          <input id="fNext" type="date" required>
+        </div>
+        <div class="field">
+          <label for="fCategory">カテゴリ</label>
+          <input id="fCategory" type="text" list="categoryList" placeholder="動画">
+          <datalist id="categoryList"></datalist>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fMethod">支払い方法</label>
+          <input id="fMethod" type="text" placeholder="例：クレジットカード">
+        </div>
+        <div class="field">
+          <label for="fStatus">状態</label>
+          <select id="fStatus">
+            <option value="active">契約中</option>
+            <option value="paused">休止中</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fNote">メモ</label>
+        <textarea id="fNote" placeholder="解約条件、家族と共有しているかなど"></textarea>
+        <p class="field-hint">休止中にすると合計金額の集計から除外されます。</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button type="submit" class="btn primary">保存する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "subscription-manager-v1";
+  var MS_DAY = 86400000;
+
+  /* ---------- 日付ユーティリティ ---------- */
+  function toISO(d){
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function parseISO(iso){
+    var p = String(iso).split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+  function today(){
+    var t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  }
+  function addDays(n){
+    var d = today();
+    d.setDate(d.getDate() + n);
+    return toISO(d);
+  }
+  // サイクル分だけ日付を進める。月末は繰り上がらないよう丸める（1/31 → 2/28）。
+  // anchorDay を渡すと本来の請求日を基準にするため 1/31 → 2/28 → 3/31 と戻る。
+  function addCycle(iso, cycle, anchorDay){
+    var p = String(iso).split("-").map(Number);
+    var months = cycle === "yearly" ? 12 : 1;
+    var day = anchorDay || p[2];
+    var target = new Date(p[0], p[1] - 1 + months, 1);
+    var lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(day, lastDay));
+    return toISO(target);
+  }
+  function daysUntil(iso){
+    return Math.round((parseISO(iso) - today()) / MS_DAY);
+  }
+  function formatDate(iso){
+    var p = String(iso).split("-").map(Number);
+    return p[1] + "/" + p[2];
+  }
+  function isValidISO(iso){
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(iso)) && !isNaN(parseISO(iso).getTime());
+  }
+
+  /* ---------- 金額ユーティリティ ---------- */
+  function yen(n){
+    return "¥" + Math.round(n).toLocaleString("ja-JP");
+  }
+  function monthlyOf(sub){
+    return sub.cycle === "yearly" ? sub.price / 12 : sub.price;
+  }
+  function yearlyOf(sub){
+    return sub.cycle === "yearly" ? sub.price : sub.price * 12;
+  }
+
+  /* ---------- サンプルデータ ---------- */
+  function sampleData(){
+    return [
+      { id:"s1", name:"Netflix", plan:"スタンダード", price:1590, cycle:"monthly",
+        next:addDays(4), category:"動画", method:"クレジットカード", status:"active",
+        note:"家族と共有中。同時視聴2台まで。", added:1 },
+      { id:"s2", name:"Spotify", plan:"Premium 個人", price:980, cycle:"monthly",
+        next:addDays(11), category:"音楽", method:"クレジットカード", status:"active",
+        note:"", added:2 },
+      { id:"s3", name:"Amazon Prime", plan:"年間プラン", price:5900, cycle:"yearly",
+        next:addDays(52), category:"ショッピング", method:"クレジットカード", status:"active",
+        note:"配送特典目当て。動画も込み。", added:3 },
+      { id:"s4", name:"Adobe Creative Cloud", plan:"コンプリートプラン", price:6480, cycle:"monthly",
+        next:addDays(19), category:"ソフトウェア", method:"クレジットカード", status:"active",
+        note:"年間契約のため途中解約は違約金あり。", added:4 },
+      { id:"s5", name:"Google One", plan:"100GB", price:250, cycle:"monthly",
+        next:addDays(2), category:"クラウド", method:"キャリア決済", status:"active",
+        note:"写真バックアップ用。", added:5 },
+      { id:"s6", name:"Kindle Unlimited", plan:"読み放題", price:980, cycle:"monthly",
+        next:addDays(24), category:"読書", method:"クレジットカード", status:"paused",
+        note:"読む本が溜まったら再開する。", added:6 }
+    ];
+  }
+
+  /* ---------- 状態 ---------- */
+  var subs = [];
+  var filter = { text:"", category:"all" };
+  var sortMode = "due";
+  var editingId = null;
+
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){ raw = null; }
+    if(!raw){
+      subs = sampleData();
+      save();
+      return;
+    }
+    try {
+      var parsed = JSON.parse(raw);
+      subs = Array.isArray(parsed) ? parsed.filter(isSane) : sampleData();
+    } catch(e){
+      subs = sampleData();
+    }
+    rollForwardDates();
+  }
+  function isSane(s){
+    return s && typeof s.name === "string" && isFinite(s.price) && isValidISO(s.next);
+  }
+  function save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(subs)); }
+    catch(e){ /* 保存できない環境ではメモリ上のみで動作 */ }
+  }
+  // 過ぎた請求日はサイクル分だけ進めて「次回」に保つ
+  function rollForwardDates(){
+    var changed = false;
+    subs.forEach(function(s){
+      var anchorDay = Number(String(s.next).split("-")[2]);
+      var guard = 0;
+      while(daysUntil(s.next) < 0 && guard < 400){
+        s.next = addCycle(s.next, s.cycle, anchorDay);
+        changed = true;
+        guard++;
+      }
+    });
+    if(changed) save();
+  }
+
+  /* ---------- DOM ヘルパ ---------- */
+  function el(tag, className, text){
+    var n = document.createElement(tag);
+    if(className) n.className = className;
+    if(text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function $(id){ return document.getElementById(id); }
+
+  /* ---------- 描画 ---------- */
+  function activeSubs(){
+    return subs.filter(function(s){ return s.status !== "paused"; });
+  }
+
+  function renderSummary(){
+    var box = $("summary");
+    box.textContent = "";
+    var act = activeSubs();
+    var monthly = act.reduce(function(a, s){ return a + monthlyOf(s); }, 0);
+    var pausedCount = subs.length - act.length;
+    var next30 = act.filter(function(s){
+      var d = daysUntil(s.next);
+      return d >= 0 && d <= 30;
+    }).reduce(function(a, s){ return a + s.price; }, 0);
+
+    var cards = [
+      { label:"Monthly Total", value:yen(monthly), sub:"契約中サービスの月額換算合計", accent:true },
+      { label:"Yearly Total", value:yen(monthly * 12), sub:"1年間の見込み支出" },
+      { label:"Active", value:act.length + " 件", sub:pausedCount > 0 ? "休止中 " + pausedCount + " 件" : "休止中はありません" },
+      { label:"Next 30 Days", value:yen(next30), sub:"今後30日に請求される金額" }
+    ];
+    cards.forEach(function(c){
+      var card = el("div", "sum-card" + (c.accent ? " accent" : ""));
+      card.appendChild(el("span", "label", c.label));
+      var v = el("div", "value num", c.value);
+      card.appendChild(v);
+      card.appendChild(el("span", "sub", c.sub));
+      box.appendChild(card);
+    });
+  }
+
+  function renderUpcoming(){
+    var list = $("upcomingList");
+    var totalBox = $("upcomingTotal");
+    list.textContent = "";
+    totalBox.textContent = "";
+
+    var rows = activeSubs().filter(function(s){
+      var d = daysUntil(s.next);
+      return d >= 0 && d <= 30;
+    }).sort(function(a, b){ return parseISO(a.next) - parseISO(b.next); });
+
+    if(rows.length === 0){
+      list.appendChild(el("p", "empty-hint", "今後30日の請求予定はありません。"));
+      return;
+    }
+
+    rows.forEach(function(s){
+      var row = el("div", "up-row");
+      var d = daysUntil(s.next);
+      row.appendChild(el("span", "up-date", formatDate(s.next)));
+      var name = el("span", "up-name", s.name + (s.plan ? "（" + s.plan + "）" : ""));
+      row.appendChild(name);
+      row.appendChild(el("span", "due" + (d <= 3 ? " soon" : ""), d === 0 ? "今日" : "あと" + d + "日"));
+      row.appendChild(el("span", "up-amount", yen(s.price)));
+      list.appendChild(row);
+    });
+
+    var total = rows.reduce(function(a, s){ return a + s.price; }, 0);
+    totalBox.appendChild(el("span", null, rows.length + "件の請求予定"));
+    var b = el("b", "num", yen(total));
+    totalBox.appendChild(b);
+  }
+
+  function categories(){
+    var set = {};
+    subs.forEach(function(s){
+      var c = (s.category || "未分類").trim() || "未分類";
+      set[c] = true;
+    });
+    return Object.keys(set).sort();
+  }
+
+  function renderChips(){
+    var box = $("categoryChips");
+    box.textContent = "";
+    var all = ["all"].concat(categories());
+    if(!all.includes(filter.category)) filter.category = "all";
+    all.forEach(function(c){
+      var chip = el("button", "chip" + (filter.category === c ? " active" : ""), c === "all" ? "すべて" : c);
+      chip.type = "button";
+      chip.addEventListener("click", function(){
+        filter.category = c;
+        render();
+      });
+      box.appendChild(chip);
+    });
+
+    var dl = $("categoryList");
+    dl.textContent = "";
+    categories().forEach(function(c){
+      var o = document.createElement("option");
+      o.value = c;
+      dl.appendChild(o);
+    });
+  }
+
+  function visibleSubs(){
+    var q = filter.text.trim().toLowerCase();
+    var list = subs.filter(function(s){
+      var cat = (s.category || "未分類").trim() || "未分類";
+      if(filter.category !== "all" && cat !== filter.category) return false;
+      if(!q) return true;
+      return [s.name, s.plan, s.note, cat, s.method].some(function(v){
+        return String(v || "").toLowerCase().indexOf(q) >= 0;
+      });
+    });
+    list.sort(function(a, b){
+      if(sortMode === "price") return monthlyOf(b) - monthlyOf(a);
+      if(sortMode === "name") return String(a.name).localeCompare(String(b.name), "ja");
+      if(sortMode === "added") return (b.added || 0) - (a.added || 0);
+      return parseISO(a.next) - parseISO(b.next);
+    });
+    return list;
+  }
+
+  function renderGrid(){
+    var grid = $("subGrid");
+    grid.textContent = "";
+    var list = visibleSubs();
+
+    if(list.length === 0){
+      grid.appendChild(el("p", "empty-hint",
+        subs.length === 0 ? "まだ登録がありません。「＋ サブスクを追加」から登録してください。"
+                          : "条件に合うサブスクがありません。"));
+      return;
+    }
+
+    list.forEach(function(s){
+      var paused = s.status === "paused";
+      var card = el("div", "card" + (paused ? " paused" : ""));
+
+      var head = el("div", "card-head");
+      var title = el("div", "card-title", s.name);
+      if(s.plan) title.appendChild(el("span", "plan", s.plan));
+      head.appendChild(title);
+      head.appendChild(el("span", "cat-badge", (s.category || "未分類").trim() || "未分類"));
+      card.appendChild(head);
+
+      var priceRow = el("div", "price-row");
+      priceRow.appendChild(el("span", "price", yen(s.price)));
+      priceRow.appendChild(el("span", "price-cycle", s.cycle === "yearly" ? "/ 年" : "/ 月"));
+      priceRow.appendChild(el("span", "price-conv",
+        s.cycle === "yearly" ? "月あたり " + yen(monthlyOf(s)) : "年 " + yen(yearlyOf(s))));
+      card.appendChild(priceRow);
+
+      var dueRow = el("div", "meta-row");
+      var dueLabel = el("span", null);
+      dueLabel.appendChild(el("span", "label", "次回請求　"));
+      dueLabel.appendChild(document.createTextNode(s.next.replace(/-/g, "/")));
+      dueRow.appendChild(dueLabel);
+      var d = daysUntil(s.next);
+      if(paused){
+        dueRow.appendChild(el("span", "due paused", "休止中"));
+      } else {
+        dueRow.appendChild(el("span", "due" + (d <= 3 ? " soon" : ""), d === 0 ? "今日" : "あと" + d + "日"));
+      }
+      card.appendChild(dueRow);
+
+      var methodRow = el("div", "meta-row");
+      var m = el("span", null);
+      m.appendChild(el("span", "label", "支払い　"));
+      m.appendChild(document.createTextNode(s.method || "未設定"));
+      methodRow.appendChild(m);
+      card.appendChild(methodRow);
+
+      var saveRow = el("div", "save-row");
+      saveRow.appendChild(el("span", "save-tag", "解約すると年 " + yen(yearlyOf(s)) + " 節約"));
+      card.appendChild(saveRow);
+
+      if(s.note) card.appendChild(el("div", "card-note", s.note));
+
+      var actions = el("div", "card-actions");
+      var editBtn = el("button", null, "編集");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function(){ openModal(s.id); });
+      var toggleBtn = el("button", null, paused ? "再開する" : "休止する");
+      toggleBtn.type = "button";
+      toggleBtn.addEventListener("click", function(){
+        s.status = paused ? "active" : "paused";
+        save();
+        render();
+      });
+      var delBtn = el("button", "danger", "削除");
+      delBtn.type = "button";
+      delBtn.addEventListener("click", function(){
+        if(confirm("「" + s.name + "」を削除します。よろしいですか？")){
+          subs = subs.filter(function(x){ return x.id !== s.id; });
+          save();
+          render();
+        }
+      });
+      actions.appendChild(editBtn);
+      actions.appendChild(toggleBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
+
+      grid.appendChild(card);
+    });
+  }
+
+  function renderBreakdown(){
+    var box = $("breakdownBody");
+    box.textContent = "";
+    var act = activeSubs();
+    if(act.length === 0){
+      box.appendChild(el("p", "empty-hint", "契約中のサブスクがありません。"));
+      return;
+    }
+    var byCat = {};
+    act.forEach(function(s){
+      var c = (s.category || "未分類").trim() || "未分類";
+      byCat[c] = (byCat[c] || 0) + monthlyOf(s);
+    });
+    var rows = Object.keys(byCat).map(function(c){
+      return { cat:c, amount:byCat[c] };
+    }).sort(function(a, b){ return b.amount - a.amount; });
+    var max = rows[0].amount;
+    var total = rows.reduce(function(a, r){ return a + r.amount; }, 0);
+
+    rows.forEach(function(r){
+      var row = el("div", "bar-row");
+      var label = el("div", "bar-label");
+      label.appendChild(el("span", null, r.cat));
+      var pct = total > 0 ? Math.round(r.amount / total * 100) : 0;
+      label.appendChild(el("span", "amt", yen(r.amount) + " / 月　" + pct + "%"));
+      row.appendChild(label);
+      var track = el("div", "bar-track");
+      var fill = el("div", "bar-fill");
+      fill.style.width = (max > 0 ? (r.amount / max * 100) : 0) + "%";
+      track.appendChild(fill);
+      row.appendChild(track);
+      box.appendChild(row);
+    });
+  }
+
+  function render(){
+    renderSummary();
+    renderUpcoming();
+    renderChips();
+    renderGrid();
+    renderBreakdown();
+  }
+
+  /* ---------- モーダル ---------- */
+  function openModal(id){
+    editingId = id || null;
+    var s = id ? subs.find(function(x){ return x.id === id; }) : null;
+    $("modalTitle").textContent = s ? "サブスクを編集" : "サブスクを追加";
+    $("fName").value = s ? s.name : "";
+    $("fPlan").value = s ? (s.plan || "") : "";
+    $("fPrice").value = s ? s.price : "";
+    $("fCycle").value = s ? s.cycle : "monthly";
+    $("fNext").value = s ? s.next : addDays(30);
+    $("fCategory").value = s ? (s.category || "") : "";
+    $("fMethod").value = s ? (s.method || "") : "";
+    $("fStatus").value = s ? (s.status || "active") : "active";
+    $("fNote").value = s ? (s.note || "") : "";
+    $("modalOverlay").classList.remove("hidden");
+    setTimeout(function(){ $("fName").focus(); }, 30);
+  }
+  function closeModal(){
+    $("modalOverlay").classList.add("hidden");
+    editingId = null;
+  }
+
+  $("subForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var price = Number($("fPrice").value);
+    var next = $("fNext").value;
+    if(!isFinite(price) || price < 0){ alert("料金は0以上の数値で入力してください。"); return; }
+    if(!isValidISO(next)){ alert("次回請求日を入力してください。"); return; }
+
+    var data = {
+      name: $("fName").value.trim(),
+      plan: $("fPlan").value.trim(),
+      price: price,
+      cycle: $("fCycle").value === "yearly" ? "yearly" : "monthly",
+      next: next,
+      category: $("fCategory").value.trim() || "未分類",
+      method: $("fMethod").value.trim(),
+      status: $("fStatus").value === "paused" ? "paused" : "active",
+      note: $("fNote").value.trim()
+    };
+    if(!data.name){ alert("サービス名を入力してください。"); return; }
+
+    if(editingId){
+      var target = subs.find(function(x){ return x.id === editingId; });
+      if(target) Object.keys(data).forEach(function(k){ target[k] = data[k]; });
+    } else {
+      data.id = "s" + Date.now() + Math.random().toString(36).slice(2, 6);
+      data.added = Date.now();
+      subs.push(data);
+    }
+    save();
+    closeModal();
+    render();
+  });
+
+  $("cancelBtn").addEventListener("click", closeModal);
+  $("modalOverlay").addEventListener("click", function(e){
+    if(e.target === $("modalOverlay")) closeModal();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !$("modalOverlay").classList.contains("hidden")) closeModal();
+  });
+
+  /* ---------- ツールバー ---------- */
+  $("addBtn").addEventListener("click", function(){ openModal(null); });
+  $("searchInput").addEventListener("input", function(e){
+    filter.text = e.target.value;
+    renderGrid();
+  });
+  $("sortSelect").addEventListener("change", function(e){
+    sortMode = e.target.value;
+    renderGrid();
+  });
+
+  /* ---------- データ入出力 ---------- */
+  $("exportBtn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(subs, null, 2)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "subscriptions-" + toISO(new Date()) + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var parsed = JSON.parse(reader.result);
+        if(!Array.isArray(parsed)) throw new Error("配列ではありません");
+        var valid = parsed.filter(isSane);
+        if(valid.length === 0) throw new Error("有効なデータがありません");
+        if(!confirm(valid.length + "件を読み込みます。現在のデータは置き換わります。よろしいですか？")) return;
+        subs = valid.map(function(s, i){
+          return {
+            id: s.id || ("s" + Date.now() + i),
+            name: String(s.name),
+            plan: String(s.plan || ""),
+            price: Number(s.price),
+            cycle: s.cycle === "yearly" ? "yearly" : "monthly",
+            next: s.next,
+            category: String(s.category || "未分類"),
+            method: String(s.method || ""),
+            status: s.status === "paused" ? "paused" : "active",
+            note: String(s.note || ""),
+            added: s.added || i
+          };
+        });
+        rollForwardDates();
+        save();
+        render();
+      } catch(err){
+        alert("読み込めませんでした：" + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+  $("resetBtn").addEventListener("click", function(){
+    if(!confirm("現在のデータを消して、サンプルデータに戻します。よろしいですか？")) return;
+    subs = sampleData();
+    save();
+    render();
+  });
+
+  /* ---------- 起動 ---------- */
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
