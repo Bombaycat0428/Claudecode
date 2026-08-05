@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有給付与管理 | Paid Leave Grant Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f8f7;
+  --card: rgba(255,255,255,0.72);
+  --card-solid: #ffffff;
+  --line: #e1e7e4;
+  --ink: #24312c;
+  --muted: #6b7b74;
+  --accent: #2f8f74;
+  --accent-soft: #e4f3ee;
+  --warn: #c98a2c;
+  --warn-soft: #fbf1de;
+  --danger: #c1503f;
+  --danger-soft: #fbeae7;
+  --shadow: 0 1px 2px rgba(36,49,44,0.04), 0 8px 24px -12px rgba(36,49,44,0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181a;
+    --card: rgba(28,34,32,0.72);
+    --card-solid: #1c2220;
+    --line: #2a3330;
+    --ink: #e7ede9;
+    --muted: #93a39b;
+    --accent: #52c49c;
+    --accent-soft: rgba(82,196,156,0.12);
+    --warn: #e0ab55;
+    --warn-soft: rgba(224,171,85,0.12);
+    --danger: #e08272;
+    --danger-soft: rgba(224,130,114,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 24px -12px rgba(0,0,0,0.4);
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 32px 18px 60px;
+}
+.wrap { max-width: 980px; margin: 0 auto; }
+.en { font-family: 'Inter', sans-serif; }
+
+header.top { margin-bottom: 28px; }
+header.top .eyebrow {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+header.top h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: 0.01em; }
+header.top p.sub { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+
+.panel {
+  background: var(--card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px 24px 24px;
+  margin-bottom: 22px;
+}
+.panel-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+.alert-panel { border-color: var(--warn); background: var(--warn-soft); }
+.alert-panel .panel-title { color: var(--warn); }
+.alert-panel .panel-title .dot { background: var(--warn); }
+.alert-list { display: flex; flex-direction: column; gap: 8px; }
+.alert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  color: var(--ink);
+}
+.alert-row:hover { border-color: var(--warn); }
+.alert-row.today { border-color: var(--danger); }
+.alert-row .alert-name { font-weight: 600; }
+.alert-row .alert-info { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.84rem; }
+
+.fields { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 170px; }
+.field.grow-2 { flex: 2 1 260px; }
+.field label { font-size: 0.8rem; font-weight: 500; color: var(--muted); }
+.field input[type="text"], .field input[type="date"], .field select {
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 0.6rem 0.75rem;
+  min-height: 42px;
+  outline: none;
+  width: 100%;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.form-footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
+.btn-primary {
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.65rem 1.6rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.88rem;
+  padding: 0.6rem 1.2rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-ghost:hover { color: var(--ink); border-color: var(--accent); }
+.form-msg { font-size: 0.84rem; min-height: 1.2em; }
+.form-msg.err { color: var(--danger); }
+.form-msg.ok { color: var(--accent); }
+.form-note { font-size: 0.76rem; color: var(--muted); margin-top: 10px; }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.row-count { font-size: 0.84rem; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 820px; }
+thead th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-align: left;
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--line); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--accent-soft); }
+td { padding: 0.75rem 0.7rem; vertical-align: middle; font-size: 0.88rem; }
+.name-cell { font-weight: 600; }
+.type-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.type-badge.pt { background: var(--warn-soft); color: var(--warn); }
+.muted-cell { color: var(--muted); font-size: 0.82rem; }
+.days-num { font-weight: 700; font-family: 'Inter', sans-serif; }
+.remain-badge {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.remain-badge.soon { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+.remain-badge.today { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+.col-actions { text-align: right; white-space: nowrap; }
+.btn-icon {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 4px 9px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: 3px;
+}
+.btn-icon:hover { color: var(--accent); border-color: var(--line); background: var(--accent-soft); }
+.btn-icon.danger:hover { color: var(--danger); background: var(--danger-soft); }
+
+.empty-state { padding: 3rem 1.5rem; text-align: center; color: var(--muted); font-size: 0.92rem; }
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(20,24,26,0.45);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow-y: auto; z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: 100%; max-width: 520px;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.5rem 1.6rem 1.6rem;
+  box-shadow: var(--shadow);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 1.1rem; }
+.modal-title { font-size: 1.05rem; font-weight: 700; }
+.modal-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+.modal-close {
+  background: transparent; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--muted); font-size: 1.05rem; line-height: 1; padding: 5px 11px; cursor: pointer;
+}
+.modal-close:hover { color: var(--danger); border-color: var(--danger); }
+.modal-footer { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 1.1rem; }
+
+.schedule-list { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; }
+.sched-row {
+  display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid var(--line); border-radius: 9px; padding: 0.6rem 0.8rem;
+  font-size: 0.86rem;
+}
+.sched-row.past { opacity: 0.55; }
+.sched-row.next { border-color: var(--accent); background: var(--accent-soft); }
+.sched-row .stage { color: var(--muted); font-size: 0.78rem; }
+.sched-row .days { font-weight: 700; font-family: 'Inter', sans-serif; }
+
+footer.page-footer {
+  max-width: 980px; margin: 6px auto 0;
+  font-size: 0.72rem; letter-spacing: 0.05em; color: var(--muted);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+
+@media (max-width: 640px) {
+  header.top h1 { font-size: 1.35rem; }
+  .panel { padding: 18px 16px 20px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow en">Paid Leave Grant Manager</div>
+  <h1>有給付与管理</h1>
+  <p class="sub">入社日を登録すると、労働基準法の基準にもとづいて有給休暇の付与日・付与日数を自動計算します。</p>
+</header>
+
+<section class="panel alert-panel" id="alert-panel" hidden>
+  <div class="panel-title"><span class="dot"></span>付与が近い従業員</div>
+  <div class="alert-list" id="alert-list"></div>
+</section>
+
+<section class="panel">
+  <div class="panel-title"><span class="dot"></span>従業員を登録</div>
+  <div class="fields">
+    <div class="field grow-2">
+      <label for="f-name">氏名<span style="color:var(--danger)">*</span></label>
+      <input id="f-name" type="text" placeholder="例: 山田 太郎" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-hiredate">入社日<span style="color:var(--danger)">*</span></label>
+      <input id="f-hiredate" type="date">
+    </div>
+    <div class="field">
+      <label for="f-weekdays">週所定労働日数<span style="color:var(--danger)">*</span></label>
+      <select id="f-weekdays">
+        <option value="5">週5日以上（通常付与）</option>
+        <option value="4">週4日（比例付与）</option>
+        <option value="3">週3日（比例付与）</option>
+        <option value="2">週2日（比例付与）</option>
+        <option value="1">週1日（比例付与）</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-footer">
+    <button class="btn-primary" id="btn-add" type="button">登録する</button>
+    <span class="form-msg" id="form-msg" role="status"></span>
+  </div>
+  <div class="form-note">
+    通常付与基準（週5日以上）：入社6ヶ月で10日、以降1年6ヶ月=11日／2年6ヶ月=12日／3年6ヶ月=14日／4年6ヶ月=16日／5年6ヶ月=18日／6年6ヶ月以降=20日。
+    週5日以上勤務であれば、1日の労働時間の長さに関わらずこの通常付与が適用されます（時短勤務でも日数は減りません）。
+    週4日以下の場合は週所定労働日数に応じた比例付与で計算します（ただし週4日以下でも週30時間以上働く方は「週5日以上」を選んでください）。データはこの端末のブラウザ内にのみ保存されます。
+  </div>
+</section>
+
+<section class="panel">
+  <div class="toolbar">
+    <div class="panel-title" style="margin-bottom:0;"><span class="dot"></span>従業員一覧</div>
+    <span class="row-count" id="row-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table id="emp-table" hidden>
+      <thead>
+        <tr>
+          <th>氏名</th>
+          <th>週所定労働日数</th>
+          <th>入社日</th>
+          <th>勤続</th>
+          <th>直近付与</th>
+          <th>次回付与日</th>
+          <th>付与日数</th>
+          <th>残り</th>
+          <th class="col-actions">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-state" id="empty-state">
+      まだ従業員が登録されていません。上のフォームから1人目を登録してください。
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer class="page-footer">
+  <span class="en">PAID LEAVE GRANT MANAGER</span>
+  <span>&copy;bombaycat0428 — 2026</span>
+</footer>
+
+<!-- 詳細モーダル -->
+<div class="modal-overlay" id="detail-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="detail-title"></div>
+        <div class="modal-sub" id="detail-sub"></div>
+      </div>
+      <button class="modal-close" id="detail-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="schedule-list" id="schedule-list"></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="detail-close2" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="edit-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="modal-head">
+      <div class="modal-title" id="edit-title">従業員情報を編集</div>
+      <button class="modal-close" id="edit-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="fields" style="margin-bottom:0.4rem;">
+      <div class="field grow-2">
+        <label for="em-name">氏名</label>
+        <input id="em-name" type="text" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="em-hiredate">入社日</label>
+        <input id="em-hiredate" type="date">
+      </div>
+      <div class="field">
+        <label for="em-weekdays">週所定労働日数</label>
+        <select id="em-weekdays">
+          <option value="5">週5日以上（通常付与）</option>
+          <option value="4">週4日（比例付与）</option>
+          <option value="3">週3日（比例付与）</option>
+          <option value="2">週2日（比例付与）</option>
+          <option value="1">週1日（比例付与）</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="edit-save" type="button">保存</button>
+      <button class="btn-ghost" id="edit-cancel" type="button">キャンセル</button>
+      <span class="form-msg" id="edit-msg" role="status"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'paid_leave_employees_v1';
+
+/* ───────── 付与日数テーブル（労働基準法） ─────────
+   STAGE_MONTHS: 入社からの経過月数の節目（6ヶ月, 1年6ヶ月, ...6年6ヶ月）
+   6年6ヶ月以降は12ヶ月ごとに最終値で継続付与 */
+const STAGE_MONTHS = [6, 18, 30, 42, 54, 66, 78];
+const FULLTIME_DAYS = [10, 11, 12, 14, 16, 18, 20];
+const PARTTIME_DAYS = {
+  4: [7, 8, 9, 10, 12, 13, 15],
+  3: [5, 6, 6, 8, 9, 10, 11],
+  2: [3, 4, 4, 5, 6, 6, 7],
+  1: [1, 2, 2, 2, 3, 3, 3],
+};
+
+function loadEmployees() {
+  let list;
+  try { list = JSON.parse(localStorage.getItem(STORE_KEY)) ?? []; }
+  catch (e) { return []; }
+  // 旧データ（雇用形態フルタイム/パート方式）を週所定労働日数のみの形式に変換
+  return list.map(emp => {
+    if (emp.weeklyDays != null && emp.employmentType === undefined) return emp;
+    const { employmentType, weeklyDays, ...rest } = emp;
+    return { ...rest, weeklyDays: employmentType === 'parttime' ? (weeklyDays || 4) : 5 };
+  });
+}
+function saveEmployees(list) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function genId() {
+  return 'emp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+let employees = loadEmployees();
+
+/* ───────── 日付ユーティリティ ───────── */
+function parseDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function addMonths(date, months) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const targetDay = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() !== targetDay) d.setDate(0); // 月末調整
+  return d;
+}
+function formatDate(d) {
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+}
+function monthsBetween(from, to) {
+  let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+  if (to.getDate() < from.getDate()) months--;
+  return Math.max(0, months);
+}
+function formatTenure(hireDate, today) {
+  const totalMonths = monthsBetween(hireDate, today);
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0) return `${months}ヶ月`;
+  return `${years}年${months}ヶ月`;
+}
+function daysBetween(from, to) {
+  const ms = to.setHours(0,0,0,0) - from.setHours(0,0,0,0);
+  return Math.round(ms / 86400000);
+}
+
+/* ───────── 付与スケジュール計算 ───────── */
+function getDaysTable(emp) {
+  if (emp.weeklyDays >= 5) return FULLTIME_DAYS;
+  return PARTTIME_DAYS[emp.weeklyDays] || PARTTIME_DAYS[4];
+}
+function typeLabel(emp) {
+  return emp.weeklyDays >= 5 ? '通常付与' : `比例付与（週${emp.weeklyDays}日）`;
+}
+function buildGrantSchedule(emp, today) {
+  const table = getDaysTable(emp);
+  const hire = parseDate(emp.hireDate);
+  const schedule = STAGE_MONTHS.map((m, i) => ({
+    months: m,
+    date: addMonths(hire, m),
+    days: table[i],
+  }));
+  // 6年6ヶ月以降は1年ごとに最終値で継続。今日から2年先まで見込みで生成。
+  const lastDays = table[table.length - 1];
+  let months = STAGE_MONTHS[STAGE_MONTHS.length - 1] + 12;
+  const horizon = addMonths(today, 24);
+  let guard = 0;
+  while (addMonths(hire, months) < horizon && guard < 30) {
+    schedule.push({ months, date: addMonths(hire, months), days: lastDays });
+    months += 12;
+    guard++;
+  }
+  return schedule;
+}
+function getGrantStatus(emp, today) {
+  const schedule = buildGrantSchedule(emp, today);
+  let latest = null;
+  let next = null;
+  for (const g of schedule) {
+    if (g.date <= today) latest = g;
+    else { next = g; break; }
+  }
+  return { schedule, latest, next };
+}
+
+/* ───────── 新規登録 ───────── */
+function setMsg(text, kind) {
+  const el = document.getElementById('form-msg');
+  el.textContent = text;
+  el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('btn-add').addEventListener('click', () => {
+  const name = document.getElementById('f-name').value.trim();
+  const hireDate = document.getElementById('f-hiredate').value;
+  const weeklyDays = Number(document.getElementById('f-weekdays').value);
+
+  if (!name) { setMsg('氏名を入力してください。', 'err'); return; }
+  if (!hireDate) { setMsg('入社日を入力してください。', 'err'); return; }
+
+  const rec = {
+    id: genId(),
+    name,
+    hireDate,
+    weeklyDays,
+    createdAt: new Date().toISOString(),
+  };
+  employees.push(rec);
+  saveEmployees(employees);
+  render();
+  setMsg(`${rec.name} さんを登録しました。`, 'ok');
+
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-hiredate').value = '';
+  document.getElementById('f-name').focus();
+});
+
+/* ───────── アラート（付与が近い従業員） ───────── */
+const ALERT_THRESHOLD_DAYS = 30;
+
+function renderAlerts() {
+  const panel = document.getElementById('alert-panel');
+  const list = document.getElementById('alert-list');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const alerts = employees
+    .map(emp => {
+      const status = getGrantStatus(emp, today);
+      const grantedToday = status.latest && status.latest.date.getTime() === today.getTime();
+      if (grantedToday) {
+        return { emp, grant: status.latest, remain: 0, isToday: true };
+      }
+      if (!status.next) return null;
+      const remain = daysBetween(new Date(today), new Date(status.next.date));
+      if (remain > ALERT_THRESHOLD_DAYS) return null;
+      return { emp, grant: status.next, remain, isToday: false };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.remain - b.remain);
+
+  if (alerts.length === 0) {
+    panel.hidden = true;
+    list.innerHTML = '';
+    return;
+  }
+
+  panel.hidden = false;
+  list.innerHTML = alerts.map(({ emp, grant, remain, isToday }) => {
+    const remainLabel = isToday ? '本日付与' : `あと${remain}日`;
+    return `
+      <button class="alert-row${isToday ? ' today' : ''}" type="button" data-id="${escapeHtml(emp.id)}">
+        <span class="alert-name">${escapeHtml(emp.name)}</span>
+        <span class="alert-info">
+          <span>${formatDate(grant.date)}</span>
+          <span class="days-num">${grant.days}日</span>
+          <span class="remain-badge ${isToday ? 'today' : 'soon'}">${remainLabel}</span>
+        </span>
+      </button>`;
+  }).join('');
+
+  list.querySelectorAll('.alert-row').forEach(btn => {
+    btn.addEventListener('click', () => openDetail(btn.dataset.id));
+  });
+}
+
+/* ───────── 一覧表示 ───────── */
+function render() {
+  renderAlerts();
+
+  const table = document.getElementById('emp-table');
+  const emptyState = document.getElementById('empty-state');
+
+  if (employees.length === 0) {
+    table.hidden = true;
+    emptyState.hidden = false;
+    document.getElementById('row-count').textContent = '';
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const rows = employees.map(emp => {
+    const hire = parseDate(emp.hireDate);
+    const status = getGrantStatus(emp, today);
+    return { emp, hire, status };
+  });
+
+  // 次回付与日が近い順にソート（次回がない＝全付与完了扱いは末尾）
+  rows.sort((a, b) => {
+    const ad = a.status.next ? a.status.next.date : new Date(8640000000000000);
+    const bd = b.status.next ? b.status.next.date : new Date(8640000000000000);
+    return ad - bd;
+  });
+
+  document.getElementById('tbody').innerHTML = rows.map(({ emp, hire, status }) => {
+    const typeBadgeClass = emp.weeklyDays >= 5 ? 'type-badge' : 'type-badge pt';
+
+    let latestCell = '<span class="muted-cell">—</span>';
+    let nextCell = '<span class="muted-cell">—</span>';
+    let daysCell = '<span class="muted-cell">—</span>';
+    let remainCell = '<span class="muted-cell">—</span>';
+
+    if (status.latest) {
+      const grantedToday = status.latest.date.getTime() === today.getTime();
+      latestCell = grantedToday
+        ? `<span class="remain-badge today">本日 ${status.latest.days}日 付与</span>`
+        : `<span class="muted-cell">${formatDate(status.latest.date)}（${status.latest.days}日）</span>`;
+    }
+
+    if (status.next) {
+      const remain = daysBetween(new Date(today), new Date(status.next.date));
+      let badgeClass = 'remain-badge';
+      if (remain <= 0) badgeClass += ' today';
+      else if (remain <= 30) badgeClass += ' soon';
+      nextCell = formatDate(status.next.date);
+      daysCell = `<span class="days-num">${status.next.days}日</span>`;
+      remainCell = `<span class="${badgeClass}">${remain <= 0 ? '本日' : `あと${remain}日`}</span>`;
+    }
+
+    return `
+    <tr data-id="${escapeHtml(emp.id)}">
+      <td class="name-cell">${escapeHtml(emp.name)}</td>
+      <td><span class="${typeBadgeClass}">${typeLabel(emp)}</span></td>
+      <td class="muted-cell">${formatDate(hire)}</td>
+      <td class="muted-cell">${formatTenure(hire, today)}</td>
+      <td>${latestCell}</td>
+      <td>${nextCell}</td>
+      <td>${daysCell}</td>
+      <td>${remainCell}</td>
+      <td class="col-actions">
+        <button class="btn-icon" data-act="detail" data-id="${escapeHtml(emp.id)}" type="button">詳細</button>
+        <button class="btn-icon" data-act="edit" data-id="${escapeHtml(emp.id)}" type="button">編集</button>
+        <button class="btn-icon danger" data-act="del" data-id="${escapeHtml(emp.id)}" type="button">削除</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  table.hidden = false;
+  emptyState.hidden = true;
+  document.getElementById('row-count').textContent = `全${employees.length}名`;
+
+  document.querySelectorAll('[data-act="detail"]').forEach(btn => {
+    btn.addEventListener('click', () => openDetail(btn.dataset.id));
+  });
+  document.querySelectorAll('[data-act="edit"]').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(btn.dataset.id));
+  });
+  document.querySelectorAll('[data-act="del"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emp = employees.find(x => x.id === btn.dataset.id);
+      if (!emp) return;
+      if (!confirm(`${emp.name} さんを削除しますか？この操作は取り消せません。`)) return;
+      employees = employees.filter(x => x.id !== emp.id);
+      saveEmployees(employees);
+      render();
+    });
+  });
+}
+
+/* ───────── 詳細モーダル ───────── */
+function openDetail(id) {
+  const emp = employees.find(x => x.id === id);
+  if (!emp) return;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const hire = parseDate(emp.hireDate);
+  const status = getGrantStatus(emp, today);
+
+  document.getElementById('detail-title').textContent = `${emp.name} さんの付与スケジュール`;
+  document.getElementById('detail-sub').textContent = `入社日: ${formatDate(hire)}　週所定労働日数: ${typeLabel(emp)}`;
+
+  document.getElementById('schedule-list').innerHTML = status.schedule.map(g => {
+    const isPast = g.date <= today;
+    const isNext = status.next && g.date.getTime() === status.next.date.getTime();
+    const cls = isNext ? 'sched-row next' : (isPast ? 'sched-row past' : 'sched-row');
+    const years = Math.floor(g.months / 12);
+    const months = g.months % 12;
+    const stageLabel = years === 0 ? `勤続${months}ヶ月` : `勤続${years}年${months}ヶ月`;
+    const tag = isNext ? '（次回）' : (isPast ? '（付与済み）' : '');
+    return `
+      <div class="${cls}">
+        <div>
+          <div>${formatDate(g.date)} <span class="stage">${stageLabel}${tag}</span></div>
+        </div>
+        <div class="days">${g.days}日</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('detail-modal').hidden = false;
+}
+function closeDetail() { document.getElementById('detail-modal').hidden = true; }
+document.getElementById('detail-close').addEventListener('click', closeDetail);
+document.getElementById('detail-close2').addEventListener('click', closeDetail);
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target.id === 'detail-modal') closeDetail();
+});
+
+/* ───────── 編集モーダル ───────── */
+let editingId = null;
+
+function setEditMsg(text, kind) {
+  const el = document.getElementById('edit-msg');
+  el.textContent = text;
+  el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+function openEdit(id) {
+  const emp = employees.find(x => x.id === id);
+  if (!emp) return;
+  editingId = id;
+
+  document.getElementById('em-name').value = emp.name;
+  document.getElementById('em-hiredate').value = emp.hireDate;
+  document.getElementById('em-weekdays').value = String(emp.weeklyDays);
+
+  setEditMsg('');
+  document.getElementById('edit-modal').hidden = false;
+  document.getElementById('em-name').focus();
+}
+function closeEdit() {
+  document.getElementById('edit-modal').hidden = true;
+  editingId = null;
+}
+
+document.getElementById('edit-save').addEventListener('click', () => {
+  const name = document.getElementById('em-name').value.trim();
+  const hireDate = document.getElementById('em-hiredate').value;
+  const weeklyDays = Number(document.getElementById('em-weekdays').value);
+
+  if (!name) { setEditMsg('氏名を入力してください。', 'err'); return; }
+  if (!hireDate) { setEditMsg('入社日を入力してください。', 'err'); return; }
+
+  const idx = employees.findIndex(x => x.id === editingId);
+  if (idx < 0) { closeEdit(); return; }
+
+  employees[idx] = { ...employees[idx], name, hireDate, weeklyDays };
+  saveEmployees(employees);
+  render();
+  closeEdit();
+});
+document.getElementById('edit-close').addEventListener('click', closeEdit);
+document.getElementById('edit-cancel').addEventListener('click', closeEdit);
+document.getElementById('edit-modal').addEventListener('click', e => {
+  if (e.target.id === 'edit-modal') closeEdit();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!document.getElementById('edit-modal').hidden) closeEdit();
+  if (!document.getElementById('detail-modal').hidden) closeDetail();
+});
+
+window.addEventListener('storage', e => {
+  if (e.key === STORE_KEY) {
+    employees = loadEmployees();
+    render();
+  }
+});
+
+/* ───────── 初期化 ───────── */
+render();
+</script>
+</body>
+</html>
