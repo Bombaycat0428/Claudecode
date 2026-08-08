@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麻雀 はじめの一歩 — 麻雀入門ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF6EC;
+    --card: #FFFFFF;
+    --ink: #2A2622;
+    --muted: #857D6E;
+    --line: #EAE1CF;
+    --soft: #F5EDDC;
+    --chip: #F5E9D0;
+    --chiptx: #D9542F;
+    --accent: #FF5A4D;
+    --accent-dark: #D63A2E;
+    --amber: #FFB000;
+    --blue: #3DA9E0;
+    --green: #5BA85A;
+    --purple: #9B7BD4;
+  }
+  [data-theme="dark"] {
+    --bg: #1E1B18;
+    --card: #2A2622;
+    --ink: #FBF6EC;
+    --muted: #B8B0A2;
+    --line: #3A352E;
+    --soft: #262220;
+    --chip: #3A352E;
+    --chiptx: #FFCF8A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "M PLUS Rounded 1c", "Noto Sans JP", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    font-size: 16px;
+    transition: background .3s, color .3s;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ---------- header ---------- */
+  .topbar {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 22px;
+  }
+  .title-block h1 { font-size: 27px; font-weight: 800; letter-spacing: .01em; }
+  .title-block p { color: var(--muted); font-size: 14px; margin-top: 6px; max-width: 480px; }
+  .theme-btn {
+    display: flex; align-items: center; gap: 7px;
+    font-family: inherit; font-weight: 700; font-size: 13px;
+    color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* ---------- tab nav ---------- */
+  .tabnav {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; gap: 8px; overflow-x: auto;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    padding: 10px 0 14px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    font-family: inherit; cursor: pointer;
+    font-weight: 700; font-size: 13.5px;
+    color: var(--muted); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 16px;
+    display: flex; align-items: center; gap: 6px;
+    transition: color .15s, background .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .tab-btn .n {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--soft); color: var(--muted);
+    font-size: 10.5px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tab-btn.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .tab-btn.active .n { background: rgba(255,255,255,.28); color: #fff; }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- panels ---------- */
+  .panel { display: none; animation: fadein .25s ease; }
+  .panel.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2.sec-title { font-size: 21px; font-weight: 800; margin-bottom: 6px; }
+  .sec-lede { color: var(--muted); font-size: 14.5px; margin-bottom: 22px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px 22px; margin-bottom: 18px;
+  }
+  .card h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 14.5px; }
+  .card p + p { margin-top: 8px; }
+  .card ul, .card ol { padding-left: 1.3em; font-size: 14.5px; }
+  .card li + li { margin-top: 6px; }
+
+  .note {
+    background: var(--soft); border: 1px dashed var(--line);
+    border-radius: 12px; padding: 14px 16px; font-size: 13.5px;
+    color: var(--muted); margin-top: 10px;
+  }
+  .note b { color: var(--ink); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 700px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--soft); border-radius: 12px; padding: 12px 16px;
+  }
+  .step .num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step .tx { font-size: 14px; }
+  .step .tx b { display: block; font-size: 14.5px; margin-bottom: 2px; }
+
+  /* ---------- tiles ---------- */
+  .tile {
+    width: 34px; height: 46px;
+    background: linear-gradient(180deg,#FFFFFF,#FBF3DE);
+    border: 1px solid #D8CBA8; border-radius: 5px;
+    box-shadow: 0 2px 3px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.55);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+  .tile.tile-lg { width: 54px; height: 72px; border-radius: 7px; }
+  .tile-m .num { font-size: 16px; font-weight: 800; color: #2A2622; line-height: 1; }
+  .tile-lg.tile-m .num { font-size: 26px; }
+  .tile-m .suit { font-size: 10px; color: #D63A2E; font-weight: 700; margin-top: 2px; }
+  .tile-lg.tile-m .suit { font-size: 15px; }
+  .tile-p .dots, .tile-s .bars { display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; }
+  .dot-row, .bar-row { display: flex; gap: 2px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+  .tile-lg .dot { width: 8px; height: 8px; }
+  .bar { width: 4px; height: 9px; border-radius: 2px; background: var(--green); flex-shrink: 0; }
+  .tile-lg .bar { width: 6px; height: 15px; }
+  .bar.bar-one { width: 6px; height: 20px; border-radius: 3px; background: var(--accent-dark); }
+  .tile-lg .bar.bar-one { width: 9px; height: 32px; }
+  .tile-z .kanji { font-size: 18px; font-weight: 800; color: #2A2622; }
+  .tile-lg.tile-z .kanji { font-size: 28px; }
+  .tile-z.haku .kanji { color: transparent; -webkit-text-stroke: 1.3px var(--blue); }
+  .tile-z.hatsu .kanji { color: #2F8F52; }
+  .tile-z.chun .kanji { color: #D63A2E; }
+
+  .tile-card { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .tile-label { font-size: 11px; color: var(--muted); font-weight: 700; text-align: center; }
+
+  .tile-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tile-group-title { font-weight: 800; font-size: 14.5px; margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .tile-group-title:first-child { margin-top: 0; }
+  .suit-badge {
+    font-size: 11px; font-weight: 800; color: #fff; background: var(--accent);
+    border-radius: 999px; padding: 3px 10px;
+  }
+
+  /* set groups (面子) */
+  .hand-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 14px 0; }
+  .set-group {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    border: 2px solid var(--line); border-radius: 10px; padding: 8px 6px 6px;
+    background: var(--soft);
+  }
+  .set-group .tiles-inner { display: flex; gap: 3px; }
+  .set-group .set-label { font-size: 11px; font-weight: 800; }
+  .set-group.shuntsu { border-color: var(--blue); }
+  .set-group.shuntsu .set-label { color: var(--blue); }
+  .set-group.kotsu { border-color: var(--amber); }
+  .set-group.kotsu .set-label { color: #B87A00; }
+  .set-group.kantsu { border-color: var(--purple); }
+  .set-group.kantsu .set-label { color: var(--purple); }
+  .set-group.toitsu { border-color: var(--accent); }
+  .set-group.toitsu .set-label { color: var(--accent); }
+
+  /* yaku cards */
+  .yaku-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
+  .yaku-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .yaku-name { font-size: 17px; font-weight: 800; }
+  .yaku-yomi { font-size: 12.5px; color: var(--muted); }
+  .han-badge { font-size: 12px; font-weight: 800; color: #fff; background: var(--accent-dark); border-radius: 999px; padding: 3px 11px; }
+  .diff-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--chip); color: var(--chiptx); }
+  .yaku-desc { font-size: 14px; margin-bottom: 10px; }
+
+  /* score table */
+  table.score-tb { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.score-tb th, table.score-tb td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: center; }
+  table.score-tb th { color: var(--muted); font-weight: 700; font-size: 12.5px; }
+  table.score-tb tr:last-child td { border-bottom: none; }
+  table.score-tb td:first-child, table.score-tb th:first-child { text-align: left; font-weight: 700; }
+
+  /* quiz */
+  .quiz-box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+  .quiz-progress { font-size: 12.5px; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .quiz-score { font-size: 12.5px; color: var(--muted); font-weight: 700; margin-bottom: 18px; }
+  .quiz-q { font-size: 16px; font-weight: 800; margin-bottom: 16px; }
+  .quiz-tiles { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .quiz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 520px) { .quiz-choices { grid-template-columns: 1fr; } }
+  .quiz-choice {
+    font-family: inherit; cursor: pointer; text-align: left;
+    background: var(--soft); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 14px; font-weight: 700; color: var(--ink);
+  }
+  .quiz-choice:hover { border-color: var(--accent); }
+  .quiz-choice.correct { background: #E4F3E1; border-color: var(--green); color: #2F6B2A; }
+  .quiz-choice.wrong { background: #FBE3DF; border-color: var(--accent); color: var(--accent-dark); }
+  [data-theme="dark"] .quiz-choice.correct { background: #223A22; color: #9BE39A; }
+  [data-theme="dark"] .quiz-choice.wrong { background: #3E2622; color: #FFB3A6; }
+  .quiz-explain {
+    margin-top: 16px; padding: 14px 16px; border-radius: 10px;
+    background: var(--soft); font-size: 13.5px; display: none;
+  }
+  .quiz-explain.show { display: block; }
+  .quiz-next-row { margin-top: 16px; display: flex; justify-content: flex-end; }
+  .btn {
+    font-family: inherit; cursor: pointer; font-weight: 800; font-size: 14px;
+    padding: 10px 22px; border-radius: 999px; border: none;
+    background: var(--accent); color: #fff;
+  }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .quiz-result { text-align: center; padding: 20px 0; }
+  .quiz-result .big { font-size: 40px; font-weight: 800; margin-bottom: 6px; }
+  .quiz-result p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+  /* glossary */
+  .gloss-search {
+    width: 100%; font-family: inherit; font-size: 14.5px;
+    padding: 12px 16px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); margin-bottom: 18px;
+  }
+  .gloss-list { display: flex; flex-direction: column; gap: 10px; }
+  .gloss-item {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 13px 16px;
+  }
+  .gloss-term { font-weight: 800; font-size: 14.5px; }
+  .gloss-yomi { font-size: 12px; color: var(--muted); font-weight: 700; margin-left: 6px; }
+  .gloss-def { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div class="title-block">
+      <h1>麻雀 はじめの一歩</h1>
+      <p>ルールを一度も見たことがない人向けの麻雀入門ガイド。牌の読み方から役、点数、クイズまで順番に学べます。</p>
+    </div>
+    <button class="theme-btn" id="themeBtn"><span id="themeIcon">☾</span><span id="themeText">Dark</span></button>
+  </div>
+
+  <nav class="tabnav" id="tabnav">
+    <button class="tab-btn active" data-tab="intro"><span class="n">1</span>はじめに</button>
+    <button class="tab-btn" data-tab="tiles"><span class="n">2</span>牌を覚える</button>
+    <button class="tab-btn" data-tab="flow"><span class="n">3</span>ゲームの流れ</button>
+    <button class="tab-btn" data-tab="sets"><span class="n">4</span>手を作る</button>
+    <button class="tab-btn" data-tab="yaku"><span class="n">5</span>役を覚える</button>
+    <button class="tab-btn" data-tab="score"><span class="n">6</span>点数の基本</button>
+    <button class="tab-btn" data-tab="quiz"><span class="n">7</span>クイズに挑戦</button>
+    <button class="tab-btn" data-tab="glossary"><span class="n">8</span>用語集</button>
+  </nav>
+
+  <!-- ============ 1. はじめに ============ -->
+  <section class="panel active" data-panel="intro">
+    <h2 class="sec-title">麻雀ってどんなゲーム？</h2>
+    <p class="sec-lede">まずは全体像をざっくりつかみましょう。細かいルールはこの後のセクションで解説します。</p>
+
+    <div class="card">
+      <h3>🀄 3行でわかる麻雀</h3>
+      <ol>
+        <li>4人で行うゲームで、<b>13枚の手牌</b>を14枚に完成させたら勝ち（これを「和了（ホーラ）＝アガリ」と呼びます）。</li>
+        <li>完成した手は「<b>同じ種類の3枚か4枚の組み合わせ</b>」を4つと、「<b>同じ牌のペア</b>」1つでできています。</li>
+        <li>自分の番が来たら牌を1枚もらい（ツモ）、いらない牌を1枚捨てます（打）。これを全員でぐるぐる繰り返します。</li>
+      </ol>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>👥 プレイ人数と座席</h3>
+        <p>基本は4人で対戦します。それぞれ「東家（トンチャ＝親）」「南家」「西家」「北家」という席に座り、東家からスタートします。</p>
+        <p>親は最初に配られる牌が1枚多く、上がったときの点数も高くなる代わりに、負けたときの失点も大きくなる特別な立場です。</p>
+      </div>
+      <div class="card">
+        <h3>🎯 ゲームの目的</h3>
+        <p>使う牌は全部で136枚。うち34種類×4枚が数字や絵柄の牌で、これを使って手牌を完成させ、他の3人より多く点数を集めることが目標です。</p>
+        <p>1回の勝負を「局（きょく）」と呼び、東場・南場などいくつかの局を重ねて最終的な順位を決めます。</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>このガイドの進め方：</b> 上のタブを順番に読んでいくと、牌の見方 → ゲームの流れ → 手の作り方 → 役 → 点数、の順で無理なく理解できるように構成しています。途中からでも好きなタブに飛んで大丈夫です。
+    </div>
+  </section>
+
+  <!-- ============ 2. 牌を覚える ============ -->
+  <section class="panel" data-panel="tiles">
+    <h2 class="sec-title">牌の種類を覚えよう</h2>
+    <p class="sec-lede">麻雀牌は全部で136枚ですが、種類はたった34種類（×4枚）。4つのグループに分かれています。</p>
+
+    <div class="card" id="tileChart"></div>
+
+    <div class="note">
+      <b>覚えておきたい呼び方：</b> 1と9の牌（老頭牌）と字牌をまとめて「<b>幺九牌（ヤオチューハイ）</b>」、2〜8の数字牌を「<b>断幺牌（タンヤオハイ）</b>」と呼びます。この分類は後で出てくる「タンヤオ」という役に直結するので、名前だけ頭の片隅に置いておいてください。
+    </div>
+  </section>
+
+  <!-- ============ 3. ゲームの流れ ============ -->
+  <section class="panel" data-panel="flow">
+    <h2 class="sec-title">ゲームの流れ</h2>
+    <p class="sec-lede">1局の中で何が起きているかを順番に追ってみましょう。</p>
+
+    <div class="card">
+      <h3>🔄 自分の番でやること</h3>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><div class="tx"><b>ツモ（牌を1枚引く）</b>山から牌を1枚引いて、手牌が14枚になります。</div></div>
+        <div class="step"><div class="num">2</div><div class="tx"><b>手牌を確認</b>14枚から完成に近づくよう、いらない牌を選びます。</div></div>
+        <div class="step"><div class="num">3</div><div class="tx"><b>打（牌を1枚捨てる）</b>いらない牌を1枚、自分の前に並べて捨てます。これで手牌は13枚に戻ります。</div></div>
+        <div class="step"><div class="num">4</div><div class="tx"><b>次の人へ</b>自分の左隣（下家）に番が移ります。東→南→西→北の順、つまり反時計回りに進みます。</div></div>
+      </div>
+      <div class="note">これをアガるか、山の牌がなくなる（流局）まで繰り返すのが1局です。</div>
+    </div>
+
+    <div class="card">
+      <h3>🖐️ 鳴き（人の捨てた牌をもらう）</h3>
+      <p>自分の番でなくても、他の人が捨てた牌を条件つきでもらえることがあります。これを「鳴く」と言います。鳴くと手の内容が相手に見えてしまう代わりに、手を早く完成させやすくなります。</p>
+      <ul>
+        <li><b>ポン</b>：手牌に同じ牌が2枚あるとき、誰かが捨てた同じ牌をもらって刻子（3枚組）を作る。</li>
+        <li><b>チー</b>：自分の上家（左隣）が捨てた牌をもらい、手牌の2枚と合わせて順子（連番3枚）を作る。上家からしかできない。</li>
+        <li><b>カン</b>：同じ牌が4枚そろったとき宣言する。手牌が1枚増える代わりに、新しいドラが追加される。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>⚡ リーチ</h3>
+      <p>手牌をまったく鳴かずに（門前のまま）あと1枚でアガれる状態（テンパイ）になったら、「リーチ」を宣言できます。1000点を場に払い、牌を1枚横向きにして捨てます。</p>
+      <p>リーチ後は毎回引いた牌をそのまま捨てるしかなくなりますが、成立すると役が1つ増え、さらに裏ドラを見られるチャンスも生まれるお得な宣言です。初心者はまず「テンパイしたらリーチ」を基本方針にすると分かりやすいです。</p>
+    </div>
+
+    <div class="card">
+      <h3>🏁 局の終わり方</h3>
+      <div class="grid2">
+        <div><b>①誰かがアガる</b><p style="margin-top:4px">自分でツモってアガる「ツモ」、人の捨てた牌でアガる「ロン」のどちらかで局が終わります。</p></div>
+        <div><b>②流局</b><p style="margin-top:4px">山の牌がなくなっても誰もアガれなければ「流局」となり、その局は引き分けのような形で終わります。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. 手を作る ============ -->
+  <section class="panel" data-panel="sets">
+    <h2 class="sec-title">手牌の作り方（面子と雀頭）</h2>
+    <p class="sec-lede">完成した手牌は、必ず「4つの組み合わせ（面子）＋1つのペア（雀頭）」＝14枚でできています。</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>順子（シュンツ）</h3>
+        <p>同じ種類の数字が3つ連続する組み合わせ。字牌では作れません。</p>
+        <div id="setShuntsu" class="hand-row"></div>
+      </div>
+      <div class="card">
+        <h3>刻子（コーツ）</h3>
+        <p>まったく同じ牌が3枚そろった組み合わせ。</p>
+        <div id="setKotsu" class="hand-row"></div>
+      </div>
+      <div class="card">
+        <h3>槓子（カンツ）</h3>
+        <p>まったく同じ牌が4枚そろった組み合わせ。「カン」を宣言したときにできます。</p>
+        <div id="setKantsu" class="hand-row"></div>
+      </div>
+      <div class="card">
+        <h3>雀頭（ジャントウ）</h3>
+        <p>同じ牌が2枚そろったペア。手牌の中で唯一「頭」になる組み合わせです。</p>
+        <div id="setToitsu" class="hand-row"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧩 完成形のイメージ（4面子＋1雀頭）</h3>
+      <p>実際にアガった手を分解すると、こんな形になります。</p>
+      <div id="fullHand" class="hand-row"></div>
+      <div class="note">この例では、順子×2・刻子×1・槓子×1・雀頭×1＝14枚（槓子がある分1枚多く数えます）で構成されています。</div>
+    </div>
+
+    <div class="card">
+      <h3>🀫 例外：七対子（チートイツ）</h3>
+      <p>「4面子＋1雀頭」のルールには例外があり、<b>まったく違う7つのペア</b>を集めても手が完成します。これを七対子と呼び、それ自体が1つの役にもなっています。</p>
+      <div id="chiitoiHand" class="hand-row"></div>
+    </div>
+  </section>
+
+  <!-- ============ 5. 役を覚える ============ -->
+  <section class="panel" data-panel="yaku">
+    <h2 class="sec-title">最初に覚えたい役</h2>
+    <p class="sec-lede">麻雀は「役」がないとアガれません。まずはこの7つを覚えれば十分戦えます。</p>
+    <div id="yakuList"></div>
+
+    <div class="card">
+      <h3>✨ ドラについて</h3>
+      <p>ドラは「役」ではなく点数を増やすボーナス牌です。手牌にドラを持っているとその枚数分だけ翻（ハン）が増えますが、<b>ドラだけではアガれません</b>。上のような役がひとつは必要です。</p>
+    </div>
+  </section>
+
+  <!-- ============ 6. 点数の基本 ============ -->
+  <section class="panel" data-panel="score">
+    <h2 class="sec-title">点数の考え方（超入門）</h2>
+    <p class="sec-lede">点数計算は麻雀で一番むずかしく感じる部分ですが、最初は仕組みだけ理解できれば十分です。</p>
+
+    <div class="card">
+      <h3>📐 翻（ハン）と符（フ）</h3>
+      <p>点数は主に「<b>翻（ハン）</b>」と「<b>符（フ）</b>」の2つで決まります。</p>
+      <ul>
+        <li><b>翻</b>：役の数と種類で決まる、点数の"倍率"のようなもの。役が多いほど、また強い役ほど翻が増えます。</li>
+        <li><b>符</b>：待ち方や面子の種類で決まる細かい加算値。最初のうちはあまり気にしなくてもOKです。</li>
+      </ul>
+      <div class="note">翻が増えるほど符の影響は小さくなり、<b>満貫（マンガン）</b>以上になると符に関係なく翻数だけで点数が決まります。まずは「翻が多いほど高得点」とだけ覚えておけば困りません。</div>
+    </div>
+
+    <div class="card">
+      <h3>💰 点数早見表（子がロンであがった場合の目安・30符）</h3>
+      <table class="score-tb">
+        <thead><tr><th>翻数</th><th>子の点数</th><th>親の点数</th></tr></thead>
+        <tbody>
+          <tr><td>1翻</td><td>1,000点</td><td>1,500点</td></tr>
+          <tr><td>2翻</td><td>2,000点</td><td>2,900点</td></tr>
+          <tr><td>3翻</td><td>3,900点</td><td>5,800点</td></tr>
+          <tr><td>4翻</td><td>7,700点</td><td>11,600点</td></tr>
+          <tr><td>5翻（満貫）</td><td>8,000点</td><td>12,000点</td></tr>
+          <tr><td>6〜7翻（跳満）</td><td>12,000点</td><td>18,000点</td></tr>
+          <tr><td>8〜10翻（倍満）</td><td>16,000点</td><td>24,000点</td></tr>
+          <tr><td>11〜12翻（三倍満）</td><td>24,000点</td><td>36,000点</td></tr>
+          <tr><td>13翻〜（役満）</td><td>32,000点</td><td>48,000点</td></tr>
+        </tbody>
+      </table>
+      <div class="note">自分でツモってアガった場合（ツモ）は、上の点数を残り3人が少しずつ負担する形になります。親は子よりも常に1.5倍点数が高いのが特徴です。</div>
+    </div>
+  </section>
+
+  <!-- ============ 7. クイズ ============ -->
+  <section class="panel" data-panel="quiz">
+    <h2 class="sec-title">練習クイズ</h2>
+    <p class="sec-lede">ここまでの内容を8問のクイズで確認してみましょう。</p>
+    <div class="quiz-box" id="quizBox"></div>
+  </section>
+
+  <!-- ============ 8. 用語集 ============ -->
+  <section class="panel" data-panel="glossary">
+    <h2 class="sec-title">用語集</h2>
+    <p class="sec-lede">出てきた言葉を忘れたらここで検索してください。</p>
+    <input type="text" class="gloss-search" id="glossSearch" placeholder="用語を検索（例：ポン、テンパイ、雀頭…）">
+    <div class="gloss-list" id="glossList"></div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  /* ---------------- theme ---------------- */
+  const themeBtn = document.getElementById('themeBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeText = document.getElementById('themeText');
+  function applyTheme(dark) {
+    document.documentElement.dataset.theme = dark ? 'dark' : '';
+    themeIcon.textContent = dark ? '☀' : '☾';
+    themeText.textContent = dark ? 'Light' : 'Dark';
+  }
+  let dark = localStorage.getItem('mahjong-guide-theme') === 'dark';
+  applyTheme(dark);
+  themeBtn.addEventListener('click', () => {
+    dark = !dark;
+    localStorage.setItem('mahjong-guide-theme', dark ? 'dark' : 'light');
+    applyTheme(dark);
+  });
+
+  /* ---------------- tabs ---------------- */
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.panel[data-panel="${btn.dataset.tab}"]`).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  /* ---------------- tile renderer ---------------- */
+  const HONORS = [
+    { kanji: '東', name: '東（トン）', cls: '' },
+    { kanji: '南', name: '南（ナン）', cls: '' },
+    { kanji: '西', name: '西（シャー）', cls: '' },
+    { kanji: '北', name: '北（ペー）', cls: '' },
+    { kanji: '白', name: '白（ハク）', cls: 'haku' },
+    { kanji: '發', name: '發（ハツ）', cls: 'hatsu' },
+    { kanji: '中', name: '中（チュン）', cls: 'chun' },
+  ];
+  const DOT_ROWS = { 1:[1], 2:[2], 3:[3], 4:[2,2], 5:[2,1,2], 6:[3,3], 7:[4,3], 8:[4,4], 9:[3,3,3] };
+
+  function tileHTML(type, value, size) {
+    const sizeClass = size === 'lg' ? 'tile-lg' : '';
+    if (type === 'm') {
+      return `<div class="tile tile-m ${sizeClass}"><span class="num">${value}</span><span class="suit">萬</span></div>`;
+    }
+    if (type === 'p') {
+      const rows = DOT_ROWS[value].map(c => `<div class="dot-row">${'<span class="dot"></span>'.repeat(c)}</div>`).join('');
+      return `<div class="tile tile-p ${sizeClass}"><div class="dots">${rows}</div></div>`;
+    }
+    if (type === 's') {
+      if (value === 1) {
+        return `<div class="tile tile-s ${sizeClass}"><div class="bars"><div class="bar-row"><span class="bar bar-one"></span></div></div></div>`;
+      }
+      const rows = DOT_ROWS[value].map(c => `<div class="bar-row">${'<span class="bar"></span>'.repeat(c)}</div>`).join('');
+      return `<div class="tile tile-s ${sizeClass}"><div class="bars">${rows}</div></div>`;
+    }
+    if (type === 'z') {
+      const h = HONORS[value - 1];
+      return `<div class="tile tile-z ${h.cls} ${sizeClass}"><span class="kanji">${h.kanji}</span></div>`;
+    }
+    return '';
+  }
+  function tileCard(type, value, label, size) {
+    return `<div class="tile-card">${tileHTML(type, value, size)}<div class="tile-label">${label}</div></div>`;
+  }
+  function tileLabel(type, value) {
+    if (type === 'm') return value + '萬';
+    if (type === 'p') return value + '筒';
+    if (type === 's') return value + '索';
+    if (type === 'z') return HONORS[value - 1].name;
+  }
+
+  /* ---------------- tile chart (tab 2) ---------------- */
+  const tileChart = document.getElementById('tileChart');
+  {
+    let html = '';
+    html += `<div class="tile-group-title"><span class="suit-badge">萬子（マンズ）</span>数字＋「萬」の漢字が書かれた牌</div><div class="tile-row">`;
+    for (let n = 1; n <= 9; n++) html += tileCard('m', n, n + '萬');
+    html += `</div>`;
+
+    html += `<div class="tile-group-title"><span class="suit-badge">筒子（ピンズ）</span>丸（点）の数で数字を表す牌</div><div class="tile-row">`;
+    for (let n = 1; n <= 9; n++) html += tileCard('p', n, n + '筒');
+    html += `</div>`;
+
+    html += `<div class="tile-group-title"><span class="suit-badge">索子（ソウズ）</span>棒（竹）の数で数字を表す牌</div><div class="tile-row">`;
+    for (let n = 1; n <= 9; n++) html += tileCard('s', n, n + '索');
+    html += `</div>`;
+
+    html += `<div class="tile-group-title"><span class="suit-badge">字牌（ツーパイ）</span>風牌（東南西北）と三元牌（白發中）</div><div class="tile-row">`;
+    for (let n = 1; n <= 7; n++) html += tileCard('z', n, HONORS[n - 1].name);
+    html += `</div>`;
+
+    tileChart.innerHTML = html;
+  }
+
+  /* ---------------- set examples (tab 4) ---------------- */
+  function setGroup(cls, label, tiles) {
+    const inner = tiles.map(([t, v]) => tileHTML(t, v)).join('');
+    return `<div class="set-group ${cls}"><div class="tiles-inner">${inner}</div><div class="set-label">${label}</div></div>`;
+  }
+  document.getElementById('setShuntsu').innerHTML =
+    setGroup('shuntsu', '順子', [['m',2],['m',3],['m',4]]) +
+    setGroup('shuntsu', '順子', [['p',6],['p',7],['p',8]]);
+  document.getElementById('setKotsu').innerHTML =
+    setGroup('kotsu', '刻子', [['p',5],['p',5],['p',5]]) +
+    setGroup('kotsu', '刻子', [['z',6],['z',6],['z',6]]);
+  document.getElementById('setKantsu').innerHTML =
+    setGroup('kantsu', '槓子', [['z',7],['z',7],['z',7],['z',7]]);
+  document.getElementById('setToitsu').innerHTML =
+    setGroup('toitsu', '雀頭', [['s',9],['s',9]]);
+
+  document.getElementById('fullHand').innerHTML =
+    setGroup('shuntsu', '順子', [['m',1],['m',2],['m',3]]) +
+    setGroup('shuntsu', '順子', [['s',4],['s',5],['s',6]]) +
+    setGroup('kotsu', '刻子', [['p',9],['p',9],['p',9]]) +
+    setGroup('kantsu', '槓子', [['z',5],['z',5],['z',5],['z',5]]) +
+    setGroup('toitsu', '雀頭', [['m',7],['m',7]]);
+
+  document.getElementById('chiitoiHand').innerHTML =
+    setGroup('toitsu', '対子', [['m',1],['m',1]]) +
+    setGroup('toitsu', '対子', [['m',9],['m',9]]) +
+    setGroup('toitsu', '対子', [['p',3],['p',3]]) +
+    setGroup('toitsu', '対子', [['s',5],['s',5]]) +
+    setGroup('toitsu', '対子', [['s',8],['s',8]]) +
+    setGroup('toitsu', '対子', [['z',1],['z',1]]) +
+    setGroup('toitsu', '対子', [['z',6],['z',6]]);
+
+  /* ---------------- yaku (tab 5) ---------------- */
+  const YAKU = [
+    {
+      name: 'リーチ', yomi: 'reach', han: '1翻（門前限定）', diff: '簡単',
+      desc: '鳴かずに手を進め、あと1枚でアガれる状態（テンパイ）になったら宣言できる基本の役。以後、裏ドラを見られるチャンスも生まれます。',
+      tiles: [['m',1],['m',2],['m',3],['p',4],['p',5],['p',6],['s',7],['s',8],['s',9],['z',1],['z',1],['m',5],['m',6],['m',7]],
+    },
+    {
+      name: '断幺九（タンヤオ）', yomi: 'tanyao', han: '1翻', diff: '簡単',
+      desc: '1・9の牌と字牌をまったく使わず、2〜8の数字牌だけで手を完成させると成立。鳴いてもOKなので初心者に一番使いやすい役です。',
+      tiles: [['m',2],['m',3],['m',4],['p',5],['p',6],['p',7],['s',3],['s',4],['s',5],['m',7],['m',8],['m',9],['s',6],['s',6]],
+    },
+    {
+      name: '平和（ピンフ）', yomi: 'pinfu', han: '1翻（門前限定）', diff: '普通',
+      desc: 'すべての面子が順子で、雀頭が役牌ではなく、待ち方も「両面待ち」という形のときに成立する役。慣れると一番よく使う役の一つです。',
+      tiles: [['m',1],['m',2],['m',3],['p',2],['p',3],['p',4],['s',5],['s',6],['s',7],['m',7],['m',8],['m',9],['s',2],['s',2]],
+    },
+    {
+      name: '役牌', yomi: 'yakuhai', han: '1翻', diff: '簡単',
+      desc: '三元牌（白・發・中）、または自分の風・場の風にあたる字牌を3枚（刻子）そろえると成立。字牌が3枚そろったらまず疑う役です。',
+      tiles: [['z',6],['z',6],['z',6],['m',2],['m',3],['m',4],['p',5],['p',6],['p',7],['s',1],['s',2],['s',3],['m',8],['m',8]],
+    },
+    {
+      name: '七対子（チートイツ）', yomi: 'chiitoitsu', han: '2翻（門前限定）', diff: '簡単',
+      desc: '4面子＋1雀頭の形ではなく、まったく違う7つのペアをそろえて完成させる特殊な役。同じペアを4枚使うことはできません。',
+      tiles: [['m',1],['m',1],['m',9],['m',9],['p',3],['p',3],['s',5],['s',5],['s',8],['s',8],['z',1],['z',1],['z',6],['z',6]],
+    },
+    {
+      name: '一盃口（イーペイコー）', yomi: 'iipeikou', han: '1翻（門前限定）', diff: '普通',
+      desc: '同じ種類・同じ並びの順子を2組そろえると成立。例えば「2萬3萬4萬」を2セット持っている状態です。',
+      tiles: [['m',2],['m',3],['m',4],['m',2],['m',3],['m',4],['p',6],['p',7],['p',8],['s',1],['s',1],['s',9],['s',9],['s',9]],
+    },
+  ];
+  const yakuList = document.getElementById('yakuList');
+  yakuList.innerHTML = YAKU.map(y => `
+    <div class="yaku-card">
+      <div class="yaku-head">
+        <span class="yaku-name">${y.name}</span>
+        <span class="yaku-yomi">${y.yomi}</span>
+        <span class="han-badge">${y.han}</span>
+        <span class="diff-badge">${y.diff}</span>
+      </div>
+      <p class="yaku-desc">${y.desc}</p>
+      <div class="tile-row">${y.tiles.map(([t,v]) => tileHTML(t,v)).join('')}</div>
+    </div>
+  `).join('');
+
+  /* ---------------- quiz (tab 7) ---------------- */
+  const QUESTIONS = [
+    {
+      q: 'この牌は何でしょう？',
+      tiles: [['p', 6]],
+      choices: ['6萬', '6筒', '6索', '6筒（字牌）'],
+      answer: 1,
+      explain: '丸（点）の数で数字を表すのは「筒子（ピンズ）」です。点が6個あるので「6筒」です。',
+    },
+    {
+      q: 'この牌は何でしょう？',
+      tiles: [['z', 6]],
+      choices: ['白（ハク）', '中（チュン）', '發（ハツ）', '東（トン）'],
+      answer: 2,
+      explain: '緑色の「發」の字が書かれた牌は「發（ハツ）」です。三元牌の一つです。',
+    },
+    {
+      q: 'この3枚の組み合わせは何と呼ぶでしょう？',
+      tiles: [['m', 3], ['m', 4], ['m', 5]],
+      choices: ['刻子（コーツ）', '順子（シュンツ）', '雀頭（ジャントウ）', 'ただのバラバラな牌'],
+      answer: 1,
+      explain: '同じ種類の数字が3つ連続しているので「順子」です。',
+    },
+    {
+      q: 'この3枚の組み合わせは何と呼ぶでしょう？',
+      tiles: [['s', 7], ['s', 7], ['s', 7]],
+      choices: ['順子（シュンツ）', '雀頭（ジャントウ）', '刻子（コーツ）', '槓子（カンツ）'],
+      answer: 2,
+      explain: 'まったく同じ牌が3枚そろっているので「刻子」です。4枚そろうと「槓子」になります。',
+    },
+    {
+      q: '手牌の中の「雀頭」の役割として正しいのはどれ？',
+      tiles: [],
+      choices: ['4面子のうちの1つ', '手牌を構成する唯一のペア', 'ドラを表す牌', '鳴いた牌のこと'],
+      answer: 1,
+      explain: '完成した手は「4面子＋1雀頭」。雀頭は同じ牌2枚のペアで、手牌の中に1組だけ存在します。',
+    },
+    {
+      q: '自分の番でやることの正しい順番はどれ？',
+      tiles: [],
+      choices: ['捨てる→引く', '引く→捨てる', '鳴く→引く', '何もしなくてよい'],
+      answer: 1,
+      explain: '自分の番では、まず山から1枚「ツモ」して14枚にし、その後いらない1枚を「打（捨てる）」して13枚に戻します。',
+    },
+    {
+      q: '「チー」ができるのは誰が捨てた牌に対してだけ？',
+      tiles: [],
+      choices: ['誰の牌でもよい', '自分の下家（右隣）', '自分の上家（左隣）', '親の牌だけ'],
+      answer: 2,
+      explain: 'チーは順子を作るための鳴きで、自分の上家（左隣）が捨てた牌に対してしかできません。ポンやカンは誰の牌に対してもできます。',
+    },
+    {
+      q: 'テンパイ（あと1枚でアガれる状態）になったとき、門前なら宣言できるのは？',
+      tiles: [],
+      choices: ['ポン', 'リーチ', 'カン', 'チー'],
+      answer: 1,
+      explain: '鳴いていない（門前の）手であと1枚でアガれる状態になったら「リーチ」を宣言できます。',
+    },
+  ];
+
+  let quizOrder = [];
+  let quizIndex = 0;
+  let quizScore = 0;
+  const quizBox = document.getElementById('quizBox');
+
+  function shuffledIndexes(n) {
+    const arr = Array.from({ length: n }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function startQuiz() {
+    quizOrder = shuffledIndexes(QUESTIONS.length);
+    quizIndex = 0;
+    quizScore = 0;
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = QUESTIONS[quizOrder[quizIndex]];
+    const tilesHtml = q.tiles.length
+      ? `<div class="quiz-tiles">${q.tiles.map(([t,v]) => tileHTML(t,v,'lg')).join('')}</div>`
+      : '';
+    quizBox.innerHTML = `
+      <div class="quiz-progress">問題 ${quizIndex + 1} / ${QUESTIONS.length}</div>
+      <div class="quiz-score">正解数：${quizScore}</div>
+      <div class="quiz-q">${q.q}</div>
+      ${tilesHtml}
+      <div class="quiz-choices">
+        ${q.choices.map((c, i) => `<button class="quiz-choice" data-i="${i}">${c}</button>`).join('')}
+      </div>
+      <div class="quiz-explain" id="quizExplain"></div>
+      <div class="quiz-next-row"><button class="btn" id="quizNextBtn" disabled>次へ</button></div>
+    `;
+    const choiceBtns = quizBox.querySelectorAll('.quiz-choice');
+    const explainBox = quizBox.querySelector('#quizExplain');
+    const nextBtn = quizBox.querySelector('#quizNextBtn');
+    let answered = false;
+    choiceBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        const i = Number(btn.dataset.i);
+        choiceBtns.forEach(b => b.disabled = true);
+        if (i === q.answer) {
+          btn.classList.add('correct');
+          quizScore++;
+        } else {
+          btn.classList.add('wrong');
+          choiceBtns[q.answer].classList.add('correct');
+        }
+        explainBox.textContent = q.explain;
+        explainBox.classList.add('show');
+        nextBtn.disabled = false;
+      });
+    });
+    nextBtn.addEventListener('click', () => {
+      quizIndex++;
+      if (quizIndex < quizOrder.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    });
+  }
+
+  function renderResult() {
+    quizBox.innerHTML = `
+      <div class="quiz-result">
+        <div class="big">${quizScore} / ${QUESTIONS.length}</div>
+        <p>お疲れさまでした。苦手だったセクションはもう一度読み返してみましょう。</p>
+        <button class="btn" id="quizRetryBtn">もう一度挑戦する</button>
+      </div>
+    `;
+    document.getElementById('quizRetryBtn').addEventListener('click', startQuiz);
+  }
+
+  startQuiz();
+
+  /* ---------------- glossary (tab 8) ---------------- */
+  const GLOSSARY = [
+    { term: '親（東家）', yomi: 'おや', def: '最初に手番が来る特別な立場。上がったときの点数が1.5倍になる代わり、放銃時の失点も大きい。' },
+    { term: '子', yomi: 'こ', def: '親以外の3人のこと。' },
+    { term: 'ツモ', yomi: '', def: '山から牌を1枚引くこと。自分で引いた牌でアガることも「ツモ」と呼ぶ。' },
+    { term: '打（打牌）', yomi: 'だはい', def: '手牌の中からいらない牌を1枚選んで捨てること。' },
+    { term: 'ポン', yomi: '', def: '手牌に同じ牌が2枚あるとき、誰かが捨てた同じ牌をもらって刻子を作る鳴き。' },
+    { term: 'チー', yomi: '', def: '自分の上家（左隣）が捨てた牌をもらい、順子を作る鳴き。上家からしかできない。' },
+    { term: 'カン', yomi: '', def: '同じ牌が4枚そろったときに宣言する鳴き。新しいドラが追加される。' },
+    { term: 'リーチ', yomi: '', def: '門前でテンパイしたときに宣言できる基本の役。以後、毎回ツモ切りになる。' },
+    { term: 'ドラ', yomi: '', def: '持っているだけで翻が増えるボーナス牌。ドラ単体では役にならない。' },
+    { term: '和了（アガリ）', yomi: 'ホーラ', def: '手牌を完成させて局を終わらせること。' },
+    { term: 'ロン', yomi: '', def: '他の人が捨てた牌でアガること。' },
+    { term: 'テンパイ', yomi: '', def: 'あと1枚で手が完成する状態。' },
+    { term: '手牌', yomi: 'てはい', def: '自分の手の中にある牌のこと。通常13枚（ツモ直後は14枚）。' },
+    { term: '山（やま）', yomi: '', def: '中央に積まれた、まだ引かれていない牌の集まり。' },
+    { term: '河（かわ）', yomi: '', def: '各プレイヤーが捨てた牌を並べる場所。' },
+    { term: '門前（メンゼン）', yomi: '', def: '一度も鳴いていない、手牌がすべて自分の手の中にある状態。' },
+    { term: '副露（フーロ）／鳴く', yomi: '', def: 'ポン・チー・カンで他人の牌を使い、面子の一部を公開すること。' },
+    { term: '対子', yomi: 'といつ', def: '同じ牌が2枚そろった組み合わせ。雀頭または七対子の構成要素。' },
+    { term: '雀頭', yomi: 'ジャントウ', def: '手牌の中で唯一のペアになる組み合わせ。' },
+    { term: '面子', yomi: 'メンツ', def: '順子・刻子・槓子など、3枚（または4枚）で構成される組み合わせの総称。' },
+    { term: '順子', yomi: 'シュンツ', def: '同じ種類の数字が3つ連続する組み合わせ。' },
+    { term: '刻子', yomi: 'コーツ', def: 'まったく同じ牌が3枚そろった組み合わせ。' },
+    { term: '槓子', yomi: 'カンツ', def: 'まったく同じ牌が4枚そろった組み合わせ。' },
+    { term: '幺九牌', yomi: 'ヤオチューハイ', def: '1・9の数字牌と字牌をまとめた呼び方。' },
+    { term: '断幺牌', yomi: 'タンヤオハイ', def: '2〜8の数字牌のこと。幺九牌を含まない牌。' },
+    { term: '場風・自風', yomi: 'ばかぜ・じかぜ', def: 'その局の場を表す風（東場なら東）と、自分の座席を表す風。役牌の判定に使う。' },
+    { term: '満貫', yomi: 'マンガン', def: '5翻、または高い符と翻数の組み合わせで到達する点数の区切り。子は8,000点。' },
+    { term: '流局', yomi: 'りゅうきょく', def: '山の牌がなくなっても誰もアガれず、局が引き分けのような形で終わること。' },
+    { term: '東場・南場', yomi: 'とんば・なんば', def: '複数の局をまとめた単位。半荘（東場＋南場）で1ゲームとするのが一般的。' },
+  ];
+  const glossList = document.getElementById('glossList');
+  function renderGlossary(filter = '') {
+    const f = filter.trim();
+    const items = GLOSSARY.filter(g => !f || g.term.includes(f) || g.def.includes(f) || g.yomi.includes(f));
+    glossList.innerHTML = items.map(g => `
+      <div class="gloss-item">
+        <span class="gloss-term">${g.term}</span>${g.yomi ? `<span class="gloss-yomi">${g.yomi}</span>` : ''}
+        <div class="gloss-def">${g.def}</div>
+      </div>
+    `).join('') || `<div class="gloss-item">該当する用語が見つかりませんでした。</div>`;
+  }
+  renderGlossary();
+  document.getElementById('glossSearch').addEventListener('input', e => renderGlossary(e.target.value));
+
+})();
+</script>
+</body>
+</html>

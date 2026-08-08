@@ -56,7 +56,9 @@
     color: var(--ink); background: var(--card);
     border: 1px solid var(--line); border-radius: 999px;
     padding: 8px 16px; cursor: pointer; flex-shrink: 0;
+    text-decoration: none;
   }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
   /* scoreboard */
   .scorebar {
@@ -173,6 +175,17 @@
   .btn.riichi-armed { background: var(--accent-dark); }
   .btn:disabled { opacity: .35; cursor: default; }
   .status-line { font-size: 13.5px; color: var(--muted); font-weight: 700; min-height: 18px; }
+  .hint-line {
+    display: none; font-size: 13px; font-weight: 700; color: var(--green);
+    background: rgba(91,168,90,.12); border-radius: 10px; padding: 8px 12px;
+  }
+  .hint-line.show { display: block; }
+  .tile.recommended { outline: 2px solid var(--green); outline-offset: 2px; }
+  .tile.recommended::after {
+    content: 'おすすめ'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 800; color: #fff; background: var(--green);
+    border-radius: 999px; padding: 1px 6px; white-space: nowrap;
+  }
 
   /* modal */
   .modal-overlay {
@@ -201,6 +214,44 @@
   .result-yaku li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--line); }
   .result-points { font-size: 26px; font-weight: 800; color: var(--accent-dark); margin-bottom: 18px; }
   .result-pay-list { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+  /* yaku guide */
+  .yaku-guide {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 24px 22px; margin-top: 22px;
+  }
+  .yaku-guide h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .yaku-guide .lead { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .yaku-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .yaku-card { background: var(--soft); border-radius: 12px; padding: 12px 14px; }
+  .yaku-card .yaku-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+  .yaku-card .yaku-name { font-weight: 800; font-size: 14.5px; }
+  .yaku-card .yaku-kana { font-size: 11px; color: var(--muted); font-weight: 700; margin-left: 4px; }
+  .yaku-card .yaku-han {
+    font-size: 11.5px; font-weight: 800; color: var(--accent-dark);
+    background: rgba(255,90,77,.12); border-radius: 999px; padding: 2px 10px; flex-shrink: 0; white-space: nowrap;
+  }
+  .yaku-card .yaku-desc { font-size: 13px; color: var(--ink); line-height: 1.6; }
+  .yaku-card .beginner-tag { display: inline-block; font-size: 10.5px; font-weight: 800; color: var(--green); margin-top: 7px; }
+  .yaku-note { margin-top: 16px; font-size: 12.5px; color: var(--muted); background: var(--soft); border-radius: 10px; padding: 10px 14px; line-height: 1.7; }
+
+  /* tile guide */
+  .tile-guide {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 24px 22px; margin-top: 22px;
+  }
+  .tile-guide h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .tile-guide .lead { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .tile-type-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px dashed var(--line);
+  }
+  .tile-type-row:last-of-type { border-bottom: none; }
+  .tile-type-head { min-width: 180px; flex-shrink: 0; }
+  .tile-type-name { font-weight: 800; font-size: 14.5px; }
+  .tile-type-kana { font-size: 11px; color: var(--muted); font-weight: 700; margin-left: 4px; }
+  .tile-type-desc { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+  .tile-type-examples { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; padding: 2px 2px 4px; }
 </style>
 </head>
 <body>
@@ -210,7 +261,10 @@
       <h1>麻雀 対戦練習</h1>
       <p>CPU3人との東1局。ツモ・ロン・ポン・チー・カン・リーチが実際に体験できます。</p>
     </div>
-    <button class="theme-btn" id="themeBtn"><span id="themeIcon">☾</span><span id="themeText">Dark</span></button>
+    <div class="topbar-actions">
+      <a class="theme-btn" href="mahjong.html">📖 麻雀入門ガイド</a>
+      <button class="theme-btn" id="themeBtn"><span id="themeIcon">☾</span><span id="themeText">Dark</span></button>
+    </div>
   </div>
 
   <div class="scorebar" id="scorebar"></div>
@@ -226,6 +280,7 @@
   <div class="player-panel">
     <div class="player-meld-row" id="playerMelds"></div>
     <div class="player-hand-row" id="playerHand"></div>
+    <div class="hint-line" id="hintLine"></div>
     <div class="player-controls">
       <button class="btn secondary" id="riichiBtn" style="display:none;">リーチ</button>
       <button class="btn" id="tsumoBtn" style="display:none;">ツモ！</button>
@@ -235,6 +290,131 @@
   </div>
 
   <div id="resultArea"></div>
+
+  <div class="tile-guide">
+    <h2>牌の種類を覚えよう</h2>
+    <p class="lead">麻雀の牌は全部で4種類。まずは見た目の違いから覚えましょう。</p>
+
+    <div class="tile-type-row">
+      <div class="tile-type-head">
+        <span class="tile-type-name">萬子<span class="tile-type-kana">マンズ</span></span>
+        <span class="tile-type-desc">数字＋「萬」の字が書かれた牌。1〜9まである。</span>
+      </div>
+      <div class="tile-type-examples">
+        <div class="tile tile-m tile-sm"><span class="num">1</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">2</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">3</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">4</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">5</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">6</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">7</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">8</span><span class="suit">萬</span></div>
+        <div class="tile tile-m tile-sm"><span class="num">9</span><span class="suit">萬</span></div>
+      </div>
+    </div>
+
+    <div class="tile-type-row">
+      <div class="tile-type-head">
+        <span class="tile-type-name">筒子<span class="tile-type-kana">ピンズ</span></span>
+        <span class="tile-type-desc">丸（ドット）の数で数字を表す牌。1〜9まである。</span>
+      </div>
+      <div class="tile-type-examples">
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div></div>
+        <div class="tile tile-p tile-sm"><div class="dots"><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div></div>
+      </div>
+    </div>
+
+    <div class="tile-type-row">
+      <div class="tile-type-head">
+        <span class="tile-type-name">索子<span class="tile-type-kana">ソーズ</span></span>
+        <span class="tile-type-desc">棒（バー）の数で数字を表す牌。1索だけ特殊なデザイン。</span>
+      </div>
+      <div class="tile-type-examples">
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar bar-one"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+        <div class="tile tile-s tile-sm"><div class="bars"><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div><div class="bar-row"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+      </div>
+    </div>
+
+    <div class="tile-type-row">
+      <div class="tile-type-head">
+        <span class="tile-type-name">風牌<span class="tile-type-kana">かぜはい</span></span>
+        <span class="tile-type-desc">東・南・西・北の4種類。自分の風や場の風と同じだと役牌になる。</span>
+      </div>
+      <div class="tile-type-examples">
+        <div class="tile tile-z tile-sm"><span class="kanji">東</span></div>
+        <div class="tile tile-z tile-sm"><span class="kanji">南</span></div>
+        <div class="tile tile-z tile-sm"><span class="kanji">西</span></div>
+        <div class="tile tile-z tile-sm"><span class="kanji">北</span></div>
+      </div>
+    </div>
+
+    <div class="tile-type-row">
+      <div class="tile-type-head">
+        <span class="tile-type-name">三元牌<span class="tile-type-kana">さんげんぱい</span></span>
+        <span class="tile-type-desc">白・發・中の3種類。誰が持っていても役牌になる。</span>
+      </div>
+      <div class="tile-type-examples">
+        <div class="tile tile-z haku tile-sm"><span class="kanji">白</span></div>
+        <div class="tile tile-z hatsu tile-sm"><span class="kanji">發</span></div>
+        <div class="tile tile-z chun tile-sm"><span class="kanji">中</span></div>
+      </div>
+    </div>
+
+    <p class="yaku-note">※1・9・字牌をまとめて「幺九牌（ヤオチュウはい）」と呼ぶ。役一覧の「断幺九（タンヤオ）」は、これらを1枚も使わずに手牌を揃える役。</p>
+  </div>
+
+  <div class="yaku-guide">
+    <h2>役（やく）一覧 — このゲームで使える役</h2>
+    <p class="lead">麻雀は「役」が最低1つないと上がれません。まずは覚えやすい役から狙ってみましょう。</p>
+    <div class="yaku-grid">
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">立直<span class="yaku-kana">リーチ</span></span><span class="yaku-han">1翻</span></div>
+        <div class="yaku-desc">あと1枚で上がれる状態（テンパイ）で宣言できる。1000点払うが、成立すれば確実に役が付く。宣言後は手牌を変えられない。</div>
+        <span class="beginner-tag">◎ まず狙いたい</span>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">断幺九<span class="yaku-kana">タンヤオ</span></span><span class="yaku-han">1翻</span></div>
+        <div class="yaku-desc">1・9・字牌（東南西北白發中）を1枚も使わずに手牌を揃える。数字の2〜8だけでよいので一番作りやすい役。</div>
+        <span class="beginner-tag">◎ まず狙いたい</span>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">役牌<span class="yaku-kana">やくはい</span></span><span class="yaku-han">1翻〜2翻</span></div>
+        <div class="yaku-desc">白・發・中、または自分の風・場の風と同じ牌を3枚（刻子）揃える。親が東の役牌を揃えると2翻になる。</div>
+        <span class="beginner-tag">◎ まず狙いたい</span>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">門前清自摸和<span class="yaku-kana">メンゼンツモ</span></span><span class="yaku-han">1翻</span></div>
+        <div class="yaku-desc">ポン・チーで一度も鳴かずに、自分で牌を引いて（ツモで）上がると成立する。</div>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">平和<span class="yaku-kana">ピンフ</span></span><span class="yaku-han">1翻</span></div>
+        <div class="yaku-desc">刻子（同じ牌3枚）を使わず、すべて順子（連続する数字3枚）だけで揃え、鳴かずに上がると成立する。</div>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">一盃口<span class="yaku-kana">イーペーコー</span></span><span class="yaku-han">1翻</span></div>
+        <div class="yaku-desc">同じ種類・同じ並びの順子を2組作る（例：萬子の2-3-4を2組）。鳴いていない時だけ成立する。</div>
+      </div>
+      <div class="yaku-card">
+        <div class="yaku-top"><span class="yaku-name">七対子<span class="yaku-kana">チートイツ</span></span><span class="yaku-han">2翻</span></div>
+        <div class="yaku-desc">同じ牌のペアを7組揃える特殊な形。鳴いていると作れない。</div>
+      </div>
+    </div>
+    <p class="yaku-note">※「ドラ」は役ではなく点数を増やすボーナス牌。ドラだけを持っていても、上の役がひとつもないと上がれない。</p>
+  </div>
 </div>
 
 <div class="modal-overlay" id="callModal">
