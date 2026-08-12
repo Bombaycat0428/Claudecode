@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosme Note — コスメの購入日・使用期限を見える化</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf1ee;
+    --paper:rgba(255,255,255,.74);
+    --paper-solid:#fffaf8;
+    --ink:#3a2e2e;
+    --muted:#8a7570;
+    --line:rgba(196,140,140,.28);
+    --accent:#c4638c;
+    --accent-dark:#9c4a6d;
+    --accent-soft:rgba(196,99,140,.12);
+    --ok:#5c8a70;
+    --ok-soft:rgba(92,138,112,.13);
+    --warn:#b3764a;
+    --warn-soft:rgba(179,118,74,.13);
+    --danger:#b3493f;
+    --danger-soft:rgba(179,73,63,.12);
+    --neutral:#7a6a66;
+    --neutral-soft:rgba(122,106,102,.11);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, rgba(196,99,140,.10), transparent 46%),
+      radial-gradient(circle at 90% 6%, rgba(233,178,142,.12), transparent 44%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.7;
+    min-height:100vh;
+  }
+  .page{max-width:1040px;margin:0 auto;padding:40px 20px 80px}
+  .num{font-family:"Space Grotesk","Noto Sans JP",sans-serif;font-variant-numeric:tabular-nums}
+
+  /* ---- Hero ---- */
+  .hero{padding:8px 4px 26px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .eyebrow{
+    font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.28em;
+    color:var(--accent-dark);font-weight:700;margin:0 0 10px;
+  }
+  h1{font-size:clamp(21px,3.4vw,30px);margin:0 0 12px;letter-spacing:.01em;font-weight:700}
+  .lead{color:var(--muted);font-size:14.5px;max-width:660px;margin:0}
+
+  /* ---- Summary ---- */
+  .summary{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;margin-bottom:30px;
+  }
+  .sum-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;backdrop-filter:blur(10px);
+    box-shadow:0 4px 18px rgba(120,70,90,.06);
+  }
+  .sum-card .label{
+    font-family:"Space Grotesk",sans-serif;font-size:10.5px;letter-spacing:.16em;
+    color:var(--muted);font-weight:600;text-transform:uppercase;display:block;
+  }
+  .sum-card .value{font-size:26px;font-weight:700;line-height:1.35;letter-spacing:-.01em}
+  .sum-card .value small{font-size:14px;font-weight:500;margin-left:2px}
+  .sum-card .sub{font-size:11.5px;color:var(--muted);display:block;margin-top:2px}
+  .sum-card.accent{background:linear-gradient(135deg,rgba(196,99,140,.13),rgba(255,255,255,.62))}
+  .sum-card.accent .value{color:var(--accent-dark)}
+  .sum-card.warn .value{color:var(--warn)}
+
+  /* ---- Section head ---- */
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+  .sec-head h2{
+    font-family:"Space Grotesk",sans-serif;font-size:15px;letter-spacing:.03em;
+    margin:0;font-weight:600;
+  }
+  .sec-head .jp{font-size:12px;color:var(--muted)}
+
+  /* ---- Check list ---- */
+  .checklist{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;backdrop-filter:blur(10px);margin-bottom:32px;
+  }
+  .cl-list{display:flex;flex-direction:column;gap:2px}
+  .cl-row{
+    display:flex;align-items:center;gap:12px;padding:9px 2px;
+    border-bottom:1px dashed var(--line);font-size:13.5px;
+  }
+  .cl-row:last-child{border-bottom:none}
+  .cl-date{
+    font-family:"Space Grotesk",sans-serif;font-size:12.5px;color:var(--muted);
+    min-width:56px;font-variant-numeric:tabular-nums;
+  }
+  .cl-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cl-name .brand{color:var(--muted);font-size:12px;margin-left:4px}
+
+  /* ---- Toolbar ---- */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  #searchInput{
+    flex:1 1 220px;padding:10px 14px;border-radius:99px;
+    border:1px solid var(--line);background:var(--paper);
+    font-size:13.5px;color:var(--ink);outline:none;font-family:inherit;
+    backdrop-filter:blur(6px);
+  }
+  #searchInput:focus{border-color:var(--accent)}
+  #sortSelect{
+    padding:9px 12px;border-radius:99px;border:1px solid var(--line);
+    background:var(--paper);font-size:13px;color:var(--muted);
+    font-family:inherit;cursor:pointer;outline:none;
+  }
+  .btn{
+    font-family:"Space Grotesk","Noto Sans JP",sans-serif;font-size:13px;font-weight:500;
+    color:var(--accent-dark);background:var(--paper);
+    border:1px solid var(--line);border-radius:99px;padding:9px 16px;
+    cursor:pointer;backdrop-filter:blur(6px);transition:background .2s;white-space:nowrap;
+  }
+  .btn:hover{background:#fff}
+  .btn.primary{
+    background:linear-gradient(120deg, hsl(292 94% 53%), hsl(330 94% 53%));
+    color:#fff;border:none;
+    padding:13px 28px;border-radius:26px;
+    box-shadow:0 8px 20px hsl(330 94% 53% / 0.42);
+    transition:transform .2s, box-shadow .2s;
+  }
+  .btn.primary:hover{transform:translateY(-3px)}
+  .btn.ghost{color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .chip{
+    font-size:12.5px;padding:6px 13px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line);background:var(--paper);color:var(--muted);
+    transition:.2s;font-family:inherit;
+  }
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* ---- Grid / Cards ---- */
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:16px;margin-bottom:40px;
+  }
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;backdrop-filter:blur(10px);
+    box-shadow:0 4px 18px rgba(120,70,90,.06);
+    display:flex;flex-direction:column;gap:11px;transition:box-shadow .2s;
+  }
+  .card:hover{box-shadow:0 8px 26px rgba(120,70,90,.11)}
+  .card-photo{
+    width:calc(100% + 36px);margin:-18px -18px 0;height:136px;
+    object-fit:cover;display:block;border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .card-title{font-weight:700;font-size:16px;line-height:1.4}
+  .card-title .brand{
+    display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px;
+  }
+  .cat-badge{
+    font-size:11px;border-radius:99px;padding:3px 10px;flex-shrink:0;white-space:nowrap;
+  }
+  .meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px}
+  .meta-row>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta-row .label{color:var(--muted);font-size:11.5px}
+  .price-row{font-size:13px;color:var(--ink)}
+  .price-row .amt{font-family:"Space Grotesk",sans-serif;font-weight:700}
+  .badge{
+    font-family:"Space Grotesk",sans-serif;font-size:11.5px;border-radius:99px;
+    padding:3px 10px;background:rgba(0,0,0,.04);color:var(--muted);white-space:nowrap;flex-shrink:0;
+  }
+  .badge.unopened{background:var(--neutral-soft);color:var(--neutral)}
+  .badge.ok{background:var(--ok-soft);color:var(--ok)}
+  .badge.soon{background:var(--warn-soft);color:var(--warn);font-weight:600}
+  .badge.expired{background:var(--danger-soft);color:var(--danger);font-weight:600}
+  .badge.noexp{background:rgba(0,0,0,.04);color:var(--muted)}
+  .card-note{
+    font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.5);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;line-height:1.55;
+  }
+  .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:4px}
+  .card-actions button{
+    font-size:11.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;
+  }
+  .card-actions button:hover{background:rgba(0,0,0,.04)}
+  .card-actions .open-btn{color:var(--accent-dark);border-color:var(--accent-soft)}
+  .card-actions .danger:hover{color:var(--danger);border-color:var(--danger)}
+  .empty-hint{
+    grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:34px 10px;
+  }
+
+  /* ---- Breakdown ---- */
+  .breakdown{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:24px;backdrop-filter:blur(10px);margin-bottom:30px;
+  }
+  .bar-row{margin-bottom:13px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar-label .amt{font-family:"Space Grotesk",sans-serif;color:var(--muted)}
+  .bar-track{height:8px;border-radius:99px;background:rgba(180,120,120,.16);overflow:hidden}
+  .bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s ease}
+
+  /* ---- Data actions / footer ---- */
+  .data-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:26px}
+  footer{
+    font-size:11.5px;color:var(--muted);text-align:center;line-height:1.9;
+    border-top:1px solid var(--line);padding-top:20px;
+  }
+
+  /* ---- Modal ---- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(50,30,35,.42);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+    backdrop-filter:blur(2px);
+  }
+  .modal-overlay.hidden{display:none}
+  .modal{
+    background:var(--paper-solid);border-radius:18px;padding:26px 24px;
+    max-width:470px;width:100%;max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(60,20,35,.28);
+  }
+  .modal h3{font-size:17px;margin:0 0 16px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--line);
+    font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;outline:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:52px}
+  .field-row{display:flex;gap:10px}
+  .field-row .field{flex:1}
+  .field-hint{font-size:11px;color:var(--muted);margin-top:3px}
+  .field input[type=file]{
+    padding:6px 2px;border:none;background:none;font-size:12px;color:var(--muted);
+  }
+  .image-preview-wrap{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .image-preview-wrap.hidden{display:none}
+  .image-preview{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+  @media (max-width:520px){
+    .toolbar{flex-direction:column;align-items:stretch}
+    #searchInput,#sortSelect,.toolbar .btn{width:100%}
+    .field-row{flex-direction:column;gap:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">COSME NOTE</p>
+    <h1>コスメの購入日と使用期限を、まとめて管理</h1>
+    <p class="lead">いつ買ったか、いつ開封したか、そろそろ使い切りたいものはどれか。手持ちのコスメをカードで一覧管理できます。</p>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="checklist">
+    <div class="sec-head">
+      <h2>Check List</h2>
+      <span class="jp">そろそろ確認したいアイテム（開封済み・期限が近い/切れ）</span>
+    </div>
+    <div class="cl-list" id="checkList"></div>
+  </section>
+
+  <div class="toolbar">
+    <input id="searchInput" type="text" placeholder="商品名・ブランド・メモで検索">
+    <select id="sortSelect">
+      <option value="purchase-new">購入日が新しい順</option>
+      <option value="purchase-old">購入日が古い順</option>
+      <option value="expiry">使用期限が近い順</option>
+      <option value="added">登録が新しい順</option>
+    </select>
+    <button class="btn primary" id="addBtn">＋ コスメを追加</button>
+  </div>
+  <div class="chips" id="categoryChips"></div>
+
+  <section class="grid" id="itemGrid"></section>
+
+  <section class="breakdown">
+    <div class="sec-head">
+      <h2>Collection Breakdown</h2>
+      <span class="jp">カテゴリ別の登録数</span>
+    </div>
+    <div id="breakdownBody"></div>
+  </section>
+
+  <div class="data-actions">
+    <button class="btn ghost" id="exportBtn">JSONで書き出す</button>
+    <button class="btn ghost" id="importBtn">JSONを読み込む</button>
+    <button class="btn ghost" id="resetBtn">サンプルデータに戻す</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+
+  <footer>
+    初期表示のアイテムはサンプルです。実際の使用期限は各商品のパッケージ表示に従ってください。<br>
+    登録したデータはこの端末のブラウザ内（localStorage）にのみ保存され、外部には送信されません。
+  </footer>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">コスメを追加</h3>
+    <form id="itemForm">
+      <div class="field">
+        <label for="fName">商品名 <span style="color:var(--danger)">*</span></label>
+        <input id="fName" type="text" required placeholder="例：保湿化粧水">
+      </div>
+      <div class="field">
+        <label for="fImage">写真</label>
+        <input id="fImage" type="file" accept="image/*">
+        <div class="image-preview-wrap hidden" id="imagePreviewWrap">
+          <img class="image-preview" id="imagePreview" alt="">
+          <button type="button" class="btn ghost" id="removeImageBtn">画像を削除</button>
+        </div>
+        <p class="field-hint">スマホ・PCの写真を選べます。自動で縮小してから保存します。</p>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fBrand">ブランド</label>
+          <input id="fBrand" type="text" placeholder="例：アクアリュクス">
+        </div>
+        <div class="field">
+          <label for="fCategory">カテゴリ</label>
+          <select id="fCategory"></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fPurchase">購入日 <span style="color:var(--danger)">*</span></label>
+          <input id="fPurchase" type="date" required>
+        </div>
+        <div class="field">
+          <label for="fPrice">価格（円）</label>
+          <input id="fPrice" type="number" min="0" step="1" placeholder="任意">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fOpened">開封日</label>
+        <input id="fOpened" type="date">
+        <p class="field-hint">空欄のままなら「未開封」として管理されます。</p>
+      </div>
+      <div class="field">
+        <label for="fExpiry">使用期限の目安（開封後）</label>
+        <select id="fExpiry">
+          <option value="0">設定しない</option>
+          <option value="3">3ヶ月</option>
+          <option value="6" selected>6ヶ月</option>
+          <option value="12">12ヶ月</option>
+          <option value="18">18ヶ月</option>
+          <option value="24">24ヶ月</option>
+          <option value="36">36ヶ月</option>
+        </select>
+        <p class="field-hint">開封日にこの月数を足して期限の目安を計算します。</p>
+      </div>
+      <div class="field">
+        <label for="fNote">メモ</label>
+        <textarea id="fNote" placeholder="使用感、リピート予定など"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button type="submit" class="btn primary">保存する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "cosmenote-v1";
+  var MS_DAY = 86400000;
+  var IMAGE_MAX_DIM = 480;
+  var IMAGE_QUALITY = 0.72;
+
+  var CATEGORIES = [
+    { value:"skincare",   label:"スキンケア",     color:"#5C8FA6" },
+    { value:"base",       label:"ベースメイク",   color:"#B98A3E" },
+    { value:"point",      label:"ポイントメイク", color:"#C4638C" },
+    { value:"hair",       label:"ヘアケア",       color:"#7C6FB0" },
+    { value:"body",       label:"ボディケア",     color:"#6B9B6E" },
+    { value:"fragrance",  label:"香水",           color:"#9B6FB0" },
+    { value:"nail",       label:"ネイル",         color:"#D07A55" },
+    { value:"other",      label:"その他",         color:"#8A8F98" }
+  ];
+
+  /* ---------- 日付ユーティリティ ---------- */
+  function toISO(d){
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function parseISO(iso){
+    var p = String(iso).split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+  function today(){
+    var t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  }
+  function addDays(n){
+    var d = today();
+    d.setDate(d.getDate() + n);
+    return toISO(d);
+  }
+  function addMonths(iso, months){
+    var p = String(iso).split("-").map(Number);
+    var target = new Date(p[0], p[1] - 1 + months, 1);
+    var lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(p[2], lastDay));
+    return toISO(target);
+  }
+  function daysUntil(iso){
+    return Math.round((parseISO(iso) - today()) / MS_DAY);
+  }
+  function daysSince(iso){
+    return Math.round((today() - parseISO(iso)) / MS_DAY);
+  }
+  function formatDate(iso){
+    var p = String(iso).split("-").map(Number);
+    return p[1] + "/" + p[2];
+  }
+  function isValidISO(iso){
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(iso)) && !isNaN(parseISO(iso).getTime());
+  }
+  function formatElapsed(days){
+    if(days <= 0) return "今日";
+    if(days < 30) return days + "日";
+    var months = Math.floor(days / 30);
+    if(months < 12) return months + "ヶ月";
+    var years = Math.floor(months / 12);
+    var rem = months % 12;
+    return years + "年" + (rem ? rem + "ヶ月" : "");
+  }
+
+  /* ---------- 金額ユーティリティ ---------- */
+  function yen(n){
+    return "¥" + Math.round(n).toLocaleString("ja-JP");
+  }
+
+  /* ---------- カテゴリ ---------- */
+  function categoryInfo(value){
+    for(var i = 0; i < CATEGORIES.length; i++){
+      if(CATEGORIES[i].value === value) return CATEGORIES[i];
+    }
+    return CATEGORIES[CATEGORIES.length - 1];
+  }
+
+  /* ---------- 状態判定 ---------- */
+  // { key, label } を返す。unopened / noexp / ok / soon / expired
+  function getStatus(item){
+    if(!item.opened) return { key:"unopened", label:"未開封" };
+    if(!item.expiryMonths) return { key:"noexp", label:"使用中" };
+    var expiryDate = addMonths(item.opened, item.expiryMonths);
+    var d = daysUntil(expiryDate);
+    if(d < 0) return { key:"expired", label:"期限切れ" };
+    if(d <= 30) return { key:"soon", label:"あと" + d + "日" };
+    return { key:"ok", label:"順調" };
+  }
+  function expiryDateOf(item){
+    if(!item.opened || !item.expiryMonths) return null;
+    return addMonths(item.opened, item.expiryMonths);
+  }
+
+  /* ---------- サンプルデータ ---------- */
+  function sampleData(){
+    return [
+      { id:"c1", name:"保湿化粧水", brand:"アクアリュクス", category:"skincare",
+        purchase:addDays(-70), opened:addDays(-65), expiryMonths:6, price:3200,
+        note:"敏感肌用。とろみが強めでしっとり続く。", image:null, added:1 },
+      { id:"c2", name:"ミネラルファンデーション", brand:"", category:"base",
+        purchase:addDays(-25), opened:addDays(-20), expiryMonths:6, price:4500,
+        note:"", image:null, added:2 },
+      { id:"c3", name:"ロングラッシュマスカラ", brand:"ノワールライン", category:"point",
+        purchase:addDays(-110), opened:addDays(-100), expiryMonths:3, price:1800,
+        note:"にじみにくくてお気に入り。", image:null, added:3 },
+      { id:"c4", name:"デイリーティントリップ", brand:"プティフルール", category:"point",
+        purchase:addDays(-8), opened:null, expiryMonths:12, price:1500,
+        note:"", image:null, added:4 },
+      { id:"c5", name:"リペアヘアオイル", brand:"", category:"hair",
+        purchase:addDays(-220), opened:addDays(-200), expiryMonths:12, price:2400,
+        note:"毛先の広がりが気にならなくなった。", image:null, added:5 },
+      { id:"c6", name:"フローラルオードパルファム", brand:"メゾンブロッサム", category:"fragrance",
+        purchase:addDays(-5), opened:null, expiryMonths:0, price:8200,
+        note:"誕生日にもらった香り。", image:null, added:6 },
+      { id:"c7", name:"デイクリーム", brand:"テラコッタ", category:"skincare",
+        purchase:addDays(-160), opened:addDays(-150), expiryMonths:6, price:5200,
+        note:"", image:null, added:7 },
+      { id:"c8", name:"ハンドクリーム", brand:"", category:"body",
+        purchase:addDays(-40), opened:addDays(-35), expiryMonths:0, price:900,
+        note:"携帯用ミニサイズ。", image:null, added:8 }
+    ];
+  }
+
+  /* ---------- 状態 ---------- */
+  var items = [];
+  var filter = { text:"", category:"all" };
+  var sortMode = "purchase-new";
+  var editingId = null;
+
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){ raw = null; }
+    if(!raw){
+      items = sampleData();
+      save();
+      return;
+    }
+    try {
+      var parsed = JSON.parse(raw);
+      items = Array.isArray(parsed) ? parsed.filter(isSane) : sampleData();
+    } catch(e){
+      items = sampleData();
+    }
+  }
+  function isSane(it){
+    return it && typeof it.name === "string" && it.name.trim() && isValidISO(it.purchase);
+  }
+  function save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); return true; }
+    catch(e){ return false; /* 容量オーバー等。呼び出し側でフォールバックする */ }
+  }
+
+  /* ---------- DOM ヘルパ ---------- */
+  function el(tag, className, text){
+    var n = document.createElement(tag);
+    if(className) n.className = className;
+    if(text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function $(id){ return document.getElementById(id); }
+
+  /* ---------- 描画 ---------- */
+  function renderSummary(){
+    var box = $("summary");
+    box.textContent = "";
+    var unopened = items.filter(function(it){ return !it.opened; }).length;
+    var needsCheck = items.filter(function(it){
+      var s = getStatus(it).key;
+      return s === "soon" || s === "expired";
+    }).length;
+    var now = today();
+    var thisMonth = items.filter(function(it){
+      var p = parseISO(it.purchase);
+      return p.getFullYear() === now.getFullYear() && p.getMonth() === now.getMonth();
+    });
+    var thisMonthAmount = thisMonth.reduce(function(a, it){ return a + (it.price || 0); }, 0);
+
+    var cards = [
+      { label:"Items", value:items.length + " 点", sub:"登録アイテム数", accent:true },
+      { label:"Unopened", value:unopened + " 点", sub:"未開封のまま" },
+      { label:"Check Soon", value:needsCheck + " 点", sub:needsCheck > 0 ? "期限が近い・切れています" : "確認が必要なものはありません", warn:needsCheck > 0 },
+      { label:"This Month", value:thisMonth.length + " 点", sub:"今月の購入額 " + yen(thisMonthAmount) }
+    ];
+    cards.forEach(function(c){
+      var card = el("div", "sum-card" + (c.accent ? " accent" : "") + (c.warn ? " warn" : ""));
+      card.appendChild(el("span", "label", c.label));
+      card.appendChild(el("div", "value num", c.value));
+      card.appendChild(el("span", "sub", c.sub));
+      box.appendChild(card);
+    });
+  }
+
+  function renderCheckList(){
+    var list = $("checkList");
+    list.textContent = "";
+
+    var rows = items.filter(function(it){
+      var s = getStatus(it).key;
+      return s === "soon" || s === "expired";
+    }).sort(function(a, b){
+      return daysUntil(expiryDateOf(a)) - daysUntil(expiryDateOf(b));
+    });
+
+    if(rows.length === 0){
+      list.appendChild(el("p", "empty-hint", "そろそろ確認したいアイテムはありません。"));
+      return;
+    }
+
+    rows.forEach(function(it){
+      var row = el("div", "cl-row");
+      var exp = expiryDateOf(it);
+      row.appendChild(el("span", "cl-date", formatDate(exp)));
+      var name = el("span", "cl-name", it.name);
+      if(it.brand) name.appendChild(el("span", "brand", it.brand));
+      row.appendChild(name);
+      var status = getStatus(it);
+      row.appendChild(el("span", "badge " + status.key, status.label));
+      list.appendChild(row);
+    });
+  }
+
+  function usedCategories(){
+    var set = {};
+    items.forEach(function(it){ set[it.category] = true; });
+    return CATEGORIES.filter(function(c){ return set[c.value]; }).map(function(c){ return c.value; });
+  }
+
+  function renderChips(){
+    var box = $("categoryChips");
+    box.textContent = "";
+    var all = ["all"].concat(usedCategories());
+    if(all.indexOf(filter.category) === -1) filter.category = "all";
+    all.forEach(function(v){
+      var label = v === "all" ? "すべて" : categoryInfo(v).label;
+      var chip = el("button", "chip" + (filter.category === v ? " active" : ""), label);
+      chip.type = "button";
+      chip.addEventListener("click", function(){
+        filter.category = v;
+        render();
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function visibleItems(){
+    var q = filter.text.trim().toLowerCase();
+    var list = items.filter(function(it){
+      if(filter.category !== "all" && it.category !== filter.category) return false;
+      if(!q) return true;
+      return [it.name, it.brand, it.note].some(function(v){
+        return String(v || "").toLowerCase().indexOf(q) >= 0;
+      });
+    });
+    list.sort(function(a, b){
+      if(sortMode === "purchase-old") return parseISO(a.purchase) - parseISO(b.purchase);
+      if(sortMode === "added") return (b.added || 0) - (a.added || 0);
+      if(sortMode === "expiry"){
+        var ea = expiryDateOf(a), eb = expiryDateOf(b);
+        if(ea && eb) return daysUntil(ea) - daysUntil(eb);
+        if(ea) return -1;
+        if(eb) return 1;
+        return parseISO(b.purchase) - parseISO(a.purchase);
+      }
+      return parseISO(b.purchase) - parseISO(a.purchase);
+    });
+    return list;
+  }
+
+  function renderGrid(){
+    var grid = $("itemGrid");
+    grid.textContent = "";
+    var list = visibleItems();
+
+    if(list.length === 0){
+      grid.appendChild(el("p", "empty-hint",
+        items.length === 0 ? "まだ登録がありません。「＋ コスメを追加」から登録してください。"
+                            : "条件に合うアイテムがありません。"));
+      return;
+    }
+
+    list.forEach(function(it){
+      var cat = categoryInfo(it.category);
+      var card = el("div", "card");
+
+      if(it.image){
+        var photo = document.createElement("img");
+        photo.className = "card-photo";
+        photo.src = it.image;
+        photo.alt = it.name;
+        card.appendChild(photo);
+      }
+
+      var head = el("div", "card-head");
+      var title = el("div", "card-title", it.name);
+      if(it.brand) title.appendChild(el("span", "brand", it.brand));
+      head.appendChild(title);
+      var catBadge = el("span", "cat-badge", cat.label);
+      catBadge.style.background = cat.color + "20";
+      catBadge.style.color = cat.color;
+      head.appendChild(catBadge);
+      card.appendChild(head);
+
+      var purchaseRow = el("div", "meta-row");
+      var pLabel = el("span", null);
+      pLabel.appendChild(el("span", "label", "購入日　"));
+      pLabel.appendChild(document.createTextNode(it.purchase.replace(/-/g, "/")));
+      purchaseRow.appendChild(pLabel);
+      purchaseRow.appendChild(el("span", "badge", "経過" + formatElapsed(daysSince(it.purchase))));
+      card.appendChild(purchaseRow);
+
+      var status = getStatus(it);
+      var statusRow = el("div", "meta-row");
+      var sLabel = el("span", null);
+      if(status.key === "unopened"){
+        sLabel.appendChild(el("span", "label", "開封　"));
+        sLabel.appendChild(document.createTextNode("未開封"));
+      } else if(status.key === "noexp"){
+        sLabel.appendChild(el("span", "label", "開封日　"));
+        sLabel.appendChild(document.createTextNode(it.opened.replace(/-/g, "/")));
+      } else {
+        sLabel.appendChild(el("span", "label", "使用期限　"));
+        sLabel.appendChild(document.createTextNode(expiryDateOf(it).replace(/-/g, "/")));
+      }
+      statusRow.appendChild(sLabel);
+      statusRow.appendChild(el("span", "badge " + status.key, status.label));
+      card.appendChild(statusRow);
+
+      if(it.price != null){
+        var priceRow = el("div", "price-row");
+        priceRow.appendChild(document.createTextNode("価格　"));
+        priceRow.appendChild(el("span", "amt", yen(it.price)));
+        card.appendChild(priceRow);
+      }
+
+      if(it.note) card.appendChild(el("div", "card-note", it.note));
+
+      var actions = el("div", "card-actions");
+      var editBtn = el("button", null, "編集");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function(){ openModal(it.id); });
+      actions.appendChild(editBtn);
+
+      if(!it.opened){
+        var openBtn = el("button", "open-btn", "開封済みにする");
+        openBtn.type = "button";
+        openBtn.addEventListener("click", function(){
+          it.opened = addDays(0);
+          save();
+          render();
+        });
+        actions.appendChild(openBtn);
+      }
+
+      var delBtn = el("button", "danger", "削除");
+      delBtn.type = "button";
+      delBtn.addEventListener("click", function(){
+        if(confirm("「" + it.name + "」を削除します。よろしいですか？")){
+          items = items.filter(function(x){ return x.id !== it.id; });
+          save();
+          render();
+        }
+      });
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
+
+      grid.appendChild(card);
+    });
+  }
+
+  function renderBreakdown(){
+    var box = $("breakdownBody");
+    box.textContent = "";
+    if(items.length === 0){
+      box.appendChild(el("p", "empty-hint", "登録アイテムがありません。"));
+      return;
+    }
+    var byCat = {};
+    items.forEach(function(it){ byCat[it.category] = (byCat[it.category] || 0) + 1; });
+    var rows = Object.keys(byCat).map(function(v){
+      return { cat:categoryInfo(v), count:byCat[v] };
+    }).sort(function(a, b){ return b.count - a.count; });
+    var max = rows[0].count;
+    var total = items.length;
+
+    rows.forEach(function(r){
+      var row = el("div", "bar-row");
+      var label = el("div", "bar-label");
+      label.appendChild(el("span", null, r.cat.label));
+      var pct = total > 0 ? Math.round(r.count / total * 100) : 0;
+      label.appendChild(el("span", "amt", r.count + "点　" + pct + "%"));
+      row.appendChild(label);
+      var track = el("div", "bar-track");
+      var fill = el("div", "bar-fill");
+      fill.style.width = (max > 0 ? (r.count / max * 100) : 0) + "%";
+      fill.style.background = r.cat.color;
+      track.appendChild(fill);
+      row.appendChild(track);
+      box.appendChild(row);
+    });
+  }
+
+  function render(){
+    renderSummary();
+    renderCheckList();
+    renderChips();
+    renderGrid();
+    renderBreakdown();
+  }
+
+  /* ---------- カテゴリセレクトの初期化 ---------- */
+  function fillCategorySelect(){
+    var sel = $("fCategory");
+    sel.textContent = "";
+    CATEGORIES.forEach(function(c){
+      var o = document.createElement("option");
+      o.value = c.value;
+      o.textContent = c.label;
+      sel.appendChild(o);
+    });
+  }
+
+  /* ---------- 画像 ---------- */
+  var pendingImage = null;
+
+  function resizeImage(file, callback){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if(w > IMAGE_MAX_DIM || h > IMAGE_MAX_DIM){
+          if(w > h){ h = Math.round(h * IMAGE_MAX_DIM / w); w = IMAGE_MAX_DIM; }
+          else { w = Math.round(w * IMAGE_MAX_DIM / h); h = IMAGE_MAX_DIM; }
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL("image/jpeg", IMAGE_QUALITY));
+      };
+      img.onerror = function(){ callback(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ callback(null); };
+    reader.readAsDataURL(file);
+  }
+
+  function setImagePreview(dataUrl){
+    pendingImage = dataUrl || null;
+    $("imagePreviewWrap").classList.toggle("hidden", !pendingImage);
+    $("imagePreview").src = pendingImage || "";
+  }
+
+  $("fImage").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    resizeImage(file, function(dataUrl){
+      if(!dataUrl){ alert("画像を読み込めませんでした。別の画像でお試しください。"); return; }
+      setImagePreview(dataUrl);
+    });
+  });
+  $("removeImageBtn").addEventListener("click", function(){
+    setImagePreview(null);
+    $("fImage").value = "";
+  });
+
+  /* ---------- モーダル ---------- */
+  function openModal(id){
+    editingId = id || null;
+    var it = id ? items.find(function(x){ return x.id === id; }) : null;
+    $("modalTitle").textContent = it ? "コスメを編集" : "コスメを追加";
+    $("fName").value = it ? it.name : "";
+    $("fBrand").value = it ? (it.brand || "") : "";
+    $("fCategory").value = it ? it.category : "skincare";
+    $("fPurchase").value = it ? it.purchase : addDays(0);
+    $("fPrice").value = it && it.price != null ? it.price : "";
+    $("fOpened").value = it ? (it.opened || "") : "";
+    $("fExpiry").value = it ? String(it.expiryMonths || 0) : "6";
+    $("fNote").value = it ? (it.note || "") : "";
+    $("fImage").value = "";
+    setImagePreview(it ? it.image : null);
+    $("modalOverlay").classList.remove("hidden");
+    setTimeout(function(){ $("fName").focus(); }, 30);
+  }
+  function closeModal(){
+    $("modalOverlay").classList.add("hidden");
+    editingId = null;
+  }
+
+  $("itemForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fName").value.trim();
+    var purchase = $("fPurchase").value;
+    var opened = $("fOpened").value || null;
+    var priceRaw = $("fPrice").value;
+    var price = priceRaw === "" ? null : Number(priceRaw);
+
+    if(!name){ alert("商品名を入力してください。"); return; }
+    if(!isValidISO(purchase)){ alert("購入日を入力してください。"); return; }
+    if(opened && !isValidISO(opened)){ alert("開封日の形式が正しくありません。"); return; }
+    if(opened && parseISO(opened) < parseISO(purchase)){
+      alert("開封日は購入日より後の日付にしてください。"); return;
+    }
+    if(price !== null && (!isFinite(price) || price < 0)){
+      alert("価格は0以上の数値で入力してください。"); return;
+    }
+
+    var data = {
+      name: name,
+      brand: $("fBrand").value.trim(),
+      category: $("fCategory").value,
+      purchase: purchase,
+      opened: opened,
+      expiryMonths: Number($("fExpiry").value) || 0,
+      price: price,
+      image: pendingImage,
+      note: $("fNote").value.trim()
+    };
+
+    if(editingId){
+      var target = items.find(function(x){ return x.id === editingId; });
+      if(target) Object.keys(data).forEach(function(k){ target[k] = data[k]; });
+    } else {
+      data.id = "c" + Date.now() + Math.random().toString(36).slice(2, 6);
+      data.added = Date.now();
+      items.push(data);
+    }
+    if(!save()){
+      // 容量オーバーの可能性が高いので、今保存したアイテムの画像だけ外して再保存を試みる
+      var saved = editingId ? items.find(function(x){ return x.id === editingId; }) : items[items.length - 1];
+      if(saved) saved.image = null;
+      if(save()){
+        alert("画像の保存に失敗しました（ブラウザの保存容量オーバー）。テキスト情報のみ保存しました。");
+      } else {
+        alert("保存に失敗しました。ブラウザの保存容量が不足している可能性があります。");
+      }
+    }
+    closeModal();
+    render();
+  });
+
+  $("cancelBtn").addEventListener("click", closeModal);
+  $("modalOverlay").addEventListener("click", function(e){
+    if(e.target === $("modalOverlay")) closeModal();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !$("modalOverlay").classList.contains("hidden")) closeModal();
+  });
+
+  /* ---------- ツールバー ---------- */
+  $("addBtn").addEventListener("click", function(){ openModal(null); });
+  $("searchInput").addEventListener("input", function(e){
+    filter.text = e.target.value;
+    renderGrid();
+  });
+  $("sortSelect").addEventListener("change", function(e){
+    sortMode = e.target.value;
+    renderGrid();
+  });
+
+  /* ---------- データ入出力 ---------- */
+  $("exportBtn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(items, null, 2)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "cosmenote-" + toISO(new Date()) + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var parsed = JSON.parse(reader.result);
+        if(!Array.isArray(parsed)) throw new Error("配列ではありません");
+        var valid = parsed.filter(isSane);
+        if(valid.length === 0) throw new Error("有効なデータがありません");
+        if(!confirm(valid.length + "件を読み込みます。現在のデータは置き換わります。よろしいですか？")) return;
+        items = valid.map(function(it, i){
+          return {
+            id: it.id || ("c" + Date.now() + i),
+            name: String(it.name),
+            brand: String(it.brand || ""),
+            category: CATEGORIES.some(function(c){ return c.value === it.category; }) ? it.category : "other",
+            purchase: it.purchase,
+            opened: it.opened && isValidISO(it.opened) ? it.opened : null,
+            expiryMonths: Number(it.expiryMonths) || 0,
+            price: it.price === null || it.price === undefined || it.price === "" ? null : Number(it.price),
+            image: typeof it.image === "string" && it.image.indexOf("data:image/") === 0 ? it.image : null,
+            note: String(it.note || ""),
+            added: it.added || i
+          };
+        });
+        save();
+        render();
+      } catch(err){
+        alert("読み込めませんでした：" + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+  $("resetBtn").addEventListener("click", function(){
+    if(!confirm("現在のデータを消して、サンプルデータに戻します。よろしいですか？")) return;
+    items = sampleData();
+    save();
+    render();
+  });
+
+  /* ---------- 起動 ---------- */
+  fillCategorySelect();
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
