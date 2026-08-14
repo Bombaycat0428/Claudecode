@@ -30,6 +30,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
+  .hidden{display:none}
   body{
     background:
       radial-gradient(circle at 10% 0%, rgba(196,99,140,.10), transparent 46%),
@@ -203,6 +204,28 @@
   .bar-track{height:8px;border-radius:99px;background:rgba(180,120,120,.16);overflow:hidden}
   .bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s ease}
 
+  /* ---- Brand links ---- */
+  .brandlinks{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;backdrop-filter:blur(10px);margin-bottom:30px;
+  }
+  .bl-list{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+  .bl-row{
+    display:flex;align-items:center;gap:10px;padding:9px 2px;
+    border-bottom:1px dashed var(--line);font-size:13.5px;
+  }
+  .bl-row:last-child{border-bottom:none}
+  .bl-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);text-decoration:none}
+  a.bl-name:hover{color:var(--accent-dark);text-decoration:underline}
+  .bl-nolink{color:var(--muted)}
+  .bl-actions{display:flex;gap:6px;flex-shrink:0}
+  .bl-actions button{
+    font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;
+  }
+  .bl-actions button:hover{background:rgba(0,0,0,.04)}
+  .bl-actions .danger:hover{color:var(--danger);border-color:var(--danger)}
+
   /* ---- Data actions / footer ---- */
   .data-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:26px}
   footer{
@@ -290,6 +313,15 @@
     <div id="breakdownBody"></div>
   </section>
 
+  <section class="brandlinks">
+    <div class="sec-head">
+      <h2>Brand Links</h2>
+      <span class="jp">よく買うブランドの公式サイト</span>
+    </div>
+    <div class="bl-list" id="brandList"></div>
+    <button class="btn ghost" id="addBrandBtn">＋ ブランドを追加</button>
+  </section>
+
   <div class="data-actions">
     <button class="btn ghost" id="exportBtn">JSONで書き出す</button>
     <button class="btn ghost" id="importBtn">JSONを読み込む</button>
@@ -322,8 +354,9 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="fBrand">ブランド</label>
-          <input id="fBrand" type="text" placeholder="例：アクアリュクス">
+          <label for="fBrandSelect">ブランド</label>
+          <select id="fBrandSelect"></select>
+          <input id="fBrandCustom" type="text" class="hidden" placeholder="ブランド名を入力" style="margin-top:8px">
         </div>
         <div class="field">
           <label for="fCategory">カテゴリ</label>
@@ -370,11 +403,33 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="brandModalOverlay">
+  <div class="modal">
+    <h3 id="brandModalTitle">ブランドを追加</h3>
+    <form id="brandForm">
+      <div class="field">
+        <label for="fBrandName">ブランド名 <span style="color:var(--danger)">*</span></label>
+        <input id="fBrandName" type="text" required placeholder="例：アクアリュクス">
+      </div>
+      <div class="field">
+        <label for="fBrandUrl">公式サイトURL</label>
+        <input id="fBrandUrl" type="url" placeholder="https://example.com（任意）">
+        <p class="field-hint">入力すると一覧からワンクリックで開けます。空欄でも登録できます。</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="brandCancelBtn">キャンセル</button>
+        <button type="submit" class="btn primary">保存する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function(){
   "use strict";
 
   var STORAGE_KEY = "cosmenote-v1";
+  var STORAGE_KEY_BRANDS = "cosmenote-brands-v1";
   var MS_DAY = 86400000;
   var IMAGE_MAX_DIM = 480;
   var IMAGE_QUALITY = 0.72;
@@ -526,6 +581,36 @@
   function save(){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); return true; }
     catch(e){ return false; /* 容量オーバー等。呼び出し側でフォールバックする */ }
+  }
+
+  /* ---------- ブランド登録 ---------- */
+  var brands = [];
+  var editingBrandId = null;
+
+  function loadBrands(){
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY_BRANDS); } catch(e){ raw = null; }
+    if(!raw){ brands = []; return; }
+    try {
+      var parsed = JSON.parse(raw);
+      brands = Array.isArray(parsed) ? parsed.filter(isSaneBrand) : [];
+    } catch(e){ brands = []; }
+  }
+  function isSaneBrand(b){
+    return b && typeof b.name === "string" && b.name.trim();
+  }
+  function saveBrands(){
+    try { localStorage.setItem(STORAGE_KEY_BRANDS, JSON.stringify(brands)); return true; }
+    catch(e){ return false; }
+  }
+  function isValidURL(s){
+    try {
+      var u = new URL(s);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch(e){ return false; }
+  }
+  function sortedBrands(){
+    return brands.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "ja"); });
   }
 
   /* ---------- DOM ヘルパ ---------- */
@@ -797,6 +882,112 @@
     });
   }
 
+  /* ---------- ブランドリンク描画 ---------- */
+  function renderBrandList(){
+    var box = $("brandList");
+    box.textContent = "";
+    if(brands.length === 0){
+      box.appendChild(el("p", "empty-hint",
+        "まだ登録がありません。よく買うブランドを登録すると、公式サイトへすぐ移動でき、アイテム登録時のプルダウンにも使えます。"));
+      return;
+    }
+    sortedBrands().forEach(function(b){
+      var row = el("div", "bl-row");
+      if(b.url){
+        var a = document.createElement("a");
+        a.className = "bl-name";
+        a.href = b.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = b.name;
+        row.appendChild(a);
+      } else {
+        row.appendChild(el("span", "bl-name bl-nolink", b.name));
+      }
+      var actions = el("div", "bl-actions");
+      var editBtn = el("button", null, "編集");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function(){ openBrandModal(b.id); });
+      var delBtn = el("button", "danger", "削除");
+      delBtn.type = "button";
+      delBtn.addEventListener("click", function(){
+        if(confirm("「" + b.name + "」を削除します。よろしいですか？")){
+          brands = brands.filter(function(x){ return x.id !== b.id; });
+          saveBrands();
+          renderBrandList();
+        }
+      });
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      row.appendChild(actions);
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- ブランド選択欄（アイテムフォーム） ---------- */
+  function fillBrandSelect(){
+    var sel = $("fBrandSelect");
+    sel.textContent = "";
+    var optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "未選択";
+    sel.appendChild(optNone);
+    sortedBrands().forEach(function(b){
+      var o = document.createElement("option");
+      o.value = b.name;
+      o.textContent = b.name;
+      sel.appendChild(o);
+    });
+    var optCustom = document.createElement("option");
+    optCustom.value = "__custom__";
+    optCustom.textContent = "その他（自由入力）";
+    sel.appendChild(optCustom);
+  }
+  $("fBrandSelect").addEventListener("change", function(){
+    var isCustom = $("fBrandSelect").value === "__custom__";
+    $("fBrandCustom").classList.toggle("hidden", !isCustom);
+    if(isCustom) setTimeout(function(){ $("fBrandCustom").focus(); }, 10);
+  });
+
+  /* ---------- ブランド登録モーダル ---------- */
+  function openBrandModal(id){
+    editingBrandId = id || null;
+    var b = id ? brands.find(function(x){ return x.id === id; }) : null;
+    $("brandModalTitle").textContent = b ? "ブランドを編集" : "ブランドを追加";
+    $("fBrandName").value = b ? b.name : "";
+    $("fBrandUrl").value = b ? (b.url || "") : "";
+    $("brandModalOverlay").classList.remove("hidden");
+    setTimeout(function(){ $("fBrandName").focus(); }, 30);
+  }
+  function closeBrandModal(){
+    $("brandModalOverlay").classList.add("hidden");
+    editingBrandId = null;
+  }
+  $("addBrandBtn").addEventListener("click", function(){ openBrandModal(null); });
+  $("brandCancelBtn").addEventListener("click", closeBrandModal);
+  $("brandModalOverlay").addEventListener("click", function(e){
+    if(e.target === $("brandModalOverlay")) closeBrandModal();
+  });
+  $("brandForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fBrandName").value.trim();
+    var url = $("fBrandUrl").value.trim();
+    if(!name){ alert("ブランド名を入力してください。"); return; }
+    if(url && !isValidURL(url)){ alert("URLの形式が正しくありません（http:// または https:// で入力してください）。"); return; }
+
+    var data = { name:name, url:url || null };
+    if(editingBrandId){
+      var target = brands.find(function(x){ return x.id === editingBrandId; });
+      if(target) Object.keys(data).forEach(function(k){ target[k] = data[k]; });
+    } else {
+      data.id = "b" + Date.now() + Math.random().toString(36).slice(2, 6);
+      brands.push(data);
+    }
+    saveBrands();
+    closeBrandModal();
+    renderBrandList();
+  });
+
   /* ---------- 画像 ---------- */
   var pendingImage = null;
 
@@ -848,7 +1039,22 @@
     var it = id ? items.find(function(x){ return x.id === id; }) : null;
     $("modalTitle").textContent = it ? "コスメを編集" : "コスメを追加";
     $("fName").value = it ? it.name : "";
-    $("fBrand").value = it ? (it.brand || "") : "";
+    fillBrandSelect();
+    var currentBrand = it ? (it.brand || "") : "";
+    var knownBrand = brands.some(function(b){ return b.name === currentBrand; });
+    if(!currentBrand){
+      $("fBrandSelect").value = "";
+      $("fBrandCustom").value = "";
+      $("fBrandCustom").classList.add("hidden");
+    } else if(knownBrand){
+      $("fBrandSelect").value = currentBrand;
+      $("fBrandCustom").value = "";
+      $("fBrandCustom").classList.add("hidden");
+    } else {
+      $("fBrandSelect").value = "__custom__";
+      $("fBrandCustom").value = currentBrand;
+      $("fBrandCustom").classList.remove("hidden");
+    }
     $("fCategory").value = it ? it.category : "skincare";
     $("fPurchase").value = it ? it.purchase : addDays(0);
     $("fPrice").value = it && it.price != null ? it.price : "";
@@ -883,9 +1089,12 @@
       alert("価格は0以上の数値で入力してください。"); return;
     }
 
+    var brandSelectVal = $("fBrandSelect").value;
+    var brand = brandSelectVal === "__custom__" ? $("fBrandCustom").value.trim() : brandSelectVal;
+
     var data = {
       name: name,
-      brand: $("fBrand").value.trim(),
+      brand: brand,
       category: $("fCategory").value,
       purchase: purchase,
       opened: opened,
@@ -922,7 +1131,9 @@
     if(e.target === $("modalOverlay")) closeModal();
   });
   document.addEventListener("keydown", function(e){
-    if(e.key === "Escape" && !$("modalOverlay").classList.contains("hidden")) closeModal();
+    if(e.key !== "Escape") return;
+    if(!$("modalOverlay").classList.contains("hidden")) closeModal();
+    if(!$("brandModalOverlay").classList.contains("hidden")) closeBrandModal();
   });
 
   /* ---------- ツールバー ---------- */
@@ -991,6 +1202,8 @@
 
   /* ---------- 起動 ---------- */
   fillCategorySelect();
+  loadBrands();
+  renderBrandList();
   load();
   render();
 })();
