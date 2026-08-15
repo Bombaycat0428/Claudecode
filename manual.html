@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockCraft Manual - あそびかたガイド</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif;
+    background: #eef3f8; color: #2b3a4a; line-height: 1.9;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  header { text-align: center; margin-bottom: 36px; }
+  header h1 { font-size: 30px; letter-spacing: 4px; }
+  header .sub { color: #6b7a88; font-size: 14px; margin-top: 4px; }
+  header .badge {
+    display: inline-block; margin-top: 12px; background: #4a90d9; color: #fff;
+    font-size: 12px; padding: 4px 16px; border-radius: 999px; letter-spacing: 1px;
+  }
+
+  section {
+    background: rgba(255,255,255,0.9); border-radius: 14px;
+    padding: 26px 30px; margin-bottom: 22px;
+    box-shadow: 0 2px 12px rgba(40,60,80,0.06);
+  }
+  h2 { font-size: 18px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .no {
+    background: #4a90d9; color: #fff; width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  p { font-size: 14px; margin-bottom: 10px; }
+  .point {
+    background: #eaf3fc; border-left: 4px solid #4a90d9; border-radius: 6px;
+    padding: 10px 16px; font-size: 13.5px; margin: 12px 0;
+  }
+  .point b { color: #2b6cb0; }
+  img.shot { width: 100%; border-radius: 10px; margin: 10px 0 4px; display: block; }
+  .cap { font-size: 12px; color: #8a97a3; text-align: center; margin-bottom: 6px; }
+
+  /* キーボード図 */
+  kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 40px; height: 40px; padding: 0 10px;
+    background: linear-gradient(#fff, #f0f3f6); border: 1px solid #c6d0d9;
+    border-bottom-width: 3px; border-radius: 8px;
+    font-family: inherit; font-size: 15px; font-weight: 700; color: #2b3a4a;
+  }
+  kbd.wide { min-width: 120px; }
+  .keyrow { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
+  .keymap { margin: 18px 0; }
+  .keymap .lbl { font-size: 12px; color: #6b7a88; text-align: center; margin-top: 6px; }
+  .kdesc {
+    display: grid; grid-template-columns: auto 1fr; gap: 8px 16px;
+    align-items: center; margin-top: 16px; font-size: 14px;
+  }
+
+  /* マウス図 */
+  .mouserow { display: flex; gap: 24px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+  .mouse-item { text-align: center; font-size: 13px; color: #44586c; }
+  .mouse-item svg { display: block; margin: 0 auto 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e4ebf1; }
+  th { color: #6b7a88; font-weight: 600; font-size: 12px; }
+
+  ol.steps { padding-left: 0; list-style: none; counter-reset: n; }
+  ol.steps li {
+    counter-increment: n; position: relative; padding: 6px 0 6px 40px; font-size: 14px;
+  }
+  ol.steps li::before {
+    content: counter(n); position: absolute; left: 0; top: 8px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #eaf3fc; color: #2b6cb0; font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  footer { text-align: center; font-size: 12px; color: #98a4b0; margin-top: 30px; }
+  a.play {
+    display: block; text-align: center; background: #4a90d9; color: #fff;
+    text-decoration: none; border-radius: 10px; padding: 14px;
+    font-size: 16px; letter-spacing: 2px; margin-top: 8px;
+  }
+  a.play:hover { background: #3a7fc4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>BLOCKCRAFT</h1>
+  <div class="sub">取扱説明書 — はじめてでも遊べる、あそびかたガイド</div>
+  <div class="badge">BEGINNER'S MANUAL</div>
+</header>
+
+<section>
+  <h2><span class="no">1</span>これはどんなゲーム？</h2>
+  <p>ブロックでできた3Dの世界を歩き回って、ブロックを<b>壊したり</b>、<b>積み上げたり</b>して自由に遊ぶゲームです。敵もゴールもありません。散歩するだけでもOK、家を建てるのもOK。<b>正解のない砂場（サンドボックス）</b>です。</p>
+</section>
+
+<section>
+  <h2><span class="no">2</span>はじめかた</h2>
+  <img class="shot" src="img/start.png" alt="スタート画面">
+  <div class="cap">スタート画面。まずは「はじめる」を押すだけでOK</div>
+  <ol class="steps">
+    <li><b>minecraft.html</b> をダブルクリックして開く</li>
+    <li>青い「<b>はじめる</b>」ボタンをクリック</li>
+    <li>マウスカーソル（矢印）が<b>消えます</b>。これは故障ではなく「視点操作モード」に入った合図です</li>
+  </ol>
+  <div class="point">💡 <b>カーソルが消えたら準備完了！</b>そのままマウスを動かすと、画面の中で顔の向きが変わります。やめたくなったら <kbd style="min-width:52px;height:30px;font-size:12px">Esc</kbd> キーでいつでもメニューに戻れます。</div>
+</section>
+
+<section>
+  <h2><span class="no">3</span>移動のしかた（いちばん大事！）</h2>
+  <p>操作は「<b>左手はキーボード、右手はマウス</b>」が基本スタイルです。</p>
+  <div class="point">🎮 コツはこれだけ：<b>マウスで行きたい方向を向いて、<kbd style="min-width:32px;height:28px;font-size:13px">W</kbd> を押しっぱなし</b>。これで前に進めます。</div>
+  <div class="keymap">
+    <div class="keyrow"><kbd>W</kbd></div>
+    <div class="keyrow"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+    <div class="lbl">左手の指を A・S・D に置き、人さし指か中指で W を押します</div>
+  </div>
+  <div class="kdesc">
+    <kbd>W</kbd><span>前に進む（いちばん使うキー）</span>
+    <kbd>S</kbd><span>後ろに下がる</span>
+    <kbd>A</kbd><span>左に平行移動</span>
+    <kbd>D</kbd><span>右に平行移動</span>
+    <kbd class="wide">Space</kbd><span>ジャンプ（1段の段差はジャンプで登れます）</span>
+    <kbd class="wide">Shift</kbd><span>押しながら移動でダッシュ（速く走る）</span>
+  </div>
+  <div class="point">🏊 水に入っても大丈夫。<b>Space を押すと浮かび上がれます</b>。おぼれることはありません。</div>
+</section>
+
+<section>
+  <h2><span class="no">4</span>画面の見かた</h2>
+  <img class="shot" src="img/play.png" alt="ゲーム画面">
+  <div class="cap">ゲーム中の画面</div>
+  <table>
+    <tr><th>場所</th><th>なに？</th></tr>
+    <tr><td>画面まんなかの「＋」</td><td>照準（クロスヘア）。ここに映っているブロックが操作の対象</td></tr>
+    <tr><td>ブロックの黒い枠</td><td>いま狙っているブロック。「ここを壊す／ここに置く」の目印</td></tr>
+    <tr><td>画面下の9マス</td><td>ホットバー。置けるブロックの一覧（白枠が選択中）</td></tr>
+    <tr><td>左上の数字</td><td>いまいる場所の座標。迷子になったときの目印に</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="no">5</span>ブロックを壊す・置く</h2>
+  <img class="shot" src="img/edit.png" alt="レンガを設置したところ">
+  <div class="cap">木の葉を壊して、レンガ（Brick）を置いてみたところ</div>
+  <div class="mouserow">
+    <div class="mouse-item">
+      <svg width="70" height="90" viewBox="0 0 70 90"><rect x="5" y="5" width="60" height="80" rx="28" fill="#f0f3f6" stroke="#c6d0d9" stroke-width="2"/><path d="M35 5 v38 M5 43 h60" stroke="#c6d0d9" stroke-width="2" fill="none"/><rect x="7" y="7" width="26" height="34" rx="20" fill="#4a90d9" opacity="0.85"/></svg>
+      <b>左クリック</b><br>狙ったブロックを壊す
+    </div>
+    <div class="mouse-item">
+      <svg width="70" height="90" viewBox="0 0 70 90"><rect x="5" y="5" width="60" height="80" rx="28" fill="#f0f3f6" stroke="#c6d0d9" stroke-width="2"/><path d="M35 5 v38 M5 43 h60" stroke="#c6d0d9" stroke-width="2" fill="none"/><rect x="37" y="7" width="26" height="34" rx="20" fill="#4a90d9" opacity="0.85"/></svg>
+      <b>右クリック</b><br>狙った面にブロックを置く
+    </div>
+    <div class="mouse-item">
+      <svg width="70" height="90" viewBox="0 0 70 90"><rect x="5" y="5" width="60" height="80" rx="28" fill="#f0f3f6" stroke="#c6d0d9" stroke-width="2"/><path d="M35 5 v38 M5 43 h60" stroke="#c6d0d9" stroke-width="2" fill="none"/><rect x="30" y="14" width="10" height="20" rx="5" fill="#4a90d9"/></svg>
+      <b>ホイール回転</b><br>置くブロックを切り替え
+    </div>
+  </div>
+  <p>置くブロックは、ホイールのほかに数字キー <kbd style="min-width:28px;height:26px;font-size:12px">1</kbd>〜<kbd style="min-width:28px;height:26px;font-size:12px">9</kbd> でも選べます。</p>
+  <table>
+    <tr><th>番号</th><th>ブロック</th><th>説明</th></tr>
+    <tr><td>1</td><td>Grass（草ブロック）</td><td>地面と同じ緑のブロック</td></tr>
+    <tr><td>2</td><td>Dirt（土）</td><td>茶色い土</td></tr>
+    <tr><td>3</td><td>Stone（石）</td><td>グレーの石。お城っぽい建物に</td></tr>
+    <tr><td>4</td><td>Sand（砂）</td><td>砂浜の砂</td></tr>
+    <tr><td>5</td><td>Wood（原木）</td><td>木の幹。柱にぴったり</td></tr>
+    <tr><td>6</td><td>Leaves（葉）</td><td>木の葉っぱ。庭木や生け垣に</td></tr>
+    <tr><td>7</td><td>Plank（板材）</td><td>木の板。家の壁や床の定番</td></tr>
+    <tr><td>8</td><td>Glass（ガラス）</td><td>向こうが透けて見える。窓に</td></tr>
+    <tr><td>9</td><td>Brick（レンガ）</td><td>赤いレンガ。おしゃれな壁に</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="no">6</span>セーブとワールド</h2>
+  <p>壊したり置いたりした内容は<b>自動でセーブ</b>されます。ブラウザを閉じても、次に開いたときに続きから遊べます。</p>
+  <p>ワールドは <b>World 1〜3</b> の3つ。スタート画面のボタンで切り替えられ、それぞれ<b>別の地形・別のセーブ</b>です。「建築の練習用」「本気の家づくり用」のように使い分けできます。</p>
+  <div class="point">⚠️「このワールドを初期化してやり直す」を押すと、<b>選択中のワールドだけ</b>が消えて新しい地形になります。ほかのワールドは消えません。</div>
+</section>
+
+<section>
+  <h2><span class="no">7</span>はじめての5分間 — まずはこれをやってみよう</h2>
+  <ol class="steps">
+    <li>「はじめる」を押したら、まず<b>マウスをゆっくり左右に動かして</b>まわりの景色を見てみる</li>
+    <li><kbd style="min-width:28px;height:26px;font-size:12px">W</kbd> を押しっぱなしにして、<b>近くの木まで歩いてみる</b></li>
+    <li>木を見つめて（黒い枠が出る）、<b>左クリック連打で幹を壊してみる</b></li>
+    <li>数字の <kbd style="min-width:28px;height:26px;font-size:12px">7</kbd> を押して板材（Plank）を選び、<b>地面を見て右クリック</b>でブロックを置いてみる</li>
+    <li>慣れてきたら、板材で四角く壁を作って<b>小さな家</b>に挑戦！窓はガラス（8番）で</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="no">8</span>こまったときは</h2>
+  <table>
+    <tr><th>こまった</th><th>解決方法</th></tr>
+    <tr><td>マウスカーソルが消えた</td><td>正常です（視点操作モード）。Esc でカーソルが戻ります</td></tr>
+    <tr><td>クリックしても何も起きない</td><td>メニュー画面に戻っています。「はじめる」を押し直してください</td></tr>
+    <tr><td>穴に落ちて出られない</td><td>まわりの壁を左クリックで壊すか、足元にブロックを置いて（真下を見て右クリック→ジャンプ）積み上がって脱出</td></tr>
+    <tr><td>高いところから落ちた</td><td>ダメージはないので大丈夫。世界の外に落ちても自動で戻されます</td></tr>
+    <tr><td>迷子になった</td><td>左上の座標が「x:40 z:40」付近がスタート地点。数字が近づく方向に歩けば戻れます</td></tr>
+    <tr><td>ぜんぶやり直したい</td><td>Esc → 「このワールドを初期化してやり直す」</td></tr>
+  </table>
+</section>
+
+<a class="play" href="minecraft.html">▶ さっそく遊んでみる</a>
+<footer>BlockCraft Manual — 敵は出ないので、あせらずゆっくり楽しんでください 🌱</footer>
+
+</div>
+</body>
+</html>

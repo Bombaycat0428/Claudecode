@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockCraft</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; }
+  #game { display: block; width: 100%; height: 100%; }
+
+  /* ---- スタート画面 ---- */
+  #overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(20, 30, 40, 0.55); backdrop-filter: blur(6px); z-index: 20;
+  }
+  #panel {
+    background: rgba(255, 255, 255, 0.9); border-radius: 16px; padding: 36px 44px;
+    max-width: 480px; width: 90%; text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  #panel h1 { font-size: 34px; letter-spacing: 4px; color: #2b3a4a; font-weight: 700; }
+  #panel .sub { color: #6b7a88; font-size: 13px; margin: 6px 0 22px; }
+  .controls { text-align: left; font-size: 13px; color: #445; line-height: 2; margin: 0 auto 24px; display: inline-block; }
+  .controls b { display: inline-block; min-width: 130px; color: #2b3a4a; }
+  #startBtn {
+    background: #4a90d9; color: #fff; border: none; border-radius: 10px;
+    padding: 12px 40px; font-size: 16px; cursor: pointer; letter-spacing: 2px;
+  }
+  #startBtn:hover { background: #3a7fc4; }
+  #worlds { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+  .wslot {
+    width: 92px; padding: 8px 0 6px; border-radius: 8px; cursor: pointer;
+    border: 2px solid #dfe6ec; background: #f6f9fb; font-size: 13px; color: #44586c;
+  }
+  .wslot .st { display: block; font-size: 10px; color: #9aa8b4; margin-top: 2px; }
+  .wslot.cur { border-color: #4a90d9; background: #eaf3fc; color: #2b3a4a; }
+  #resetBtn {
+    background: none; border: none; color: #98a4b0; font-size: 12px;
+    margin-top: 14px; cursor: pointer; text-decoration: underline;
+  }
+  #panel .note { font-size: 11px; color: #a0aab4; margin-top: 12px; }
+
+  /* ---- HUD ---- */
+  #crosshair {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 20px; height: 20px; pointer-events: none; z-index: 10; display: none;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ""; position: absolute; background: rgba(255,255,255,0.85);
+    mix-blend-mode: difference;
+  }
+  #crosshair::before { left: 9px; top: 0; width: 2px; height: 20px; }
+  #crosshair::after { left: 0; top: 9px; width: 20px; height: 2px; }
+
+  #hotbar {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+    display: flex; gap: 4px; padding: 6px; border-radius: 10px;
+    background: rgba(20, 30, 40, 0.45); backdrop-filter: blur(4px); z-index: 10; display: none;
+  }
+  .slot {
+    width: 48px; height: 48px; border-radius: 6px; position: relative;
+    border: 2px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.25);
+  }
+  .slot.sel { border-color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.15); }
+  .slot canvas { width: 100%; height: 100%; image-rendering: pixelated; border-radius: 4px; }
+  .slot .num {
+    position: absolute; left: 4px; top: 2px; font-size: 10px; color: rgba(255,255,255,0.75);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  #blockName {
+    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+    color: #fff; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 10;
+  }
+  #pos {
+    position: fixed; left: 12px; top: 10px; color: rgba(255,255,255,0.85);
+    font-size: 11px; font-family: Consolas, monospace;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7); z-index: 10; display: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="overlay">
+  <div id="panel">
+    <h1>BLOCKCRAFT</h1>
+    <div class="sub">ブロックを壊して、積んで、自由に作る 3D サンドボックス</div>
+    <div class="controls">
+      <b>W A S D</b>移動<br>
+      <b>マウス</b>視点操作<br>
+      <b>Space</b>ジャンプ / 水中で浮上<br>
+      <b>Shift</b>ダッシュ<br>
+      <b>左クリック</b>ブロックを壊す<br>
+      <b>右クリック</b>ブロックを置く<br>
+      <b>1〜9 / ホイール</b>ブロック選択<br>
+      <b>Esc</b>メニューに戻る
+    </div><br>
+    <div id="worlds"></div>
+    <button id="startBtn">はじめる</button><br>
+    <button id="resetBtn">このワールドを初期化してやり直す</button>
+    <div class="note">※ PC推奨（マウス＋キーボード操作）。編集内容は自動保存されます。</div>
+  </div>
+</div>
+
+<div id="crosshair"></div>
+<div id="hotbar"></div>
+<div id="blockName"></div>
+<div id="pos"></div>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script>
+"use strict";
+
+// ================= 定数 =================
+const SX = 80, SY = 48, SZ = 80;      // ワールドサイズ
+const CHUNK = 16;
+const WATER_LEVEL = 12;
+const SAVE_KEY = "blockcraft_worlds";
+const WORLD_SLOTS = 3;
+
+const AIR = 0, GRASS = 1, DIRT = 2, STONE = 3, SAND = 4,
+      WOOD = 5, LEAVES = 6, PLANK = 7, GLASS = 8, BRICK = 9, WATER = 10;
+
+const BLOCKS = {
+  [GRASS]:  { name: "Grass",  jp: "草ブロック", top: 0,  side: 1,  bottom: 2 },
+  [DIRT]:   { name: "Dirt",   jp: "土",        top: 2,  side: 2,  bottom: 2 },
+  [STONE]:  { name: "Stone",  jp: "石",        top: 3,  side: 3,  bottom: 3 },
+  [SAND]:   { name: "Sand",   jp: "砂",        top: 4,  side: 4,  bottom: 4 },
+  [WOOD]:   { name: "Wood",   jp: "原木",      top: 6,  side: 5,  bottom: 6 },
+  [LEAVES]: { name: "Leaves", jp: "葉",        top: 7,  side: 7,  bottom: 7 },
+  [PLANK]:  { name: "Plank",  jp: "板材",      top: 8,  side: 8,  bottom: 8 },
+  [GLASS]:  { name: "Glass",  jp: "ガラス",    top: 9,  side: 9,  bottom: 9 },
+  [BRICK]:  { name: "Brick",  jp: "レンガ",    top: 10, side: 10, bottom: 10 },
+  [WATER]:  { name: "Water",  jp: "水",        top: 11, side: 11, bottom: 11 },
+};
+const HOTBAR = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANK, GLASS, BRICK];
+
+// ================= テクスチャアトラス =================
+const TILE = 16, ATLAS_TILES = 16;
+const atlasCanvas = document.createElement("canvas");
+atlasCanvas.width = TILE * ATLAS_TILES; atlasCanvas.height = TILE;
+const actx = atlasCanvas.getContext("2d");
+
+function fillTile(t, fn) {
+  for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) {
+    const c = fn(x, y, Math.random());
+    if (!c) continue;
+    actx.fillStyle = c;
+    actx.fillRect(t * TILE + x, y, 1, 1);
+  }
+}
+fillTile(0, (x, y, r) => `hsl(${98 + r * 14},45%,${34 + r * 14}%)`);                    // 草(上面)
+fillTile(1, (x, y, r) => y < 3 || (y === 3 && r < 0.5)
+  ? `hsl(${98 + r * 14},45%,${34 + r * 14}%)` : `hsl(28,32%,${28 + r * 14}%)`);        // 草(側面)
+fillTile(2, (x, y, r) => `hsl(28,32%,${28 + r * 14}%)`);                               // 土
+fillTile(3, (x, y, r) => r < 0.12 ? "hsl(0,0%,38%)" : `hsl(0,0%,${46 + r * 12}%)`);    // 石
+fillTile(4, (x, y, r) => `hsl(48,40%,${62 + r * 12}%)`);                               // 砂
+fillTile(5, (x, y, r) => {
+  const s = Math.sin(x * 2.1) * 5;
+  return `hsl(25,38%,${22 + s + r * 8}%)`;
+});                                                                                     // 原木(側面)
+fillTile(6, (x, y, r) => {
+  const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5));
+  return (Math.floor(d) % 2 === 0) ? `hsl(30,40%,${44 + r * 6}%)` : `hsl(28,42%,${32 + r * 6}%)`;
+});                                                                                     // 原木(木口)
+fillTile(7, (x, y, r) => r < 0.15 ? "hsl(115,45%,14%)" : `hsl(112,42%,${20 + r * 15}%)`); // 葉
+fillTile(8, (x, y, r) => (y % 4 === 3) ? "hsl(32,40%,30%)"
+  : `hsl(34,45%,${46 + r * 8 + (Math.floor(y / 4) % 2) * 3}%)`);                        // 板材
+fillTile(9, (x, y, r) => {
+  const edge = x === 0 || y === 0 || x === TILE - 1 || y === TILE - 1;
+  const streak = (x + y === 20) || (x + y === 21) || (x + y === 6);
+  return edge ? "rgba(220,240,245,1)" : streak ? "rgba(235,248,252,1)" : null;          // ガラス(他は透過)
+});
+fillTile(10, (x, y, r) => {
+  const row = Math.floor(y / 4), off = (row % 2) * 4;
+  const mortar = (y % 4 === 0) || ((x + off) % 8 === 0);
+  return mortar ? "hsl(30,8%,68%)" : `hsl(5,48%,${36 + r * 10}%)`;
+});                                                                                     // レンガ
+fillTile(11, (x, y, r) => `hsl(210,65%,${42 + r * 12}%)`);                              // 水
+
+const atlas = new THREE.CanvasTexture(atlasCanvas);
+atlas.magFilter = THREE.NearestFilter;
+atlas.minFilter = THREE.NearestFilter;
+atlas.generateMipmaps = false;
+
+// ================= 地形生成 =================
+let seed, world, edits;
+let store = { current: 0, slots: Array(WORLD_SLOTS).fill(null) };
+try {
+  const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+  if (s && Array.isArray(s.slots)) {
+    for (let i = 0; i < WORLD_SLOTS; i++) store.slots[i] = s.slots[i] || null;
+    store.current = Math.min(WORLD_SLOTS - 1, s.current || 0);
+  }
+} catch (e) { /* 壊れたセーブは無視 */ }
+try {
+  // 旧形式（単一ワールド）のセーブを World 1 に引き継ぐ
+  const old = JSON.parse(localStorage.getItem("blockcraft_save"));
+  if (old && typeof old.seed === "number" && !store.slots[0]) {
+    store.slots[0] = { seed: old.seed, edits: old.edits || {} };
+    localStorage.removeItem("blockcraft_save");
+  }
+} catch (e) {}
+
+function saveStore() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(store)); } catch (e) {}
+}
+function loadSlot(i) {
+  store.current = i;
+  if (!store.slots[i]) store.slots[i] = { seed: Math.floor(Math.random() * 100000), edits: {} };
+  seed = store.slots[i].seed;
+  edits = store.slots[i].edits;
+}
+loadSlot(store.current);
+
+function noise2(x, y) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + seed * 0.731) * 43758.5453;
+  return n - Math.floor(n);
+}
+function smoothNoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = noise2(xi, yi), b = noise2(xi + 1, yi), c = noise2(xi, yi + 1), d = noise2(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y) {
+  return smoothNoise(x * 0.03, y * 0.03) * 0.55
+       + smoothNoise(x * 0.08, y * 0.08) * 0.3
+       + smoothNoise(x * 0.2,  y * 0.2)  * 0.15;
+}
+
+const idx = (x, y, z) => x + z * SX + y * SX * SZ;
+function getBlock(x, y, z) {
+  if (x < 0 || y < 0 || z < 0 || x >= SX || y >= SY || z >= SZ) return AIR;
+  return world[idx(x, y, z)];
+}
+function setBlock(x, y, z, v) {
+  if (x < 0 || y < 0 || z < 0 || x >= SX || y >= SY || z >= SZ) return;
+  world[idx(x, y, z)] = v;
+}
+
+function generateWorld() {
+  world = new Uint8Array(SX * SY * SZ);
+  const heights = new Int16Array(SX * SZ);
+  for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
+    const h = Math.floor(3 + Math.pow(fbm(x, z), 1.5) * 36);
+    heights[x + z * SX] = h;
+    for (let y = 0; y <= h; y++) {
+      let b;
+      if (y === h) b = (h <= WATER_LEVEL + 1) ? SAND : GRASS;
+      else if (y >= h - 3) b = (h <= WATER_LEVEL + 1) ? SAND : DIRT;
+      else b = STONE;
+      setBlock(x, y, z, b);
+    }
+    for (let y = h + 1; y <= WATER_LEVEL; y++) setBlock(x, y, z, WATER);
+  }
+  // 木を植える
+  for (let z = 3; z < SZ - 3; z++) for (let x = 3; x < SX - 3; x++) {
+    const h = heights[x + z * SX];
+    if (h <= WATER_LEVEL + 1 || getBlock(x, h, z) !== GRASS) continue;
+    if (noise2(x * 3.7, z * 5.3) > 0.985) {
+      const th = 4 + Math.floor(noise2(x, z) * 2);
+      for (let y = 1; y <= th; y++) setBlock(x, h + y, z, WOOD);
+      for (let dy = th - 1; dy <= th + 2; dy++)
+        for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+          const dist = Math.abs(dx) + Math.abs(dz) + Math.abs(dy - th - 1);
+          if (dist > 4 || (dy <= th && dx === 0 && dz === 0)) continue;
+          if (getBlock(x + dx, h + dy, z + dz) === AIR) setBlock(x + dx, h + dy, z + dz, LEAVES);
+        }
+    }
+  }
+  // 保存済みの編集を反映
+  for (const k in edits) world[k] = edits[k];
+}
+generateWorld();
+
+// ================= Three.js セットアップ =================
+const canvas = document.getElementById("game");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene = new THREE.Scene();
+const SKY = 0x9fd3ef;
+scene.background = new THREE.Color(SKY);
+scene.fog = new THREE.Fog(SKY, 60, 170);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 400);
+camera.rotation.order = "YXZ";
+
+const matSolid = new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true, alphaTest: 0.5 });
+const matWater = new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true, transparent: true, opacity: 0.65, depthWrite: false });
+
+// 面定義: [-x, +x, -y, +y, -z, +z]
+const FACES = [
+  { dir: [-1, 0, 0], shade: 0.8,  corners: [[0,1,0,0,1],[0,0,0,0,0],[0,1,1,1,1],[0,0,1,1,0]] },
+  { dir: [ 1, 0, 0], shade: 0.8,  corners: [[1,1,1,0,1],[1,0,1,0,0],[1,1,0,1,1],[1,0,0,1,0]] },
+  { dir: [ 0,-1, 0], shade: 0.55, corners: [[1,0,1,1,0],[0,0,1,0,0],[1,0,0,1,1],[0,0,0,0,1]] },
+  { dir: [ 0, 1, 0], shade: 1.0,  corners: [[0,1,1,1,1],[1,1,1,0,1],[0,1,0,1,0],[1,1,0,0,0]] },
+  { dir: [ 0, 0,-1], shade: 0.68, corners: [[1,0,0,0,0],[0,0,0,1,0],[1,1,0,0,1],[0,1,0,1,1]] },
+  { dir: [ 0, 0, 1], shade: 0.68, corners: [[0,0,1,0,0],[1,0,1,1,0],[0,1,1,0,1],[1,1,1,1,1]] },
+];
+
+function faceVisible(self, n) {
+  if (n === AIR) return true;
+  if (n === self) return false;
+  if (n === WATER || n === GLASS) return true;
+  return false;
+}
+function tileFor(b, fi) {
+  const d = BLOCKS[b];
+  return fi === 3 ? d.top : fi === 2 ? d.bottom : d.side;
+}
+
+const CX = SX / CHUNK, CZ = SZ / CHUNK;
+const chunkMeshes = [];   // {solid, water}
+
+function buildChunk(cx, cz) {
+  const old = chunkMeshes[cx + cz * CX];
+  if (old) {
+    for (const m of [old.solid, old.water]) if (m) { scene.remove(m); m.geometry.dispose(); }
+  }
+  const data = { solid: null, water: null };
+  for (const pass of ["solid", "water"]) {
+    const pos = [], norm = [], uv = [], col = [], index = [];
+    for (let y = 0; y < SY; y++)
+      for (let z = cz * CHUNK; z < (cz + 1) * CHUNK; z++)
+        for (let x = cx * CHUNK; x < (cx + 1) * CHUNK; x++) {
+          const b = getBlock(x, y, z);
+          if (b === AIR) continue;
+          if ((pass === "water") !== (b === WATER)) continue;
+          for (let fi = 0; fi < 6; fi++) {
+            const f = FACES[fi];
+            const n = getBlock(x + f.dir[0], y + f.dir[1], z + f.dir[2]);
+            if (!faceVisible(b, n)) continue;
+            const t = tileFor(b, fi);
+            const base = pos.length / 3;
+            for (const c of f.corners) {
+              pos.push(x + c[0], y + c[1], z + c[2]);
+              norm.push(f.dir[0], f.dir[1], f.dir[2]);
+              uv.push((t + c[3] * 0.998 + 0.001) / ATLAS_TILES, c[4]);
+              col.push(f.shade, f.shade, f.shade);
+            }
+            index.push(base, base + 1, base + 2, base + 2, base + 1, base + 3);
+          }
+        }
+    if (!index.length) continue;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(norm, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(index);
+    const mesh = new THREE.Mesh(g, pass === "water" ? matWater : matSolid);
+    scene.add(mesh);
+    data[pass] = mesh;
+  }
+  chunkMeshes[cx + cz * CX] = data;
+}
+function rebuildAll() {
+  for (let cz = 0; cz < CZ; cz++) for (let cx = 0; cx < CX; cx++) buildChunk(cx, cz);
+}
+rebuildAll();
+
+function rebuildAt(x, z) {
+  const cx = Math.floor(x / CHUNK), cz = Math.floor(z / CHUNK);
+  const set = new Set([cx + cz * CX]);
+  if (x % CHUNK === 0 && cx > 0) set.add(cx - 1 + cz * CX);
+  if (x % CHUNK === CHUNK - 1 && cx < CX - 1) set.add(cx + 1 + cz * CX);
+  if (z % CHUNK === 0 && cz > 0) set.add(cx + (cz - 1) * CX);
+  if (z % CHUNK === CHUNK - 1 && cz < CZ - 1) set.add(cx + (cz + 1) * CX);
+  for (const k of set) buildChunk(k % CX, Math.floor(k / CX));
+}
+
+// ターゲット枠
+const hl = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.BoxGeometry(1.002, 1.002, 1.002)),
+  new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.6 })
+);
+hl.visible = false;
+scene.add(hl);
+
+// ================= プレイヤー =================
+const P_W = 0.3, P_H = 1.8, EYE = 1.62;
+const player = { x: 0, y: 0, z: 0, vy: 0, onGround: false };
+let yaw = 0, pitch = 0;
+
+function surfaceY(x, z) {
+  for (let y = SY - 1; y >= 0; y--) {
+    const b = getBlock(x, y, z);
+    if (b !== AIR && b !== WATER) return y + 1;
+  }
+  return WATER_LEVEL + 1;
+}
+function respawn() {
+  player.x = SX / 2 + 0.5; player.z = SZ / 2 + 0.5;
+  player.y = surfaceY(SX / 2, SZ / 2) + 0.5;
+  player.vy = 0; yaw = Math.PI * 0.25; pitch = 0;
+}
+respawn();
+
+const isSolid = b => b !== AIR && b !== WATER;
+function collides(px, py, pz) {
+  const x0 = Math.floor(px - P_W), x1 = Math.floor(px + P_W);
+  const z0 = Math.floor(pz - P_W), z1 = Math.floor(pz + P_W);
+  const y0 = Math.floor(py), y1 = Math.floor(py + P_H - 0.01);
+  for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+    if (y < 0) return true;
+    if (isSolid(getBlock(x, y, z))) return true;
+  }
+  return false;
+}
+function inWater() {
+  return getBlock(Math.floor(player.x), Math.floor(player.y + 0.9), Math.floor(player.z)) === WATER;
+}
+
+// ================= 入力 =================
+const keys = {};
+let locked = false;
+const overlay = document.getElementById("overlay");
+
+document.addEventListener("keydown", e => {
+  keys[e.code] = true;
+  if (e.code.startsWith("Digit")) {
+    const n = parseInt(e.code.slice(5));
+    if (n >= 1 && n <= 9) selectSlot(n - 1);
+  }
+});
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+document.getElementById("startBtn").addEventListener("click", () => canvas.requestPointerLock());
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm(`World ${store.current + 1} の編集を消去して、新しい地形を生成します。よろしいですか？`)) {
+    store.slots[store.current] = null;
+    enterWorld(store.current);
+  }
+});
+document.addEventListener("pointerlockchange", () => {
+  locked = document.pointerLockElement === canvas;
+  overlay.style.display = locked ? "none" : "flex";
+  for (const id of ["crosshair", "hotbar", "pos"])
+    document.getElementById(id).style.display = locked ? (id === "hotbar" ? "flex" : "block") : "none";
+});
+document.addEventListener("mousemove", e => {
+  if (!locked) return;
+  yaw -= e.movementX * 0.0024;
+  pitch -= e.movementY * 0.0024;
+  pitch = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, pitch));
+});
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("wheel", e => {
+  if (!locked) return;
+  selectSlot((selected + (e.deltaY > 0 ? 1 : 8)) % 9);
+});
+
+// ================= レイキャスト＆編集 =================
+function raycast() {
+  const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
+  const o = camera.position;
+  let px = null, py = null, pz = null;
+  for (let t = 0; t < 6; t += 0.02) {
+    const x = Math.floor(o.x + dir.x * t), y = Math.floor(o.y + dir.y * t), z = Math.floor(o.z + dir.z * t);
+    if (x === px && y === py && z === pz) continue;
+    const b = getBlock(x, y, z);
+    if (isSolid(b)) return { x, y, z, px, py, pz };
+    px = x; py = y; pz = z;
+  }
+  return null;
+}
+
+let saveTimer = null;
+function recordEdit(x, y, z, v) {
+  edits[idx(x, y, z)] = v;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveStore, 400);
+}
+
+canvas.addEventListener("mousedown", e => {
+  if (!locked) return;
+  const hit = raycast();
+  if (!hit) return;
+  if (e.button === 0) {
+    setBlock(hit.x, hit.y, hit.z, AIR);
+    recordEdit(hit.x, hit.y, hit.z, AIR);
+    rebuildAt(hit.x, hit.z);
+  } else if (e.button === 2 && hit.px !== null) {
+    const { px, py, pz } = hit;
+    if (px < 0 || py < 0 || pz < 0 || px >= SX || py >= SY || pz >= SZ) return;
+    // プレイヤーと重なる位置には置けない
+    if (px + 1 > player.x - P_W && px < player.x + P_W &&
+        pz + 1 > player.z - P_W && pz < player.z + P_W &&
+        py + 1 > player.y && py < player.y + P_H) return;
+    const b = HOTBAR[selected];
+    setBlock(px, py, pz, b);
+    recordEdit(px, py, pz, b);
+    rebuildAt(px, pz);
+  }
+});
+
+// ================= ホットバー UI =================
+let selected = 0;
+const hotbarEl = document.getElementById("hotbar");
+const nameEl = document.getElementById("blockName");
+let nameTimer = null;
+
+HOTBAR.forEach((b, i) => {
+  const slot = document.createElement("div");
+  slot.className = "slot" + (i === 0 ? " sel" : "");
+  const c = document.createElement("canvas");
+  c.width = TILE; c.height = TILE;
+  c.getContext("2d").drawImage(atlasCanvas, BLOCKS[b].side * TILE, 0, TILE, TILE, 0, 0, TILE, TILE);
+  const num = document.createElement("span");
+  num.className = "num"; num.textContent = i + 1;
+  slot.appendChild(c); slot.appendChild(num);
+  hotbarEl.appendChild(slot);
+});
+function selectSlot(i) {
+  selected = i;
+  [...hotbarEl.children].forEach((s, j) => s.classList.toggle("sel", j === i));
+  const b = BLOCKS[HOTBAR[i]];
+  nameEl.textContent = `${b.name}（${b.jp}）`;
+  nameEl.style.opacity = 1;
+  clearTimeout(nameTimer);
+  nameTimer = setTimeout(() => nameEl.style.opacity = 0, 1200);
+}
+
+// ================= ワールド切替 =================
+const worldsEl = document.getElementById("worlds");
+function enterWorld(i) {
+  loadSlot(i);
+  generateWorld();
+  rebuildAll();
+  respawn();
+  saveStore();
+  updateWorldUI();
+}
+function updateWorldUI() {
+  worldsEl.innerHTML = "";
+  for (let i = 0; i < WORLD_SLOTS; i++) {
+    const b = document.createElement("button");
+    b.className = "wslot" + (i === store.current ? " cur" : "");
+    b.innerHTML = `World ${i + 1}<span class="st">${store.slots[i] ? "セーブあり" : "未作成"}</span>`;
+    b.addEventListener("click", () => { if (i !== store.current) enterWorld(i); });
+    worldsEl.appendChild(b);
+  }
+}
+updateWorldUI();
+
+// ================= メインループ =================
+const posEl = document.getElementById("pos");
+const clock = new THREE.Clock();
+
+function step(dt) {
+  const swim = inWater();
+  const speed = (keys.ShiftLeft || keys.ShiftRight ? 8.5 : 5.4) * (swim ? 0.6 : 1);
+  let mx = 0, mz = 0;
+  if (keys.KeyW) { mx -= Math.sin(yaw); mz -= Math.cos(yaw); }
+  if (keys.KeyS) { mx += Math.sin(yaw); mz += Math.cos(yaw); }
+  if (keys.KeyA) { mx -= Math.cos(yaw); mz += Math.sin(yaw); }
+  if (keys.KeyD) { mx += Math.cos(yaw); mz -= Math.sin(yaw); }
+  const len = Math.hypot(mx, mz);
+  if (len > 0) { mx = mx / len * speed * dt; mz = mz / len * speed * dt; }
+
+  if (!collides(player.x + mx, player.y, player.z)) player.x += mx;
+  if (!collides(player.x, player.y, player.z + mz)) player.z += mz;
+
+  if (swim) {
+    player.vy = Math.max(player.vy - 10 * dt, -2.2);
+    if (keys.Space) player.vy = 4;
+  } else {
+    player.vy -= 24 * dt;
+    if (keys.Space && player.onGround) player.vy = 8.4;
+  }
+  const dy = player.vy * dt;
+  player.onGround = false;
+  if (!collides(player.x, player.y + dy, player.z)) {
+    player.y += dy;
+  } else {
+    if (dy < 0) player.onGround = true;
+    player.vy = 0;
+  }
+  if (player.y < -20) respawn();
+
+  camera.position.set(player.x, player.y + EYE, player.z);
+  camera.rotation.set(pitch, yaw, 0);
+
+  const hit = locked ? raycast() : null;
+  if (hit) {
+    hl.visible = true;
+    hl.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
+  } else hl.visible = false;
+
+  posEl.textContent = `x:${player.x.toFixed(1)} y:${player.y.toFixed(1)} z:${player.z.toFixed(1)}`;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (locked) step(dt);
+  else camera.rotation.set(pitch, yaw += dt * 0.02, 0), camera.position.set(player.x, player.y + EYE, player.z);
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
