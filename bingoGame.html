@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BINGO GAME — ビンゴゲーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --twilight-a: hsl(240 86% 34%);
+    --twilight-b: hsl(285 90% 46%);
+    --twilight-c: hsl(334 100% 58%);
+    --ink: #2b3440;
+    --ink-soft: rgba(43, 52, 64, 0.62);
+    --on-bg: #f7f3fc;
+    --on-bg-soft: rgba(247, 243, 252, 0.72);
+    --glass: #ffffff;
+    --glass-edge: rgba(43, 52, 64, 0.08);
+    --cell: rgba(43, 52, 64, 0.045);
+    --cell-edge: rgba(43, 52, 64, 0.12);
+    --accent: #e0705f;
+    --accent-bright: #ff9478;
+    --accent-soft: rgba(224, 112, 95, 0.15);
+    --gold: #c8912e;
+    --gold-bright: #f2c14e;
+    --gold-soft: rgba(200, 145, 46, 0.18);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { min-height: 100%; margin: 0; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255, 255, 255, 0.16), transparent 65%),
+      linear-gradient(180deg, var(--twilight-a), var(--twilight-b), var(--twilight-c));
+    color: var(--on-bg);
+    font-family: "Space Grotesk", "Noto Sans JP", sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .scene {
+    width: min(820px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  header { text-align: center; line-height: 1; }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 8vw, 40px);
+    font-weight: 700;
+    letter-spacing: 0.34em;
+    margin-right: -0.34em;
+  }
+
+  h1 .o { color: var(--accent-bright); }
+
+  .subtitle {
+    margin-top: 8px;
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    margin-right: -0.3em;
+    color: var(--on-bg-soft);
+  }
+
+  /* 抽選ドラム */
+  .drum {
+    position: relative;
+    width: clamp(200px, 52vw, 250px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(14px);
+    box-shadow:
+      0 24px 50px -24px rgba(8, 4, 26, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    animation: card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .drum .letter {
+    min-width: 44px;
+    text-align: center;
+    padding: 3px 14px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .drum .letter.on { opacity: 1; }
+
+  .drum .number {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: clamp(72px, 19vw, 96px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    transition: filter 0.15s ease, opacity 0.15s ease;
+  }
+
+  .drum .number.ready {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(20px, 5vw, 24px);
+    letter-spacing: 0.28em;
+    margin-right: -0.28em;
+    color: var(--ink-soft);
+  }
+
+  .drum.spinning .number { filter: blur(2px); opacity: 0.75; }
+
+  .drum.landed .number { animation: land 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @keyframes land {
+    0%   { transform: scale(0.72); }
+    100% { transform: none; }
+  }
+
+  .drum.landed::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    opacity: 0;
+    animation: ring 0.9s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes ring {
+    0%   { opacity: 0.8; transform: scale(0.96); }
+    100% { opacity: 0; transform: scale(1.12); }
+  }
+
+  .draw {
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 52px;
+    background: var(--accent);
+    color: #fff;
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    margin-right: -0.24em;
+    text-indent: 0.24em;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 14px 30px -12px rgba(224, 112, 95, 0.45);
+  }
+
+  .draw:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 18px 34px -12px rgba(224, 112, 95, 0.5); }
+  .draw:active:not(:disabled) { transform: scale(0.97); }
+  .draw:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(8px);
+  }
+
+  .chip b {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* チェックシート */
+  .sheet {
+    width: 100%;
+    padding: clamp(10px, 3vw, 18px);
+    border-radius: 20px;
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(14px);
+    box-shadow:
+      0 24px 50px -24px rgba(8, 4, 26, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 1.2vw, 9px);
+  }
+
+  .sheet-row {
+    display: grid;
+    grid-template-columns: auto repeat(15, 1fr);
+    gap: clamp(4px, 1vw, 7px);
+    align-items: center;
+  }
+
+  .sheet-row .label {
+    width: clamp(20px, 4.5vw, 30px);
+    text-align: center;
+    font-weight: 700;
+    font-size: clamp(13px, 3.2vw, 18px);
+    color: var(--ink-soft);
+  }
+
+  .sheet-row:last-child .label { color: var(--accent); }
+
+  .slot {
+    aspect-ratio: 1;
+    border-radius: 26%;
+    border: 1px solid var(--cell-edge);
+    background: var(--cell);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: clamp(11px, 2.8vw, 17px);
+    font-weight: 600;
+    color: var(--ink-soft);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .slot.drawn {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .slot.latest {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+    box-shadow: 0 0 0 2px var(--gold-soft), 0 4px 14px -4px var(--gold);
+  }
+
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .tool {
+    appearance: none;
+    border: 1px solid var(--glass-edge);
+    border-radius: 999px;
+    padding: 8px 18px;
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 24px -14px rgba(8, 4, 26, 0.4);
+  }
+
+  .tool:hover { transform: translateY(-1px); }
+  .tool:active { transform: scale(0.97); }
+  .tool.off { color: var(--ink-soft); }
+
+  .nav {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 12px;
+  }
+
+  .nav a { color: var(--on-bg-soft); text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.35); padding-bottom: 1px; }
+  .nav a:hover { color: var(--accent-bright); border-color: var(--accent-bright); }
+
+  .complete {
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--gold-bright);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="scene">
+    <header>
+      <h1>B<span>I</span>NG<span class="o">O</span></h1>
+      <div class="subtitle">ビンゴゲーム</div>
+    </header>
+
+    <div class="drum" id="drum">
+      <span class="letter" id="letter">B</span>
+      <span class="number ready" id="number">READY</span>
+    </div>
+
+    <button class="draw" id="draw">スタート</button>
+
+    <div class="status">
+      <span class="chip">出た数 <b id="drawnCount">0</b></span>
+      <span class="chip">残り <b id="leftCount">75</b></span>
+    </div>
+    <div class="complete" id="complete"></div>
+
+    <div class="sheet" id="sheet"></div>
+
+    <div class="tools">
+      <button class="tool" id="soundBtn">🔊 サウンド ON</button>
+      <button class="tool" id="fsBtn">フルスクリーン</button>
+      <button class="tool" id="resetBtn">リセット</button>
+    </div>
+
+    <div class="nav"><a href="bingo.html">ビンゴカードはこちら →</a></div>
+  </div>
+
+<script>
+  const STORAGE_KEY = "bingo-game-v1";
+  const LETTERS = ["B", "I", "N", "G", "O"];
+  const letterOf = n => LETTERS[Math.floor((n - 1) / 15)];
+
+  const drum = document.getElementById("drum");
+  const letterEl = document.getElementById("letter");
+  const numberEl = document.getElementById("number");
+  const drawBtn = document.getElementById("draw");
+  const sheet = document.getElementById("sheet");
+  const soundBtn = document.getElementById("soundBtn");
+  const completeEl = document.getElementById("complete");
+
+  let drawn = [];        // 出た順の番号
+  let soundOn = true;
+  let spinning = false;
+  let audioCtx = null;
+
+  // ---- サウンド（WebAudio・アセット不要）----
+  function ctx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tick() {
+    if (!soundOn) return;
+    const ac = ctx(), t = ac.currentTime;
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.type = "square";
+    osc.frequency.value = 640 + Math.random() * 240;
+    g.gain.setValueAtTime(0.028, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    osc.connect(g).connect(ac.destination);
+    osc.start(t); osc.stop(t + 0.05);
+  }
+
+  function ding() {
+    if (!soundOn) return;
+    const ac = ctx(), t = ac.currentTime;
+    [[880, 0], [1174.66, 0.09]].forEach(([f, d]) => {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.12, t + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.5);
+      osc.connect(g).connect(ac.destination);
+      osc.start(t + d); osc.stop(t + d + 0.55);
+    });
+  }
+
+  // ---- 状態 ----
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ drawn, soundOn }));
+  }
+
+  function load() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (Array.isArray(data.drawn)) drawn = data.drawn.filter(n => n >= 1 && n <= 75);
+      if (typeof data.soundOn === "boolean") soundOn = data.soundOn;
+    } catch (e) {}
+  }
+
+  // ---- 描画 ----
+  function buildSheet() {
+    sheet.innerHTML = "";
+    for (let r = 0; r < 5; r++) {
+      const row = document.createElement("div");
+      row.className = "sheet-row";
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = LETTERS[r];
+      row.appendChild(label);
+      for (let i = 1; i <= 15; i++) {
+        const n = r * 15 + i;
+        const slot = document.createElement("span");
+        slot.className = "slot";
+        slot.id = "slot-" + n;
+        slot.textContent = n;
+        row.appendChild(slot);
+      }
+      sheet.appendChild(row);
+    }
+  }
+
+  function showNumber(n) {
+    numberEl.classList.remove("ready");
+    numberEl.textContent = n;
+    letterEl.textContent = letterOf(n);
+    letterEl.classList.add("on");
+  }
+
+  function update() {
+    document.querySelectorAll(".slot").forEach(s => s.classList.remove("drawn", "latest"));
+    drawn.forEach(n => document.getElementById("slot-" + n).classList.add("drawn"));
+    if (drawn.length) {
+      const last = drawn[drawn.length - 1];
+      const el = document.getElementById("slot-" + last);
+      el.classList.remove("drawn");
+      el.classList.add("latest");
+      showNumber(last);
+    } else {
+      numberEl.classList.add("ready");
+      numberEl.textContent = "READY";
+      letterEl.classList.remove("on");
+    }
+    document.getElementById("drawnCount").textContent = drawn.length;
+    document.getElementById("leftCount").textContent = 75 - drawn.length;
+    const done = drawn.length >= 75;
+    drawBtn.disabled = done || spinning;
+    completeEl.textContent = done ? "🎉 すべての番号が出ました" : "";
+  }
+
+  // ---- 抽選 ----
+  function spin() {
+    if (spinning || drawn.length >= 75) return;
+    const pool = [];
+    for (let n = 1; n <= 75; n++) if (!drawn.includes(n)) pool.push(n);
+    const final = pool[Math.floor(Math.random() * pool.length)];
+
+    spinning = true;
+    drawBtn.disabled = true;
+    drum.classList.add("spinning");
+    drum.classList.remove("landed");
+    letterEl.classList.add("on");
+
+    let interval = 40;
+    const flicker = () => {
+      if (interval > 340) {
+        drum.classList.remove("spinning");
+        drum.classList.add("landed");
+        drawn.push(final);
+        spinning = false;
+        ding();
+        update();
+        save();
+        return;
+      }
+      const n = pool[Math.floor(Math.random() * pool.length)];
+      showNumber(n);
+      tick();
+      interval *= 1.12;
+      setTimeout(flicker, interval);
+    };
+    flicker();
+  }
+
+  drawBtn.addEventListener("click", spin);
+
+  // ---- ツール ----
+  function renderSoundBtn() {
+    soundBtn.textContent = soundOn ? "🔊 サウンド ON" : "🔇 サウンド OFF";
+    soundBtn.classList.toggle("off", !soundOn);
+  }
+
+  soundBtn.addEventListener("click", () => {
+    soundOn = !soundOn;
+    renderSoundBtn();
+    save();
+  });
+
+  document.getElementById("fsBtn").addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (drawn.length && !confirm("抽選履歴をすべてリセットしますか？")) return;
+    drawn = [];
+    drum.classList.remove("landed", "spinning");
+    update();
+    save();
+  });
+
+  // ---- 初期化 ----
+  load();
+  buildSheet();
+  renderSoundBtn();
+  update();
+</script>
+</body>
+</html>
