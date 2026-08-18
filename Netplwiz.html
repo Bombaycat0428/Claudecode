@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユーザー アカウント (netplwiz)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", "Meiryo", sans-serif;
+      font-size: 12px;
+      user-select: none;
+    }
+    body {
+      background-color: #f0f0f0;
+      /* display: flex;
+      justify-content: center;
+      align-items: center; */
+      height: 100vh;
+      margin: 0;
+    }
+    .window {
+      width: 420px;
+      background: #f0f0f0;
+      border: 1px solid #707070;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      margin: 50px auto;
+    }
+    .title-bar {
+      background: #ffffff;
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .title-bar-text {
+      font-size: 12px;
+      color: #000;
+    }
+    .close-btn {
+      width: 18px;
+      height: 18px;
+      line-height: 16px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .close-btn:hover {
+      background: #e81123;
+      color: #fff;
+    }
+    .tabs {
+      display: flex;
+      background: #f0f0f0;
+      padding: 6px 6px 0 6px;
+      border-bottom: 1px solid #0078d7;
+    }
+    .tab {
+      padding: 4px 12px;
+      background: #e1e1e1;
+      border: 1px solid #a0a0a0;
+      border-bottom: none;
+      margin-right: 2px;
+      border-top-left-radius: 3px;
+      border-top-right-radius: 3px;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: #f0f0f0;
+      border-color: #0078d7;
+      margin-bottom: -1px;
+      padding-bottom: 5px;
+    }
+    .content {
+      padding: 12px;
+      background: #f0f0f0;
+    }
+    .checkbox-container {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-container input {
+      margin-right: 6px;
+    }
+    .box-title {
+      color: #003399;
+      margin-bottom: 4px;
+    }
+    .user-list-container {
+      border: 1px solid #a0a0a0;
+      background: #fff;
+      height: 150px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background: #f0f0f0;
+      text-align: left;
+      font-weight: normal;
+      border-bottom: 1px solid #d9d9d9;
+      border-right: 1px solid #d9d9d9;
+      padding: 3px 6px;
+    }
+    td {
+      padding: 3px 6px;
+      white-space: nowrap;
+    }
+    tr.selected {
+      background-color: #0078d7;
+      color: #fff;
+    }
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    button {
+      min-width: 75px;
+      padding: 4px 12px;
+      background: #e1e1e1;
+      border: 1px solid #adadad;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e5f1fb;
+      border-color: #0078d7;
+    }
+    button:disabled {
+      background: #f4f4f4;
+      color: #a1a1a1;
+      border-color: #d9d9d9;
+      cursor: default;
+    }
+    .fieldset {
+      border: 1px solid #d9d9d9;
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+    .fieldset legend {
+      color: #003399;
+    }
+    .footer-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 1px solid #dfdfdf;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background-color: #f8f9fa;
+    }
+    .card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #e0e0e0;
+    }
+.card {
+    display: block;
+    clear: both;
+    margin-bottom: 20px; /* カード同士の間隔 */
+    }
+    h1 {
+      font-size: 1.4rem;
+      border-bottom: 2px solid #0078d4;
+      padding-bottom: 8px;
+      margin-top: 0;
+      color: #0078d4;
+    }
+    ol {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    kbd {
+      background-color: #eee;
+      border: 1px solid #b4b4b4;
+      border-radius: 3px;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+      color: #333;
+      display: inline-block;
+      font-size: 0.85em;
+      font-weight: 700;
+      line-height: 1;
+      padding: 2px 5px;
+      white-space: nowrap;
+    }
+    code {
+      background-color: #f1f1f1;
+      color: #d63384;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .note {
+      background-color: #fff8e1;
+      border-left: 4px solid #ffc107;
+      padding: 12px 16px;
+      margin-top: 20px;
+      border-radius: 0 4px 4px 0;
+    }
+    .note h2 {
+      font-size: 1rem;
+      margin: 0 0 8px 0;
+      color: #856404;
+    }
+    .path {
+      font-weight: bold;
+      color: #198754;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>自動ログイン設定手順（Windows 10 / 11 共通）</h1>
+
+  <ol>
+    <li>キーボードの <kbd>Windows</kbd> + <kbd>R</kbd> を同時に押します。</li>
+    <li>名前の欄に <code>netplwiz</code> と入力して <kbd>Enter</kbd> を押します。</li>
+    <li>「ユーザー アカウント」画面が開いたら、自動ログインさせたいアカウントを選択して選択状態（青く反転）にします。</li>
+    <li><strong>「ユーザーがこのコンピューターを使うには、ユーザー名とパスワードの入力が必要」</strong> のチェックを外します。</li>
+    <li>「適用」を押すとパスワード入力画面が出るので、該当アカウントのパスワードを入力して 「OK」 を押します。</li>
+  </ol>
+
+  <div class="note">
+    <h2>※「チェックボックスが表示されない」場合</h2>
+    <p>Windows 11 や最近の Windows 10 では、セキュリティ設定によってチェックボックスが非表示になっていることがあります。</p>
+    <p>その場合は、以下を確認・変更してください。</p>
+    <p class="path">設定アプリ ＞ アカウント ＞ サインイン オプション</p>
+    <p><strong>「安全のため、このデバイスでは Microsoft アカウントに対して Windows Hello サインインのみを許可する」</strong> という項目を <strong>「オフ」</strong> に変更してから、再度 <code>netplwiz</code> を開きます。</p>
+  </div>
+</div>
+<div class="window">
+  <div class="title-bar">
+    <span class="title-bar-text">ユーザー アカウント</span>
+    <button class="close-btn">✕</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">ユーザー</div>
+    <div class="tab">詳細設定</div>
+  </div>
+
+  <div class="content">
+    <div class="checkbox-container">
+      <input type="checkbox" id="require-signin" checked>
+      <label for="require-signin">ユーザーがこのコンピューターを使うには、ユーザー名とパスワードの入力が必要(E)</label>
+    </div>
+
+    <div class="box-title">このコンピューターのユーザー(U):</div>
+
+    <div class="user-list-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40%;">ユーザー名</th>
+            <th style="width: 60%;">グループ</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody">
+          <tr class="selected" onclick="selectRow(this)">
+            <td>Administrator</td>
+            <td>Administrators</td>
+          </tr>
+          <tr onclick="selectRow(this)">
+            <td>User01</td>
+            <td>Users</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="button-group">
+      <button>追加(D)...</button>
+      <button>削除(R)</button>
+      <button>プロパティ(P)</button>
+    </div>
+
+    <div class="fieldset">
+      <legend>パスワードの変更</legend>
+      <span style="color: #555;">選択したユーザーのパスワードを変更できます。</span>
+      <div style="margin-top: 6px; text-align: right;">
+        <button id="reset-pwd-btn">パスワードのリセット(S)...</button>
+      </div>
+    </div>
+
+    <div class="footer-buttons">
+      <button onclick="alert('設定を適用しました')">OK</button>
+      <button>キャンセル</button>
+      <button onclick="alert('適用しました')">適用(A)</button>
+    </div>
+  </div>
+</div>
+<script>
+  function selectRow(row) {
+    const rows = document.querySelectorAll('#user-tbody tr');
+    rows.forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+  }
+</script>
+
+</body>
+</html>
