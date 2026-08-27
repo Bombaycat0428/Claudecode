@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRW Watch — 日本円⇄韓国ウォン為替ウォッチ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f3f5f8;
+    --paper:rgba(255,255,255,.72);
+    --paper-solid:#ffffff;
+    --ink:#232a33;
+    --muted:#707c8a;
+    --line:rgba(80,100,130,.18);
+    --accent:#2f5fa8;
+    --accent-dark:#234a87;
+    --accent-soft:rgba(47,95,168,.1);
+    --up:#c0392b;
+    --up-soft:rgba(192,57,43,.1);
+    --down:#2f6fa8;
+    --down-soft:rgba(47,111,168,.1);
+    --warn:#a3711f;
+    --warn-soft:rgba(163,113,31,.1);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(circle at 12% 0%, rgba(47,95,168,.07), transparent 45%),
+      radial-gradient(circle at 88% 8%, rgba(192,57,43,.05), transparent 45%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.7;
+    min-height:100vh;
+  }
+  .mono{font-family:"Space Mono",monospace}
+  .page{max-width:960px;margin:0 auto;padding:40px 20px 80px}
+
+  /* ---- Hero ---- */
+  .hero{padding:8px 4px 26px;border-bottom:1px solid var(--line);margin-bottom:22px}
+  .eyebrow{
+    font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.24em;
+    color:var(--accent-dark);font-weight:700;margin:0 0 10px;
+  }
+  h1{
+    font-family:"Noto Serif JP",serif;font-weight:700;
+    font-size:clamp(22px,3.6vw,30px);margin:0 0 12px;letter-spacing:.02em;
+  }
+  .lead{color:var(--muted);font-size:14px;max-width:640px;margin:0}
+
+  .disclaimer{
+    background:var(--warn-soft);border:1px solid rgba(163,113,31,.28);
+    border-radius:12px;padding:13px 16px;margin-bottom:24px;
+    font-size:12.5px;color:#6e4f16;display:flex;gap:9px;align-items:flex-start;
+  }
+  .disclaimer .mark{flex-shrink:0;font-size:14px;line-height:1.5}
+
+  /* ---- Status bar ---- */
+  .statusbar{
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+    gap:12px;margin-bottom:20px;
+  }
+  .status-left{display:flex;flex-direction:column;gap:2px}
+  .clock{font-size:20px;font-weight:700;letter-spacing:.03em}
+  .clock-label{font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .status-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .updated-note{font-size:12px;color:var(--muted)}
+  .btn{
+    font-family:"Noto Sans JP",sans-serif;font-size:12.5px;font-weight:500;
+    color:var(--accent-dark);background:var(--paper);
+    border:1px solid var(--line);border-radius:99px;padding:8px 15px;
+    cursor:pointer;backdrop-filter:blur(6px);transition:background .2s;white-space:nowrap;
+  }
+  .btn:hover{background:#fff}
+  .btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* ---- Rate card ---- */
+  .rate-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:26px 24px;backdrop-filter:blur(10px);margin-bottom:20px;
+    box-shadow:0 4px 20px rgba(60,80,110,.06);
+  }
+  .rate-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .rate-title{font-size:13px;color:var(--muted);font-weight:500}
+  .change-tag{
+    font-family:"Space Mono",monospace;font-size:12.5px;font-weight:700;
+    padding:4px 10px;border-radius:99px;
+  }
+  .change-tag.up{color:var(--up);background:var(--up-soft)}
+  .change-tag.down{color:var(--down);background:var(--down-soft)}
+  .change-tag.flat{color:var(--muted);background:rgba(0,0,0,.04)}
+
+  .amount-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{
+    font-size:12.5px;padding:6px 14px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line);background:var(--paper);color:var(--muted);
+    transition:.2s;font-family:"Space Mono",monospace;
+  }
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  .rate-main{
+    display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+    padding:16px 4px;border-bottom:1px dashed var(--line);margin-bottom:14px;
+  }
+  .rate-main .from{font-size:16px;color:var(--muted)}
+  .rate-main .eq{font-size:16px;color:var(--muted)}
+  .rate-main .to{
+    font-size:clamp(28px,7vw,40px);font-weight:700;color:var(--accent-dark);
+    transition:opacity .25s;
+  }
+  .rate-main .unit{font-size:14px;color:var(--muted)}
+  .rate-main.pulse .to{animation:flash .6s ease}
+  @keyframes flash{
+    0%{opacity:.2}
+    100%{opacity:1}
+  }
+
+  .rate-sub{display:flex;align-items:baseline;gap:10px;font-size:14px;color:var(--ink)}
+  .rate-sub .val{font-size:17px;font-weight:700;color:var(--accent-dark)}
+
+  /* ---- Converter ---- */
+  .converter{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:24px;backdrop-filter:blur(10px);margin-bottom:20px;
+  }
+  .converter h2, .chart-card h2{
+    font-family:"Noto Serif JP",serif;font-size:17px;margin:0 0 16px;
+  }
+  .conv-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .conv-field{flex:1 1 220px;display:flex;flex-direction:column;gap:6px}
+  .conv-field label{font-size:11.5px;color:var(--muted)}
+  .conv-input{
+    display:flex;align-items:center;gap:8px;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+  }
+  .conv-input input{
+    flex:1;min-width:0;border:none;outline:none;background:transparent;
+    font-family:"Space Mono",monospace;font-size:19px;color:var(--ink);
+  }
+  .conv-input span{font-size:12.5px;color:var(--muted)}
+  .conv-swap{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;color:var(--accent-dark);cursor:pointer;font-size:15px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .conv-swap:hover{background:var(--accent-soft)}
+
+  /* ---- Chart ---- */
+  .chart-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:24px;backdrop-filter:blur(10px);margin-bottom:20px;
+  }
+  .chart-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .range-chips{display:flex;gap:8px}
+  .chart-wrap{position:relative}
+  svg.chart{width:100%;height:180px;display:block;overflow:visible}
+  .chart-empty{font-size:13px;color:var(--muted);padding:30px 0;text-align:center}
+  .chart-line{fill:none;stroke:var(--accent);stroke-width:2}
+  .chart-area{fill:var(--accent-soft);stroke:none}
+  .chart-point{fill:var(--accent-dark)}
+  .chart-axis-label{font-size:10px;fill:var(--muted);font-family:"Space Mono",monospace}
+
+  footer{
+    font-size:11.5px;color:var(--muted);text-align:center;line-height:1.9;
+    border-top:1px solid var(--line);padding-top:20px;
+  }
+  footer a{color:var(--accent-dark)}
+
+  @media (max-width:520px){
+    .statusbar{flex-direction:column;align-items:flex-start}
+    .rate-top{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">JPY ⇄ KRW EXCHANGE WATCH</p>
+    <h1>KRW Watch</h1>
+    <p class="lead">日本円と韓国ウォンの為替レートをウォッチできるツールです。金額換算と直近の推移をまとめて確認できます。</p>
+  </header>
+
+  <div class="disclaimer">
+    <span class="mark">⚠</span>
+    <span>表示レートはECB（欧州中央銀行）が平日に発表する参考レートで、<b>1日1回の更新</b>です。銀行・両替所・カード会社が実際に適用するレートとは異なります。送金や両替の判断には、必ず各金融機関の最新レートをご確認ください。</span>
+  </div>
+
+  <div class="statusbar">
+    <div class="status-left">
+      <div class="clock mono" id="clock">--:--:--</div>
+      <div class="clock-label">現在時刻（この端末のローカル時刻）</div>
+    </div>
+    <div class="status-right">
+      <span class="updated-note" id="updatedNote">レート取得中…</span>
+      <button class="btn" id="refreshBtn">今すぐ更新</button>
+      <button class="btn" id="autoBtn">自動更新: ON</button>
+    </div>
+  </div>
+
+  <section class="rate-card">
+    <div class="rate-top">
+      <span class="rate-title">JPY → KRW 基準レート</span>
+      <span class="change-tag flat" id="changeTag">前日比 —</span>
+    </div>
+
+    <div class="amount-chips" id="amountChips">
+      <span class="chip mono" data-amount="100">¥100</span>
+      <span class="chip mono active" data-amount="1000">¥1,000</span>
+      <span class="chip mono" data-amount="10000">¥10,000</span>
+      <span class="chip mono" data-amount="100000">¥100,000</span>
+    </div>
+
+    <div class="rate-main" id="rateMain">
+      <span class="from mono" id="mainFrom">¥1,000</span>
+      <span class="eq">=</span>
+      <span class="to mono" id="mainTo">----</span>
+      <span class="unit">ウォン</span>
+    </div>
+
+    <div class="rate-sub">
+      <span>10,000ウォン ＝</span>
+      <span class="val mono" id="reverseVal">----</span>
+      <span>円</span>
+    </div>
+  </section>
+
+  <section class="converter">
+    <h2>Converter<span style="display:block;font-family:'Noto Sans JP',sans-serif;font-size:12.5px;color:var(--muted);font-weight:500;margin-top:3px">金額を入力すると自動で相互換算します</span></h2>
+    <div class="conv-row">
+      <div class="conv-field">
+        <label>日本円 (JPY)</label>
+        <div class="conv-input">
+          <span>¥</span>
+          <input type="number" id="jpyInput" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+      <button class="conv-swap" id="swapBtn" title="表示の向きを入れ替え">⇄</button>
+      <div class="conv-field">
+        <label>韓国ウォン (KRW)</label>
+        <div class="conv-input">
+          <span>₩</span>
+          <input type="number" id="krwInput" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <div class="chart-head">
+      <h2 style="margin:0">Rate History<span style="display:block;font-family:'Noto Sans JP',sans-serif;font-size:12.5px;color:var(--muted);font-weight:500;margin-top:3px">JPY→KRW の推移（平日の参考レート）</span></h2>
+      <div class="range-chips" id="rangeChips">
+        <span class="chip" data-days="7">7日</span>
+        <span class="chip active" data-days="30">30日</span>
+        <span class="chip" data-days="90">90日</span>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <div class="chart-empty" id="chartEmpty">データを読み込み中…</div>
+      <svg class="chart" id="chartSvg" viewBox="0 0 600 180" preserveAspectRatio="none" style="display:none"></svg>
+    </div>
+  </section>
+
+  <footer>
+    データ出典：<a href="https://frankfurter.dev/" target="_blank" rel="noopener">Frankfurter API</a>（ECB＝欧州中央銀行の平日参考レート、1日1回更新）<br>
+    自動更新は5分間隔でAPIに問い合わせ、実際にレートが変わったタイミングで反映します。取得したデータはこの端末のブラウザ内（localStorage）にキャッシュされ、外部には送信されません。
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var API_BASE = "https://api.frankfurter.dev/v1";
+  var STORAGE_KEY = "krwWatch_v1";
+
+  var state = {
+    rate: null,        // KRW per 1 JPY
+    prevRate: null,    // previous day's rate (for change tag)
+    date: null,        // rate date (YYYY-MM-DD)
+    fetchedAt: null,   // ISO timestamp of last successful fetch
+    amount: 1000,
+    history: {},        // { "7": [{date,rate}], "30": [...], "90": [...] }
+    range: "30",
+    autoRefresh: true,
+    convDirection: "jpy2krw" // which field the user is actively typing into is tracked via events instead
+  };
+
+  var clockEl = document.getElementById("clock");
+  var updatedNoteEl = document.getElementById("updatedNote");
+  var refreshBtn = document.getElementById("refreshBtn");
+  var autoBtn = document.getElementById("autoBtn");
+  var changeTagEl = document.getElementById("changeTag");
+  var amountChipsEl = document.getElementById("amountChips");
+  var rateMainEl = document.getElementById("rateMain");
+  var mainFromEl = document.getElementById("mainFrom");
+  var mainToEl = document.getElementById("mainTo");
+  var reverseValEl = document.getElementById("reverseVal");
+  var jpyInput = document.getElementById("jpyInput");
+  var krwInput = document.getElementById("krwInput");
+  var swapBtn = document.getElementById("swapBtn");
+  var rangeChipsEl = document.getElementById("rangeChips");
+  var chartSvg = document.getElementById("chartSvg");
+  var chartEmpty = document.getElementById("chartEmpty");
+
+  var autoTimer = null;
+
+  // ---- cache ----
+  function loadCache(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed && typeof parsed.rate === "number"){
+          state.rate = parsed.rate;
+          state.prevRate = parsed.prevRate || null;
+          state.date = parsed.date || null;
+          state.fetchedAt = parsed.fetchedAt || null;
+          if(parsed.history) state.history = parsed.history;
+        }
+      }
+    }catch(e){}
+  }
+
+  function saveCache(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        rate: state.rate,
+        prevRate: state.prevRate,
+        date: state.date,
+        fetchedAt: state.fetchedAt,
+        history: state.history
+      }));
+    }catch(e){}
+  }
+
+  // ---- formatting ----
+  function fmtKrw(n){
+    return Math.round(n).toLocaleString("ja-JP");
+  }
+  function fmtJpy(n){
+    return Math.round(n).toLocaleString("ja-JP");
+  }
+
+  // ---- clock ----
+  function tickClock(){
+    var now = new Date();
+    clockEl.textContent = now.toLocaleTimeString("ja-JP", { hour12:false });
+  }
+
+  // ---- rendering ----
+  function renderUpdatedNote(){
+    if(!state.fetchedAt){
+      updatedNoteEl.textContent = "レート取得中…";
+      return;
+    }
+    var fetched = new Date(state.fetchedAt);
+    updatedNoteEl.textContent =
+      "レート基準日: " + (state.date || "-") +
+      "　最終取得: " + fetched.toLocaleTimeString("ja-JP", { hour12:false });
+  }
+
+  function renderChangeTag(){
+    if(state.rate == null || state.prevRate == null || state.prevRate === 0){
+      changeTagEl.textContent = "前日比 —";
+      changeTagEl.className = "change-tag flat";
+      return;
+    }
+    var diff = state.rate - state.prevRate;
+    var pct = (diff / state.prevRate) * 100;
+    if(Math.abs(pct) < 0.005){
+      changeTagEl.textContent = "前日比 ±0.00%";
+      changeTagEl.className = "change-tag flat";
+      return;
+    }
+    var sign = diff > 0 ? "+" : "";
+    changeTagEl.textContent = "前日比 " + sign + pct.toFixed(2) + "%";
+    changeTagEl.className = "change-tag " + (diff > 0 ? "up" : "down");
+  }
+
+  function renderRate(pulse){
+    if(state.rate == null){
+      mainToEl.textContent = "----";
+      reverseValEl.textContent = "----";
+      return;
+    }
+    mainFromEl.textContent = "¥" + state.amount.toLocaleString("ja-JP");
+    mainToEl.textContent = fmtKrw(state.amount * state.rate);
+    reverseValEl.textContent = fmtJpy(10000 / state.rate);
+
+    if(pulse){
+      rateMainEl.classList.remove("pulse");
+      void rateMainEl.offsetWidth; // reflow to restart animation
+      rateMainEl.classList.add("pulse");
+    }
+    renderChangeTag();
+    renderUpdatedNote();
+  }
+
+  // ---- converter ----
+  function renderConverterFromJpy(){
+    if(state.rate == null) return;
+    var v = parseFloat(jpyInput.value);
+    if(Number.isNaN(v)){ krwInput.value = ""; return; }
+    krwInput.value = Math.round(v * state.rate * 100) / 100;
+  }
+  function renderConverterFromKrw(){
+    if(state.rate == null) return;
+    var v = parseFloat(krwInput.value);
+    if(Number.isNaN(v)){ jpyInput.value = ""; return; }
+    jpyInput.value = Math.round((v / state.rate) * 100) / 100;
+  }
+
+  jpyInput.addEventListener("input", renderConverterFromJpy);
+  krwInput.addEventListener("input", renderConverterFromKrw);
+  swapBtn.addEventListener("click", function(){
+    var tmp = jpyInput.value;
+    jpyInput.value = krwInput.value;
+    krwInput.value = tmp;
+    if(jpyInput.value){ renderConverterFromJpy(); }
+    else if(krwInput.value){ renderConverterFromKrw(); }
+  });
+
+  // ---- amount chips ----
+  amountChipsEl.addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    state.amount = Number(chip.dataset.amount);
+    Array.prototype.forEach.call(amountChipsEl.querySelectorAll(".chip"), function(c){
+      c.classList.toggle("active", c === chip);
+    });
+    renderRate(false);
+  });
+
+  // ---- chart ----
+  function renderChart(){
+    var days = state.history[state.range];
+    if(!days || !days.length){
+      chartSvg.style.display = "none";
+      chartEmpty.style.display = "block";
+      chartEmpty.textContent = "データを読み込み中…";
+      return;
+    }
+    chartEmpty.style.display = "none";
+    chartSvg.style.display = "block";
+    chartSvg.innerHTML = "";
+
+    var W = 600, H = 180, padX = 8, padY = 16;
+    var rates = days.map(function(d){ return d.rate; });
+    var min = Math.min.apply(null, rates);
+    var max = Math.max.apply(null, rates);
+    if(min === max){ min -= 0.01; max += 0.01; }
+
+    function x(i){
+      return padX + (i / (days.length - 1)) * (W - padX * 2);
+    }
+    function y(v){
+      return H - padY - ((v - min) / (max - min)) * (H - padY * 2);
+    }
+
+    var linePoints = days.map(function(d,i){ return x(i) + "," + y(d.rate); }).join(" ");
+    var areaPoints = linePoints + " " + x(days.length-1) + "," + (H-padY) + " " + x(0) + "," + (H-padY);
+
+    var ns = "http://www.w3.org/2000/svg";
+
+    var area = document.createElementNS(ns, "polygon");
+    area.setAttribute("points", areaPoints);
+    area.setAttribute("class", "chart-area");
+    chartSvg.appendChild(area);
+
+    var line = document.createElementNS(ns, "polyline");
+    line.setAttribute("points", linePoints);
+    line.setAttribute("class", "chart-line");
+    chartSvg.appendChild(line);
+
+    days.forEach(function(d, i){
+      // thin out points for readability on long ranges
+      if(days.length > 40 && i % Math.ceil(days.length/40) !== 0 && i !== days.length-1) return;
+      var c = document.createElementNS(ns, "circle");
+      c.setAttribute("cx", x(i));
+      c.setAttribute("cy", y(d.rate));
+      c.setAttribute("r", 2.4);
+      c.setAttribute("class", "chart-point");
+      var title = document.createElementNS(ns, "title");
+      title.textContent = d.date + " : 1円 = " + d.rate.toFixed(4) + "ウォン";
+      c.appendChild(title);
+      chartSvg.appendChild(c);
+    });
+
+    var labelFirst = document.createElementNS(ns, "text");
+    labelFirst.setAttribute("x", x(0));
+    labelFirst.setAttribute("y", H - 2);
+    labelFirst.setAttribute("class", "chart-axis-label");
+    labelFirst.textContent = days[0].date;
+    chartSvg.appendChild(labelFirst);
+
+    var labelLast = document.createElementNS(ns, "text");
+    labelLast.setAttribute("x", x(days.length-1));
+    labelLast.setAttribute("y", H - 2);
+    labelLast.setAttribute("text-anchor", "end");
+    labelLast.setAttribute("class", "chart-axis-label");
+    labelLast.textContent = days[days.length-1].date;
+    chartSvg.appendChild(labelLast);
+  }
+
+  rangeChipsEl.addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    state.range = chip.dataset.days;
+    Array.prototype.forEach.call(rangeChipsEl.querySelectorAll(".chip"), function(c){
+      c.classList.toggle("active", c === chip);
+    });
+    if(state.history[state.range]){
+      renderChart();
+    }else{
+      chartEmpty.style.display = "block";
+      chartSvg.style.display = "none";
+      chartEmpty.textContent = "データを読み込み中…";
+      fetchHistory(state.range);
+    }
+  });
+
+  // ---- fetching ----
+  function isoDate(d){
+    return d.toISOString().slice(0,10);
+  }
+
+  function fetchLatest(){
+    return fetch(API_BASE + "/latest?base=JPY&symbols=KRW")
+      .then(function(res){
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        var newRate = data.rates && data.rates.KRW;
+        if(typeof newRate !== "number") throw new Error("invalid response");
+
+        if(state.date && state.date !== data.date && state.rate != null){
+          state.prevRate = state.rate;
+        }
+        state.rate = newRate;
+        state.date = data.date;
+        state.fetchedAt = new Date().toISOString();
+        saveCache();
+        renderRate(true);
+        renderConverterFromJpy();
+        updatedNoteEl.style.color = "";
+      })
+      .catch(function(err){
+        updatedNoteEl.textContent = "取得に失敗しました（前回取得したデータを表示中）";
+        updatedNoteEl.style.color = "var(--warn)";
+        console.error("fetchLatest failed:", err);
+      });
+  }
+
+  function fetchHistory(days){
+    var end = new Date();
+    var start = new Date();
+    start.setDate(end.getDate() - Number(days));
+    var url = API_BASE + "/" + isoDate(start) + ".." + isoDate(end) + "?base=JPY&symbols=KRW";
+
+    return fetch(url)
+      .then(function(res){
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        var list = Object.keys(data.rates || {}).sort().map(function(d){
+          return { date:d, rate:data.rates[d].KRW };
+        }).filter(function(d){ return typeof d.rate === "number"; });
+        state.history[days] = list;
+
+        if(list.length >= 2 && (state.prevRate == null)){
+          state.prevRate = list[list.length-2].rate;
+        }
+        saveCache();
+        if(state.range === days){
+          renderChart();
+        }
+        renderChangeTag();
+      })
+      .catch(function(err){
+        if(state.range === days){
+          chartEmpty.style.display = "block";
+          chartSvg.style.display = "none";
+          chartEmpty.textContent = "推移データを取得できませんでした。";
+        }
+        console.error("fetchHistory failed:", err);
+      });
+  }
+
+  // ---- auto refresh ----
+  function startAutoRefresh(){
+    stopAutoRefresh();
+    autoTimer = setInterval(function(){
+      fetchLatest();
+    }, 5 * 60 * 1000);
+  }
+  function stopAutoRefresh(){
+    if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+  }
+
+  refreshBtn.addEventListener("click", function(){
+    fetchLatest();
+    fetchHistory(state.range);
+  });
+
+  autoBtn.addEventListener("click", function(){
+    state.autoRefresh = !state.autoRefresh;
+    autoBtn.textContent = "自動更新: " + (state.autoRefresh ? "ON" : "OFF");
+    autoBtn.classList.toggle("active", state.autoRefresh);
+    if(state.autoRefresh) startAutoRefresh(); else stopAutoRefresh();
+  });
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden){
+      stopAutoRefresh();
+    }else if(state.autoRefresh){
+      fetchLatest();
+      startAutoRefresh();
+    }
+  });
+
+  // ---- init ----
+  loadCache();
+  if(state.rate != null){
+    renderRate(false);
+  }
+  if(state.history[state.range]){
+    renderChart();
+  }
+
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  autoBtn.classList.add("active");
+
+  fetchLatest();
+  fetchHistory(state.range);
+  startAutoRefresh();
+})();
+</script>
+</body>
+</html>
