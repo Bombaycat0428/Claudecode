@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+<meta name="referrer" content="no-referrer">
 <title>有給付与管理 | Paid Leave Grant Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,7 +292,7 @@ footer.page-footer {
   <div class="fields">
     <div class="field grow-2">
       <label for="f-name">氏名<span style="color:var(--danger)">*</span></label>
-      <input id="f-name" type="text" placeholder="例: 山田 太郎" autocomplete="off">
+      <input id="f-name" type="text" placeholder="例: 山田 太郎" autocomplete="off" maxlength="100">
     </div>
     <div class="field">
       <label for="f-hiredate">入社日<span style="color:var(--danger)">*</span></label>
@@ -381,7 +383,7 @@ footer.page-footer {
     <div class="fields" style="margin-bottom:0.4rem;">
       <div class="field grow-2">
         <label for="em-name">氏名</label>
-        <input id="em-name" type="text" autocomplete="off">
+        <input id="em-name" type="text" autocomplete="off" maxlength="100">
       </div>
       <div class="field">
         <label for="em-hiredate">入社日</label>
@@ -425,23 +427,43 @@ function loadEmployees() {
   let list;
   try { list = JSON.parse(localStorage.getItem(STORE_KEY)) ?? []; }
   catch (e) { return []; }
+  if (!Array.isArray(list)) return [];
   // 旧データ（雇用形態フルタイム/パート方式）を週所定労働日数のみの形式に変換
-  return list.map(emp => {
+  const migrated = list.map(emp => {
+    if (!emp || typeof emp !== 'object') return emp;
     if (emp.weeklyDays != null && emp.employmentType === undefined) return emp;
     const { employmentType, weeklyDays, ...rest } = emp;
     return { ...rest, weeklyDays: employmentType === 'parttime' ? (weeklyDays || 4) : 5 };
   });
+  // 破損・改ざんされたレコードを除外し、各フィールドを検証・正規化する
+  return migrated.map(sanitizeEmployee).filter(Boolean);
 }
 function saveEmployees(list) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
 }
 function genId() {
+  if (window.crypto && typeof crypto.randomUUID === 'function') return 'emp-' + crypto.randomUUID();
   return 'emp-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function isValidHireDate(s) {
+  if (typeof s !== 'string' || !DATE_RE.test(s)) return false;
+  const d = parseDate(s);
+  return !Number.isNaN(d.getTime());
+}
+function sanitizeEmployee(emp) {
+  if (!emp || typeof emp !== 'object') return null;
+  const id = typeof emp.id === 'string' && emp.id ? emp.id : genId();
+  const name = typeof emp.name === 'string' ? emp.name.trim().slice(0, 100) : '';
+  const weeklyDays = [1, 2, 3, 4, 5].includes(Number(emp.weeklyDays)) ? Number(emp.weeklyDays) : 5;
+  if (!name || !isValidHireDate(emp.hireDate)) return null;
+  return { id, name, hireDate: emp.hireDate, weeklyDays, createdAt: typeof emp.createdAt === 'string' ? emp.createdAt : new Date().toISOString() };
 }
 
 let employees = loadEmployees();
@@ -531,10 +553,11 @@ document.getElementById('btn-add').addEventListener('click', () => {
 
   if (!name) { setMsg('氏名を入力してください。', 'err'); return; }
   if (!hireDate) { setMsg('入社日を入力してください。', 'err'); return; }
+  if (!isValidHireDate(hireDate)) { setMsg('入社日の形式が正しくありません。', 'err'); return; }
 
   const rec = {
     id: genId(),
-    name,
+    name: name.slice(0, 100),
     hireDate,
     weeklyDays,
     createdAt: new Date().toISOString(),
@@ -766,11 +789,12 @@ document.getElementById('edit-save').addEventListener('click', () => {
 
   if (!name) { setEditMsg('氏名を入力してください。', 'err'); return; }
   if (!hireDate) { setEditMsg('入社日を入力してください。', 'err'); return; }
+  if (!isValidHireDate(hireDate)) { setEditMsg('入社日の形式が正しくありません。', 'err'); return; }
 
   const idx = employees.findIndex(x => x.id === editingId);
   if (idx < 0) { closeEdit(); return; }
 
-  employees[idx] = { ...employees[idx], name, hireDate, weeklyDays };
+  employees[idx] = { ...employees[idx], name: name.slice(0, 100), hireDate, weeklyDays };
   saveEmployees(employees);
   render();
   closeEdit();
