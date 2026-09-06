@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>韓国史年表シート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --wood:       #6b4423;
+  --board:      #15281c;
+  --board-up:   #1c3324;
+  --line:       rgba(255,255,255,0.35);
+  --line-soft:  rgba(255,255,255,0.2);
+  --white:      #ffffff;
+  --yellow:     #ffd84d;
+  --pink:       #ff9eb5;
+  --blue:       #8ecae6;
+  --green:      #8ee06a;
+  --purple:     #c08eff;
+  --muted:      rgba(255,255,255,0.78);
+
+  --jp: 'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --en: 'Inter', sans-serif;
+  --r: 8px;
+  --r-sm: 5px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 112.5%; } /* base 18px */
+
+body {
+  font-family: var(--jp);
+  background: #4a2f18;
+  color: var(--white);
+  min-height: 100vh;
+  padding: 24px 14px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  background-color: var(--board);
+  border: 12px solid var(--wood);
+  border-radius: 8px;
+  padding: 2rem 1.5rem 1.6rem;
+}
+
+/* ── Header ── */
+header { margin-bottom: 2rem; }
+
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+  border-bottom: 3px solid var(--line-soft);
+  padding-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.header-brand { display: flex; align-items: center; gap: 1rem; }
+
+.git-logo { width: 48px; height: 48px; flex-shrink: 0; }
+
+.header-eyebrow {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--yellow);
+  margin-bottom: 4px;
+}
+
+header h1 {
+  font-family: var(--jp);
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+}
+
+.header-sub {
+  font-family: var(--jp);
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.header-stats { text-align: right; flex-shrink: 0; }
+
+.stat-count {
+  font-family: var(--en);
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: var(--yellow);
+  line-height: 1;
+}
+
+.stat-sep { color: var(--muted); font-size: 1.6rem; }
+.stat-denom { color: var(--muted); }
+.stat-label { font-family: var(--jp); font-weight: 700; font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
+
+.quiz-link {
+  display: inline-block;
+  margin-top: 10px;
+  background: var(--yellow);
+  color: #2a1f06;
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.quiz-link:hover { background: #ffe27a; }
+.quiz-link:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+
+/* ── progress chain ── */
+.git-graph {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.git-graph::-webkit-scrollbar { height: 6px; }
+.git-graph::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 3px; }
+
+.graph-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.graph-dot {
+  --pct: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: conic-gradient(var(--yellow) calc(var(--pct) * 360deg), rgba(255,255,255,0.18) 0);
+  position: relative;
+  cursor: default;
+}
+.graph-dot::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--board);
+}
+.graph-node[data-complete="true"] .graph-dot {
+  background: var(--green);
+}
+.graph-node[data-complete="true"] .graph-dot::after { background: var(--board); }
+
+.graph-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+  max-width: 78px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.graph-node[data-complete="true"] .graph-label { color: var(--green); }
+
+.graph-line {
+  height: 4px;
+  flex: 1;
+  min-width: 16px;
+  background: rgba(255,255,255,0.18);
+  align-self: flex-start;
+  margin-top: 9px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.graph-line::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: calc(var(--filled, 0) * 100%);
+  background: var(--green);
+}
+
+/* ── Cards ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+/* ── Card header ── */
+.card-header {
+  background: rgba(255,255,255,0.07);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 3px solid var(--line);
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0;
+  height: 5px;
+  width: calc(var(--section-pct, 0) * 100%);
+  background: var(--green);
+}
+.card-header:active { cursor: grabbing; }
+
+.card-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.card-commit-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--yellow);
+  flex-shrink: 0;
+}
+.card[data-complete="true"] .card-commit-dot {
+  background: var(--green);
+}
+
+.card-section-name {
+  font-family: var(--jp);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.card-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.card-hash {
+  font-family: var(--en);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.drag-handle { font-size: 1.2rem; color: var(--muted); }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; }
+
+tr {
+  border-bottom: 2px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+tr:last-child { border-bottom: none; }
+tr:hover { background: rgba(255,255,255,0.08); }
+tr.learned { background: rgba(142,224,106,0.14); }
+tr.learned:hover { background: rgba(142,224,106,0.22); }
+
+td { padding: 1rem 0.9rem; vertical-align: middle; }
+
+td.check-col {
+  width: 56px;
+  text-align: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  padding: 1rem 0.4rem 1rem 0.9rem;
+  color: rgba(255,255,255,0.55);
+  border-left: 5px solid transparent;
+}
+tr:hover td.check-col { border-left-color: var(--blue); color: var(--blue); }
+tr.learned td.check-col { color: var(--green); border-left-color: var(--green); }
+
+td.cmd-col {
+  font-family: var(--en);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--yellow);
+  white-space: normal;
+  word-break: break-word;
+  width: 38%;
+}
+tr.learned td.cmd-col { color: var(--green); }
+
+td.desc-col {
+  font-family: var(--jp);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.55;
+}
+tr.learned td.desc-col { color: rgba(142,224,106,0.9); }
+
+td.del-col {
+  width: 48px;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 1.2rem;
+  padding: 1rem 0.6rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+td.del-col:hover { color: var(--pink); background: rgba(255,158,181,0.18); }
+
+/* ── Tags ── */
+.tag {
+  display: inline-block;
+  font-family: var(--jp);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+.tag.danger { background: rgba(255,158,181,0.2); color: var(--pink); border: 2px solid rgba(255,158,181,0.5); }
+.tag.tip    { background: rgba(142,202,230,0.2); color: var(--blue); border: 2px solid rgba(142,202,230,0.5); }
+
+/* ── Add section ── */
+.add-section {
+  background: var(--board-up);
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.add-form {
+  padding: 1.2rem 1.3rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.add-form .field { display: flex; flex-direction: column; gap: 6px; }
+
+.add-form label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.add-form input,
+.add-form select {
+  background: rgba(0,0,0,0.3);
+  border: 2px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--white);
+  padding: 0.7rem 0.9rem;
+  font-size: 1.1rem;
+  font-family: var(--jp);
+  outline: none;
+  min-height: 48px;
+}
+.add-form input:focus,
+.add-form select:focus {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255,216,77,0.3);
+}
+.add-form input.cmd-input { font-family: var(--en); font-weight: 700; color: var(--yellow); width: 220px; font-size: 1.15rem; }
+.add-form input.desc-input { width: 280px; }
+.add-form select { width: 220px; cursor: pointer; }
+.add-form select option { background: #1c3324; color: var(--white); }
+
+.add-form button {
+  background: var(--yellow);
+  color: #2a1f06;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  font-family: var(--jp);
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+}
+.add-form button:hover { background: #ffe27a; }
+.add-form button:active { transform: scale(0.97); }
+
+/* ── Footer ── */
+footer {
+  margin-top: 1.5rem;
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+footer p {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* ── Focus (大きく見やすいフォーカスリング) ── */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+tr:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--board-up);
+  border: 4px solid var(--yellow);
+  border-radius: 10px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.8rem 1.8rem 1.6rem;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: rgba(0,0,0,0.25);
+  color: var(--white);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { background: rgba(255,158,181,0.25); border-color: var(--pink); }
+
+.modal-word {
+  font-family: var(--en);
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--yellow);
+  padding-right: 3rem;
+}
+
+.modal-meaning {
+  font-family: var(--jp);
+  font-size: 1.2rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 3px solid var(--line-soft);
+}
+
+.modal-example {
+  margin-top: 1.2rem;
+}
+.modal-example-label {
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--blue);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.modal-example-en {
+  font-family: var(--en);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.5;
+  margin-bottom: 0.4rem;
+}
+.modal-example-jp {
+  font-family: var(--jp);
+  font-size: 1.15rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.modal-example.pop {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.modal-example.pop .modal-example-label { color: var(--yellow); }
+.modal-example.pop .modal-example-en { color: var(--yellow); }
+.modal-example.pop .modal-example-jp { color: rgba(255,216,77,0.8); }
+
+.modal-example.alt {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 2px dashed var(--line-soft);
+}
+.modal-example.alt .modal-example-label { color: var(--purple); }
+.modal-example.alt .modal-example-en { color: var(--purple); }
+.modal-example.alt .modal-example-jp { color: rgba(192,142,255,0.8); }
+
+/* ── 韓国史版の微調整（用語・本文は日本語フォントで表示） ── */
+td.cmd-col,
+.modal-word,
+.modal-example-en,
+.add-form input.cmd-input { font-family: var(--jp); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  header h1 { font-size: 1.7rem; }
+  .stat-count { font-size: 2rem; }
+  .add-form input { width: 100% !important; }
+  .add-form select { width: 100%; }
+  td.cmd-col { font-size: 1.25rem; }
+  td.desc-col { font-size: 1.05rem; }
+  .modal-word { font-size: 1.5rem; }
+  .modal-example-en { font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="header-top">
+    <div class="header-brand">
+      <svg class="git-logo" viewBox="0 0 92 92" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="18" width="64" height="14" rx="4" fill="#ffffff"/>
+        <rect x="24" y="32" width="14" height="42" rx="3" fill="#ffd84d"/>
+        <rect x="54" y="32" width="14" height="42" rx="3" fill="#ffd84d"/>
+      </svg>
+      <div>
+        <div class="header-eyebrow">本日の授業：韓国史</div>
+        <h1>韓国史年表シート</h1>
+        <div class="header-sub">用語をクリックすると解説が見られます。左の☐をクリックすると覚えたチェックがつきます</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-count">
+        <span id="stat-learned">0</span><span class="stat-sep"> / </span><span id="stat-total" class="stat-denom">0</span>
+      </div>
+      <div class="stat-label">覚えた用語</div>
+    </div>
+  </div>
+  <div class="git-graph" id="git-graph"></div>
+</header>
+
+<div class="grid" id="grid">
+
+  <div class="card" data-section="古朝鮮">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">古朝鮮</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 1</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="天から降りた桓雄と熊女の子である檀君王険が、紀元前2333年に古朝鮮を建国したと伝わる建国神話。史実というより、朝鮮民族の始まりを説明する伝承として語り継がれている。" data-pop="熊が人になった夜、天と地の間に小さな国が生まれた。神話の霧の向こうから、この土地の一番古い物語が始まる。" data-chuni="天帝の子と熊より転生せし乙女が結ばれし禁断の血脈……それは半島の歴史そのものの始まりを告げる、神話の産声であった。"><td class="check-col">☐</td><td class="cmd-col">檀君神話</td><td class="desc-col">古朝鮮の建国神話、檀君王険が開国したと伝わる <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="檀君神話を建国伝承に持つ、朝鮮半島に成立した最初の国家。青銅器文化を基盤に勢力を広げ、後期には鉄器文化も取り入れて中国の諸勢力と接触した。" data-pop="半島の空に初めて上がった一本の旗。まだ地図にも載らないその国が、すべての始まりの一ページだった。" data-chuni="幾多の部族を束ねし半島最初の国家……その産声こそが、数千年に及ぶ興亡の物語の第一頁である。"><td class="check-col">☐</td><td class="cmd-col">古朝鮮</td><td class="desc-col">朝鮮半島最初の国家、青銅器・鉄器文化を背景に成立</td></tr>
+      <tr data-normal="紀元前194年ごろ、中国・燕から亡命した衛満が古朝鮮の王位を奪って成立させた政権。鉄器文化や中継貿易を背景に勢力を強めたが、紀元前108年に前漢の武帝に滅ぼされた。" data-pop="海を渡ってきたよそ者が、いつしか玉座の主になる。鉄の刃を手にした新しい王朝が、半島の北で静かに息づく。" data-chuni="亡命者の身より王位を簒奪せし者の国……されどその栄華も、大陸の巨獣の前にはわずか一世紀の夢に過ぎなかった。"><td class="check-col">☐</td><td class="cmd-col">衛氏朝鮮</td><td class="desc-col">中国からの亡命者・衛満が古朝鮮の王位を奪って建てた政権</td></tr>
+      <tr data-normal="古朝鮮の社会にあったとされる法。中国の史書「漢書」に一部が記録されており、現存するのは殺人・傷害・窃盗を罰する3条のみで、当時の身分制度や私有財産の存在をうかがわせる。" data-pop="石にも紙にも残らなかった掟が、隣国の書物にわずか三行だけ書き留められている。それでも十分、あの国の暮らしが見えてくる。" data-chuni="大陸の史書にわずか三条のみ刻まれし断片の掟……失われた残り五条は、今も歴史の闇に眠ったままである。"><td class="check-col">☐</td><td class="cmd-col">8条の法（犯禁八条）</td><td class="desc-col">古朝鮮に伝わる法、現存するのは3条のみ</td></tr>
+      <tr data-normal="紀元前108年、前漢の武帝が衛氏朝鮮を滅ぼした後、朝鮮半島北部に設置した4つの郡（楽浪郡など）。中国の文化や制度が半島に伝わる窓口となった。" data-pop="北の空に立った異国の役所の旗。押しつけられた支配のはずが、いつしか新しい文化が行き交う窓になっていく。" data-chuni="大陸の巨獣が北の大地に打ち立てし四つの拠点……それは支配の楔であると同時に、文明を運ぶ扉ともなった。"><td class="check-col">☐</td><td class="cmd-col">漢四郡</td><td class="desc-col">前漢が古朝鮮を滅ぼした後に設置した4つの統治拠点</td></tr>
+      <tr data-normal="紀元前1000年ごろから朝鮮半島で発達した青銅器文化を背景に、各地に支石墓（ドルメン）が築かれた。世界の支石墓の半数近くが朝鮮半島にあるとされ、代表的なものは世界文化遺産に登録されている。" data-pop="巨大な一枚岩を空に持ち上げた、名もなき人々の記念碑。何千年経っても、その静けさは風化しない。" data-chuni="大地に突き立てられし巨石の記念碑……それは名もなき王たちが、永遠を求めて遺した沈黙の遺言である。"><td class="check-col">☐</td><td class="cmd-col">青銅器文化と支石墓</td><td class="desc-col">朝鮮半島に多数残る巨石墓、世界文化遺産にも登録</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="三国時代">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">三国時代</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 2</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="中国東北部から朝鮮半島北部にかけて勢力を広げた国。伝承では紀元前37年に朱蒙（東明聖王）が建国したとされ、後に東アジア屈指の軍事強国に成長した。" data-pop="弓の名手が北の大地に降り立った日、小さな部族の集まりが一つの国に生まれ変わった。" data-chuni="弓矢の神と称えられし者が打ち立てし北方の雄国……その建国譚は、半島の歴史に刻まれた最初の英雄叙事詩である。"><td class="check-col">☐</td><td class="cmd-col">高句麗の建国</td><td class="desc-col">伝承では紀元前37年、朱蒙（東明聖王）が建国 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="4世紀末から5世紀初めにかけて在位し、満州から朝鮮半島中部まで高句麗の領土を大きく広げた王。その業績は中国吉林省にある「広開土王碑」に詳しく刻まれている。" data-pop="馬蹄の音が大陸を駆け抜けて、地図の線をどこまでも押し広げていく。石碑に刻まれた栄光は、千六百年たっても色あせない。" data-chuni="版図を極限まで押し広げし高句麗最盛期の王者……その武勲は巨大な石碑に刻まれ、今なお大地に立ち続けている。"><td class="check-col">☐</td><td class="cmd-col">広開土王</td><td class="desc-col">高句麗最大版図を築いた王、業績を伝える石碑が現存</td></tr>
+      <tr data-normal="朝鮮半島南西部に成立した国。伝承では高句麗の建国者・朱蒙の子である温祚が紀元前18年に建国したとされ、日本列島とも活発に交流した。" data-pop="漢江のほとりに新しい旗が立った。海を渡る船の舳先には、まだ見ぬ島国への憧れが乗っていた。" data-chuni="北の英雄王の血を継ぎし者が南に開きし新天地……その国は後に、海を越えた島国とも深き縁を結ぶこととなる。"><td class="check-col">☐</td><td class="cmd-col">百済の建国</td><td class="desc-col">伝承では紀元前18年、朱蒙の子・温祚が建国</td></tr>
+      <tr data-normal="朝鮮半島南東部に成立した国。伝承では紀元前57年に朴赫居世が建国したとされる。三国の中では発展が遅れていたが、後に唐と結んで半島統一を成し遂げる。" data-pop="卵から生まれた王の伝説が、東の谷に小さな灯をともした。誰も知らなかったその灯が、やがて半島全体を照らすことになる。" data-chuni="卵より生まれし始祖王の伝説を持つ東方の小国……されど後の世、この国こそが半島統一という悲願を成し遂げる者となる。"><td class="check-col">☐</td><td class="cmd-col">新羅の建国</td><td class="desc-col">伝承では紀元前57年、朴赫居世が建国、後に半島を統一</td></tr>
+      <tr data-normal="洛東江流域に存在した小国の連合体。良質な鉄の生産と交易で栄え、日本列島とも交流したが、統一国家を形成できないまま6世紀に新羅に併合された。" data-pop="川辺の国々が緩やかに手をつないで、鉄の輝きで一つの時代を照らした。まとまりきれなかったその連合は、静かに歴史の奥へ沈んでいく。" data-chuni="鉄の恵みを武器に栄えし川辺の小国連合……されど一つの王冠を戴くことなく、その名は歴史の狭間へと消えていった。"><td class="check-col">☐</td><td class="cmd-col">加耶（伽耶）連盟</td><td class="desc-col">洛東江流域の小国連合、鉄の生産で栄えた</td></tr>
+      <tr data-normal="中国大陸から朝鮮半島に伝わった仏教は、高句麗で372年、百済で384年に公認された。新羅では貴族の反対が強かったが、527年ごろ殉教者イチャドンの逸話を経て公認された。" data-pop="海を越えて渡ってきた小さな教えが、三つの国それぞれの速さで根を下ろしていく。最後の国には、一人の殉教者の祈りが必要だった。" data-chuni="大陸より三国それぞれの地に降り立ちし新たな信仰……その定着のため、ある国では一人の若者が己の命さえも捧げたという。"><td class="check-col">☐</td><td class="cmd-col">仏教の伝来</td><td class="desc-col">高句麗372年・百済384年・新羅527年ごろに公認 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="新羅の貴族の子弟からなる青年修養集団。心身を鍛え、忠誠や勇気を重んじる規律のもとで人材を育成し、後の半島統一戦争で軍事的にも大きな役割を果たした。" data-pop="山野を駆ける若者たちの誓いの声。彼らが胸に刻んだ約束が、やがて半島の運命を動かす力になる。" data-chuni="忠と勇の誓いのもとに鍛え上げられし若き戦士団……その魂こそが、新羅を統一の頂へと押し上げる原動力となった。"><td class="check-col">☐</td><td class="cmd-col">花郎（ファラン）</td><td class="desc-col">新羅の貴族青年による修養集団、統一戦争で活躍</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="統一新羅・渤海">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">統一新羅・渤海</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 3</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="新羅は唐と同盟して660年に百済、668年に高句麗を滅ぼした後、朝鮮半島の直接支配を狙う唐と戦い（676年ごろ）、これを退けて大同江以南の統一を実現した。" data-pop="一度手を組んだ相手を、今度は自分の力ではね返す。長く続いた三国の物語が、ようやく一つのエンディングを迎える。" data-chuni="敵の敵と手を組み、その手をも振り払いし新羅の決断……三国鼎立の長き物語は、こうして一つの結末へと収束した。"><td class="check-col">☐</td><td class="cmd-col">羅唐戦争と半島統一</td><td class="desc-col">新羅が唐と結んで百済・高句麗を滅ぼし、唐も退けて統一 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="新羅特有の身分制度で、生まれた血統によって就ける官職の上限や日常生活の細部までが厳格に定められていた。統一後も社会の硬直化を招き、新羅衰退の一因ともなった。" data-pop="生まれた瞬間に、進める道の先まで決められている。どんなに才能があっても、血の壁だけは越えられない。" data-chuni="生まれながらにして運命の天井が定められし血統の掟……いかなる才も、この鎖の前では無力であった。"><td class="check-col">☐</td><td class="cmd-col">骨品制</td><td class="desc-col">血統によって身分・官職の上限が決まる新羅の身分制度</td></tr>
+      <tr data-normal="8世紀半ば、統一新羅の都・慶州近郊に建てられた仏教寺院と石窟寺院。当時の高い建築・彫刻技術を伝える代表的な文化財で、ともに世界文化遺産に登録されている。" data-pop="石を積んで祈りの形にした山の中腹に、静かに座る仏の眼差し。千年の時を超えても、その微笑みは変わらない。" data-chuni="山の胎内に彫り込まれし祈りの結晶……その仏の眼差しは、千二百年の時を超えてなお衆生を見守り続ける。"><td class="check-col">☐</td><td class="cmd-col">仏国寺と石窟庵</td><td class="desc-col">8世紀の統一新羅を代表する仏教建築、世界遺産</td></tr>
+      <tr data-normal="高句麗滅亡後、その遺民と靺鞨の人々を率いた大祚栄が698年に建国した国。旧高句麗の領域を中心に満州から朝鮮半島北部にまたがる領土を持ち、新羅と並び立った（南北国時代）。" data-pop="滅びた国の民が、北の大地でもう一度旗を掲げる。新羅と肩を並べたその国は、忘れられた王国のリベンジだった。" data-chuni="滅びし高句麗の魂を継ぎし者たちが北方に打ち立てし再生の国……新羅と並び立ちしその姿は、まさしく不死鳥の如くであった。"><td class="check-col">☐</td><td class="cmd-col">渤海の建国</td><td class="desc-col">698年、大祚栄が高句麗の遺民らを率いて建国</td></tr>
+      <tr data-normal="9世紀末、王位争いや地方豪族の台頭で新羅が弱体化すると、甄萱が後百済を、弓裔が後高句麗を建て、新羅と合わせて三勢力が並び立つ後三国時代となった。" data-pop="一つだった国が、もう一度三つの旗に分かれていく。歴史はまた最初の物語を、少し違う顔で繰り返す。" data-chuni="統一の栄華に翳りが差し、大地は再び三つの旗に引き裂かれた……歴史は巡り、三国の物語は新たな幕を開ける。"><td class="check-col">☐</td><td class="cmd-col">新羅の衰退と後三国時代</td><td class="desc-col">9世紀末、新羅が弱体化し後百済・後高句麗が並立</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="高麗">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">高麗</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 4</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="後高句麗の武将だった王建は918年に高麗を建国し、935年に新羅の降伏を受け、936年に後百済を破って朝鮮半島を再び統一した。" data-pop="三つに割れていた地図が、一人の武将の手で一枚に重なり直す。新しい国の名前が、半島にもう一度平和の合図を送る。" data-chuni="三国に裂かれし大地を再びひとつに縫い合わせし武人の王……その旗のもとに、半島は久方ぶりの統一を取り戻した。"><td class="check-col">☐</td><td class="cmd-col">王建と高麗の建国</td><td class="desc-col">918年建国、936年に朝鮮半島を再統一</td></tr>
+      <tr data-normal="958年、光宗が中国（後周）の制度にならって導入した官吏登用試験。学識によって人材を選ぶ建前の制度で、後の朝鮮王朝にも受け継がれた。" data-pop="血筋じゃなく答案用紙が、出世の階段を決める時代が来る。もっとも、その階段に立てる人はまだ限られていたけれど。" data-chuni="筆一本で己の運命を切り開く道が開かれし時……されどその門は、なお限られし者にのみ許されていた。"><td class="check-col">☐</td><td class="cmd-col">科挙制度の導入</td><td class="desc-col">958年、光宗が中国にならって導入した官吏登用試験</td></tr>
+      <tr data-normal="高麗時代に発達した、翡翠色の釉薬が特徴の陶磁器。文様を彫って白土や赤土を埋め込む象嵌（しょうがん）技法は高麗独自のもので、当時の東アジアで高く評価された。" data-pop="翡翠色の釉薬の下に、雲と鶴の模様がそっと眠っている。土くれが器になるまでの時間が、そのまま美しさになった。" data-chuni="翠玉の色を土に封じ込めし職人たちの秘技……その象嵌の紋様は、時を超えて今も静かな輝きを放つ。"><td class="check-col">☐</td><td class="cmd-col">高麗青磁</td><td class="desc-col">独自の象嵌技法で知られる高麗時代の陶磁器</td></tr>
+      <tr data-normal="モンゴルの侵入を仏の力で退けようと、13世紀に約8万枚の木版に彫刻された仏教経典の集大成。現在も慶尚南道の海印寺に保管され、世界文化遺産・記憶遺産に登録されている。" data-pop="一枚一枚の木の板に、祈りの文字を彫り続けた歳月。八万枚の板が集まって、一つの巨大な願いになった。" data-chuni="侵略者への恐怖を経文に変え、八万枚の板に刻みし民族の祈り……その一枚一枚が、今も護国の意志を宿している。"><td class="check-col">☐</td><td class="cmd-col">高麗大蔵経（八万大蔵経）</td><td class="desc-col">モンゴル撃退を祈願し彫られた木版大蔵経、海印寺に現存 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="1377年に高麗で印刷された仏教書「直指」は、現存する世界最古の金属活字による印刷物とされる。グーテンベルクの活版印刷（15世紀半ば）よりも早い時期の技術として知られる。" data-pop="一文字ずつ金属に刻んだ活字が、遠くヨーロッパより早く本を刷り出す。その事実は、長い間静かに歴史の隅で眠っていた。" data-chuni="西の大陸に先んじて金属に文字を刻みし者たち……その一冊の書物は、忘れられた技術の勝利を今に伝えている。"><td class="check-col">☐</td><td class="cmd-col">金属活字とジキジ（直指）</td><td class="desc-col">1377年印刷、現存する世界最古の金属活字本 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="13世紀、高麗はモンゴル（元）から数度にわたり侵攻を受け、都を江華島に移して抵抗した。朝廷が元に屈服した後も、軍事組織「三別抄」は済州島まで転戦して抵抗を続けた。" data-pop="島に逃れた都が、それでも旗を降ろさない。最後まで戦い続けた者たちの声は、海の向こうまで届いていた。" data-chuni="世界を呑み込みし蒼き狼の大軍にすら屈せざりし者たち……三別抄の意地は、絶望の中でなお最後まで燃え続けた。"><td class="check-col">☐</td><td class="cmd-col">モンゴルの侵入と三別抄</td><td class="desc-col">13世紀の度重なる侵攻、三別抄が最後まで抵抗</td></tr>
+      <tr data-normal="14世紀、日本の武装集団（倭寇）による朝鮮半島沿岸への襲撃が頻発した。これに対処した崔瑩や李成桂ら武将の台頭は、後の高麗滅亡・朝鮮建国の一因ともなった。" data-pop="海の向こうから来る影に、沿岸の村は何度も夜を明かした。その脅威と戦った武将たちが、次の時代の主役になっていく。" data-chuni="海より押し寄せし武装せる影の群れ……これを退けし武人たちの武名こそが、次なる王朝の礎となった。"><td class="check-col">☐</td><td class="cmd-col">倭寇の襲来</td><td class="desc-col">14世紀、日本の武装集団による朝鮮半島沿岸への襲撃</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="朝鮮王朝前期">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">朝鮮王朝前期</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 5</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="高麗末の有力武将だった李成桂は、1388年の威化島回軍でクーデターの実権を握り、1392年に高麗の王を廃して即位、国号を「朝鮮」と定めた。" data-pop="遠征の途中で馬首を返した、その一瞬の決断が新しい王朝の始まりになる。旧い国の名前が、静かに歴史から退場した。" data-chuni="遠征の途上、己の剣を旧王朝そのものへと向けし武人……その決断が、五百年続く新王朝の扉を開いた。"><td class="check-col">☐</td><td class="cmd-col">李成桂と朝鮮の建国</td><td class="desc-col">1392年、李成桂が高麗を倒して朝鮮王朝を開く</td></tr>
+      <tr data-normal="朝鮮王朝は1394年、風水思想などをふまえて漢陽（現在のソウル）を新しい都と定めた。以後、漢陽は約500年にわたり朝鮮王朝の政治・文化の中心であり続けた。" data-pop="山と川に守られた盆地に、新しい王朝が根を下ろす。この街の名前は、五百年先の地図にもずっと残ることになる。" data-chuni="山河を天然の城壁とせし地に築かれし新たな王都……その礎は五百年の永きにわたり、王朝の背骨であり続けた。"><td class="check-col">☐</td><td class="cmd-col">漢陽（現ソウル）遷都</td><td class="desc-col">1394年、新王朝の都として漢陽を定める</td></tr>
+      <tr data-normal="朝鮮王朝4代国王・世宗は、それまで漢字に頼っていた表記のために独自の文字体系「訓民正音（ハングル）」を作らせ、1446年に公布した。学問・科学・軍事など幅広い分野で業績を残した名君として知られる。" data-pop="誰もが自分の言葉を書けるように、王は新しい文字を民に贈った。難しい漢字を知らなくても、心はちゃんと文字になる。" data-chuni="民のために独自の文字体系を創造せし稀代の賢王……その二十八の文字は、後の世まで民族の声そのものを支え続けている。"><td class="check-col">☐</td><td class="cmd-col">世宗大王と訓民正音（ハングル）</td><td class="desc-col">1446年、独自の文字体系ハングルを公布 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="朝鮮王朝の支配階級である両班は、文官（文班）・武官（武班）の官職を独占する家柄で、主に科挙に合格することで地位を得た。特権的な身分として、税や労役の面でも優遇された。" data-pop="試験に受かった者たちが、そのまま国の中心に居座っていく。学問という名の階段は、いつしか身分の壁にもなっていた。" data-chuni="学問の頂を極めし者たちが築きし支配の階層……されどその階段は、やがて登れぬ者を締め出す壁ともなった。"><td class="check-col">☐</td><td class="cmd-col">両班と科挙</td><td class="desc-col">科挙合格者を中心とする朝鮮王朝の支配階級</td></tr>
+      <tr data-normal="朝鮮王朝は高麗時代に優遇された仏教に代えて、朱子学（性理学）を国家の統治理念とした。祖先祭祀や身分秩序を重んじる儒教的価値観が、社会全体に深く根づいていった。" data-pop="お寺の鐘の代わりに、書物をめくる音が響くようになる。新しい時代のルールブックは、遠い中国から取り寄せた哲学だった。" data-chuni="仏の教えに代わりて国家の背骨に据えられし儒の理念……その秩序は、王宮から庶民の暮らしの隅々までを支配した。"><td class="check-col">☐</td><td class="cmd-col">儒教（性理学）の国教化</td><td class="desc-col">仏教に代わり儒教が政治・社会の基本理念に</td></tr>
+      <tr data-normal="朝鮮王朝の統治の基本となる法典で、1485年に完成した。政治・経済・軍事・刑罰など国家運営の基準を体系的にまとめ、以後の朝鮮王朝の統治の骨格となった。" data-pop="何十年もかけて書き足された条文が、ようやく一冊の本にまとまる。この本のページの中に、国の形そのものが収められている。" data-chuni="数十年の歳月をかけて編まれし国家の設計図……その一条一条が、五百年続く王朝の骨格そのものとなった。"><td class="check-col">☐</td><td class="cmd-col">経国大典</td><td class="desc-col">1485年完成、朝鮮王朝統治の基本法典</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="朝鮮王朝後期">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">朝鮮王朝後期</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 6</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="1592年と1597年の2度、豊臣秀吉の命による日本軍が朝鮮半島に侵攻した戦争。朝鮮は明の援軍や李舜臣率いる水軍の活躍などにより日本軍を撃退したが、国土は大きな被害を受けた。" data-pop="突然の砲声が海辺の村を揺らした、長く続く戦の始まり。焼け跡から立ち上がるまでに、何年もの歳月が必要だった。" data-chuni="島国より押し寄せし大軍が、半島全土を戦火に包んだ七年……その傷跡は、勝敗を超えてなお深く大地に刻まれた。"><td class="check-col">☐</td><td class="cmd-col">壬辰倭乱（文禄・慶長の役）</td><td class="desc-col">1592・1597年の日本軍侵攻、明の援軍も得て撃退 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="壬辰倭乱で朝鮮水軍を率いた武将。装甲を施した亀甲船などを駆使し、日本軍の海上輸送路を脅かす戦果を挙げ、朝鮮側の危機を救った名将として今も高く評価されている。" data-pop="甲羅のような船が波を割って進む。誰も予想しなかったその一手が、戦の流れをそっと変えていった。" data-chuni="海を鋼の甲羅で覆いし奇策の将……その采配ひとつが、陸で崩れかけた戦局を海の上から支え続けた。"><td class="check-col">☐</td><td class="cmd-col">李舜臣と亀甲船</td><td class="desc-col">亀甲船を用いた水軍で日本軍の補給線を脅かした名将</td></tr>
+      <tr data-normal="1636年、勢力を強めた清（後金）が朝鮮に侵攻した戦い。朝鮮は敗れて清への服属を認め、以後は清を宗主国とする冊封関係に置かれることとなった。" data-pop="北からの新しい風が、古い秩序をあっという間に塗り替える。頭を下げたその日から、外交の地図が変わってしまった。" data-chuni="新興の大国の前に膝を折らざるを得なかった屈辱の年……この日を境に、半島の外交は新たな秩序に組み込まれた。"><td class="check-col">☐</td><td class="cmd-col">丙子胡乱</td><td class="desc-col">1636年、清（後金）の侵攻で朝鮮が屈服</td></tr>
+      <tr data-normal="17〜19世紀、観念的な議論に偏りがちな性理学を批判し、農業・商業・行政制度など実生活に役立つ学問を重視した思想潮流。丁若鏞（茶山）らの学者が代表的。" data-pop="難しい理屈より、まず目の前の田んぼをどう良くするか。地に足のついた問いかけが、静かに学問の風向きを変えていく。" data-chuni="空を舞う理念ではなく大地を耕す知恵を求めし学者たち……その現実主義は、旧き学問の殻を静かに打ち破っていった。"><td class="check-col">☐</td><td class="cmd-col">実学の興隆</td><td class="desc-col">空理空論を批判し実用的な学問を重視した思想潮流</td></tr>
+      <tr data-normal="18世紀、英祖・正祖の2代にわたり派閥抗争が抑えられ、学芸や実学が振興された時期。正祖は水原に計画都市「華城」を築き、当時最新の技術を用いた城郭として世界文化遺産に登録されている。" data-pop="争いに疲れた宮廷に、久しぶりの静かな時間が訪れる。新しく築かれた城壁の中では、次の時代の設計図が描かれていた。" data-chuni="長き党争の嵐を鎮め、学芸の華を咲かせし二代の治世……新たに築かれし城郭には、次代への希望が石として積み上げられた。"><td class="check-col">☐</td><td class="cmd-col">英祖・正祖の時代と華城</td><td class="desc-col">18世紀、王権安定と学芸振興が進んだ時期</td></tr>
+      <tr data-normal="幼い国王・高宗の実父として実権を握った興宣大院君は、フランス・アメリカとの武力衝突（洋擾）を経て、西洋列強に対する排外的な鎖国政策を強め、各地に「斥和碑」を建てさせた。日本の江戸幕府の鎖国政策とは時期も内容も異なる点に注意。" data-pop="息子の代わりに玉座の陰に立った男が、国の扉をさらに固く閉ざしていく。石碑に刻んだ言葉は、変化を拒む最後の抵抗だった。" data-chuni="幼き王に代わり国政を握りし摂政が掲げし「拒絶」の旗……石に刻まれた誓いは、迫りくる新時代への最後の防波堤であった。"><td class="check-col">☐</td><td class="cmd-col">興宣大院君と鎖国政策</td><td class="desc-col">高宗の摂政、洋擾を経て排外的な鎖国策を推進（日本の鎖国と区別） <span class="tag danger">注意</span></td></tr>
+      <tr data-normal="1876年、日本の軍事的圧力を受けて朝鮮が結んだ最初の近代的条約。釜山など港の開港を定めたが、日本に領事裁判権を認めるなど朝鮮側に不利な不平等条約でもあった。" data-pop="黒船に驚いた国が、今度は自分の国の扉を叩かれる番だった。開いた港の向こうから、新しい時代の風と圧力が一緒に吹き込んでくる。" data-chuni="長き鎖国の扉を、隣国の圧力によってついに開かされし条約……それは近代化への第一歩であると同時に、屈辱の証でもあった。"><td class="check-col">☐</td><td class="cmd-col">江華島条約</td><td class="desc-col">1876年、日本の圧力で結んだ朝鮮最初の近代的（不平等）条約</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="大韓帝国・日本統治時代">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">大韓帝国・日本統治時代</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 7</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="1894年から数次にわたり実施された朝鮮の内政改革。身分制度や科挙の廃止、行政・税制・司法制度の近代化など広範な改革が進められたが、日本の影響を強く受けたものでもあった。" data-pop="何百年も続いた身分の壁が、制度の上では一夜にして取り払われる。急ぎ足の近代化は、期待と戸惑いを一緒に運んできた。" data-chuni="数百年続きし身分の鎖を制度の上で断ち切りし大変革……されどその速度は、あまりに急な近代化への戸惑いをも生んだ。"><td class="check-col">☐</td><td class="cmd-col">甲午改革</td><td class="desc-col">1894年〜、身分制廃止など近代化を進めた一連の改革</td></tr>
+      <tr data-normal="1897年、国王・高宗は皇帝を名乗り、国号を「大韓帝国」と改めて自主独立と近代化（光武改革）を目指した。しかし列強の圧力が強まる中、実権はしだいに弱まっていった。" data-pop="王が皇帝の冠をかぶった日、国はもう一度独り立ちしようとした。けれどその舞台の外では、大きな国々の思惑がすでに動き出していた。" data-chuni="王より皇帝へと自ら格を引き上げし最後の自尊……されどその煌びやかな冠は、迫りくる激流を防ぐには小さすぎた。"><td class="check-col">☐</td><td class="cmd-col">大韓帝国の成立</td><td class="desc-col">1897年、高宗が皇帝を称し国号を「大韓帝国」に改称</td></tr>
+      <tr data-normal="1910年、日本は大韓帝国を併合する条約を締結し、朝鮮半島は日本の植民地統治下に置かれた。以後1945年まで、朝鮮総督府による統治が続いた。" data-pop="一枚の条約が国の名前を地図から消した日。灯りが消えた宮殿の奥で、次の時代への長い夜が始まった。" data-chuni="一片の条約が半島の主権そのものを飲み込みし日……ここより三十五年に及ぶ、長き雌伏の時代が幕を開ける。"><td class="check-col">☐</td><td class="cmd-col">韓国併合（1910年）</td><td class="desc-col">1910年、日本が韓国を併合し植民地支配下に置く <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="1919年3月1日、京城（現ソウル）で独立宣言書が読み上げられたのをきっかけに、朝鮮半島全土に広がった非暴力の独立要求運動。統治当局により厳しく弾圧されたが、その後の民族運動に大きな影響を与えた。" data-pop="一枚の宣言書が読み上げられた朝、通りという通りに人々の声が満ちた。その声は止められても、記憶の中では鳴り止まなかった。" data-chuni="一片の宣言書より燃え上がりし民族の叫び……その炎は弾圧の雨にも消えることなく、次代の抵抗の礎となった。"><td class="check-col">☐</td><td class="cmd-col">三・一独立運動</td><td class="desc-col">1919年、全国で広がった非暴力の独立要求運動 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="三・一独立運動の直後、1919年に中国・上海で樹立された亡命政府。独立運動の中心組織として活動を続け、現在の大韓民国はこの臨時政府の法統を受け継ぐと位置づけている。" data-pop="故郷を離れた場所に、それでも国のかたちを作ろうとした人々。地図にないその政府は、独立という一つの約束をずっと守り続けた。" data-chuni="祖国を追われしなお、異郷の地に打ち立てられし亡命の政庁……その灯火は絶えることなく、独立という悲願を守り抜いた。"><td class="check-col">☐</td><td class="cmd-col">大韓民国臨時政府</td><td class="desc-col">1919年、上海で樹立された独立運動の中心組織</td></tr>
+      <tr data-normal="1930年代後半以降、日本語教育や創氏改名など朝鮮人を「皇国臣民」として同化させる政策が強化される一方、戦争の拡大にともない労働力・兵力としての動員も進められた。" data-pop="名前まで書き換えられていく日々の中で、それでも人々は静かに自分たちの言葉を心の奥にしまい続けた。" data-chuni="名も言葉さえも塗り替えんとせし同化の奔流……されど人々の内なる誇りだけは、最後まで奪われることはなかった。"><td class="check-col">☐</td><td class="cmd-col">皇民化政策と戦時動員</td><td class="desc-col">1930年代後半以降、同化政策と労務・軍事動員が強化</td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="大韓民国の成立と朝鮮戦争">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">大韓民国の成立と朝鮮戦争</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 8</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="1945年8月15日、日本の敗戦により35年間続いた植民地統治が終わった。朝鮮半島ではこの日を「光復節」として記念しており、独立を回復した日として重要な意味を持つ。" data-pop="長い夜が明けた朝、街のあちこちで太極旗が振られた。三十五年ぶりに、自分たちの言葉で未来を語れる日が来た。" data-chuni="三十五年に及ぶ雌伏の夜が明け、光が再び大地に戻りし日……人々はこの日を「光復」と呼び、永遠に記憶に刻んだ。"><td class="check-col">☐</td><td class="cmd-col">光復（1945年8月15日）</td><td class="desc-col">日本の敗戦により植民地支配が終わる</td></tr>
+      <tr data-normal="日本の敗戦後、北緯38度線を境に北をソ連、南をアメリカが占領統治した。冷戦の激化とともにこの分割は固定化し、朝鮮半島の南北分断へとつながっていった。" data-pop="地図に引かれた一本の線が、家族の間にもいつしか壁を作ってしまった。その線は今も、消えないまま地図の上に残っている。" data-chuni="大国の思惑によって大地に刻まれし一本の境界線……その線は今なお、幾多の家族の再会を阻み続けている。"><td class="check-col">☐</td><td class="cmd-col">38度線と南北分断</td><td class="desc-col">米ソによる分割占領が固定化し、南北分断へ</td></tr>
+      <tr data-normal="1948年8月15日、朝鮮半島南部で大韓民国（韓国）が成立し、李承晩が初代大統領に就任した。同年9月、北部には金日成を指導者とする朝鮮民主主義人民共和国が成立し、南北分断が国家として確定した。" data-pop="同じ半島の上に、二つの国旗が同じ年に掲げられる。分かれた道の先で、それぞれの物語がここから本格的に動き出す。" data-chuni="一つの半島の上に、南北二つの国家がほぼ同時に産声を上げし年……分断という名の悲劇は、こうして国家の形をとって固定された。"><td class="check-col">☐</td><td class="cmd-col">大韓民国の成立（1948年）</td><td class="desc-col">1948年、南部に大韓民国が成立、李承晩が初代大統領に（1897年の大韓帝国とは別の国家） <span class="tag danger">注意</span></td></tr>
+      <tr data-normal="1950年、北朝鮮の侵攻で始まった戦争。国連軍（主に米軍）が韓国側を、中国義勇軍が北朝鮮側を支援して激戦となり、1953年に休戦協定が結ばれたが、正式な終戦には至っておらず現在も休戦状態が続いている。" data-pop="三年にわたる戦の後、境界線は元の場所近くに引き直された。休戦という名の静けさは、今も終わらない物語として続いている。" data-chuni="三年にわたり半島を焼き尽くした兄弟の戦い……その終わりに結ばれし休戦は、七十年を経てなお「終戦」の文字を持たない。"><td class="check-col">☐</td><td class="cmd-col">朝鮮戦争</td><td class="desc-col">1950〜53年、北朝鮮の侵攻で始まった戦争、現在も休戦状態 <span class="tag tip">頻出</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card" data-section="現代（民主化と経済発展）">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-commit-dot"></span>
+        <span class="card-section-name">現代（民主化と経済発展）</span>
+      </div>
+      <div class="card-header-right">
+        <span class="card-hash">韓国史 Lesson 9</span>
+        <span class="drag-handle">⠿</span>
+      </div>
+    </div>
+    <table>
+      <tr data-normal="1960年、大統領選挙の不正に抗議する学生・市民の運動が全国に広がり、李承晩大統領が退陣に追い込まれた出来事。韓国における民主化運動の出発点の一つとされる。" data-pop="教科書を置いて通りに出た学生たちの声が、長く続いた政権の土台を静かに揺らした。" data-chuni="不正の一票に抗いて立ち上がりし学生たちの叫び……その声は、十二年続きし権力の座をついに揺り動かした。"><td class="check-col">☐</td><td class="cmd-col">4・19革命</td><td class="desc-col">1960年、不正選挙への抗議から李承晩政権が崩壊</td></tr>
+      <tr data-normal="1961年、朴正煕少将らが軍事クーデターで政権を掌握した。後に大統領に就任し、強権的な統治のもとで急速な経済開発政策を推し進めた（1979年暗殺により政権終了）。" data-pop="戦車の音とともに、国の舵取りが一夜で入れ替わる。この後の十八年間が、国の姿を大きく作り変えていく。" data-chuni="一夜にして国家の舵を奪いし軍人……その強権の十八年は、光と影を分厚く塗り重ねた時代であった。"><td class="check-col">☐</td><td class="cmd-col">5・16軍事クーデターと朴正煕</td><td class="desc-col">1961年、朴正煕らによる軍事クーデター、後に大統領として長期政権</td></tr>
+      <tr data-normal="1960年代から80年代にかけて、輸出主導型の工業化政策により韓国が遂げた急速な経済成長を指す言葉。ソウルを流れる漢江にちなんで名付けられ、財閥系企業の成長とともに進んだ。" data-pop="焼け跡だった川沿いに、いくつもの工場の煙突が立ち並んでいく。数十年かけて、貧しかった国が世界の舞台に躍り出た。" data-chuni="焦土の川のほとりに打ち立てられし奇跡の経済成長……数十年でこの国は、世界地図の中で全く違う顔を持つに至った。"><td class="check-col">☐</td><td class="cmd-col">漢江の奇跡</td><td class="desc-col">1960〜80年代の輸出主導型による急速な経済成長 <span class="tag tip">頻出</span></td></tr>
+      <tr data-normal="1980年5月、全羅南道・光州で起きた民主化を求める市民の運動。戒厳軍による鎮圧で多くの犠牲者を出したが、その後の韓国民主化運動の重要な原動力となった。" data-pop="街を包囲した戒厳令の中でも、人々は声を上げることをやめなかった。その代償は大きかったけれど、記憶は消えなかった。" data-chuni="戒厳の刃を前にしてなお声を上げ続けし街……その犠牲の記憶こそが、後の民主化を導く道標となった。"><td class="check-col">☐</td><td class="cmd-col">5・18光州民主化運動</td><td class="desc-col">1980年、光州で起きた民主化要求運動と軍による鎮圧</td></tr>
+      <tr data-normal="1987年6月、大統領直接選挙制の導入などを求める大規模な市民デモが全国で展開された。政権側が要求を受け入れ（6・29民主化宣言）、直接選挙による民主的な憲法体制への移行が実現した。" data-pop="街を埋め尽くした声が、ついに憲法そのものを書き換えさせる。長い抗議の行進が、投票用紙一枚の重みを取り戻した。" data-chuni="街頭を埋め尽くしし民衆の意志が、ついに国家の根幹たる憲法を動かした……この年、直接選挙という当たり前の権利が民の手に戻った。"><td class="check-col">☐</td><td class="cmd-col">6月民主抗争</td><td class="desc-col">1987年、大規模なデモにより大統領直接選挙制を獲得</td></tr>
+      <tr data-normal="1988年に開催された夏季オリンピック。経済成長と民主化の進展を背景に開催され、韓国が国際社会における存在感を高める象徴的な出来事となった。" data-pop="聖火が競技場に灯った夜、世界中の目がこの国に集まった。焼け跡から始まった国の物語が、世界のステージに追いついた瞬間だった。" data-chuni="焦土より這い上がりし国が世界に向けて掲げし聖火……それは戦後復興の物語の、一つの到達点であった。"><td class="check-col">☐</td><td class="cmd-col">ソウルオリンピック</td><td class="desc-col">1988年開催、韓国の国際的地位向上を象徴する大会</td></tr>
+      <tr data-normal="1997年、アジア通貨危機の波及で韓国はドル不足に陥り、IMF（国際通貨基金）の支援を受け入れた。企業・金融機関の大規模な構造改革が進められ、社会に大きな影響を残した。" data-pop="好調だったはずの経済が、ある日突然足元から崩れていく。国中で財布のひもを締め直した冬が、長く記憶に残った。" data-chuni="繁栄の絶頂から一夜にして奈落へ堕ちし経済……国家の誇りをも懸けし再建の道のりは、苦く長いものであった。"><td class="check-col">☐</td><td class="cmd-col">IMF通貨危機</td><td class="desc-col">1997年、アジア通貨危機の影響でIMFの支援を受ける</td></tr>
+      <tr data-normal="2000年、金大中大統領と北朝鮮の金正日総書記による初の南北首脳会談が平壌で実現した。融和的な「太陽政策」のもとで対話や交流事業が進められたが、その後も南北関係は緊張と対話を繰り返している。" data-pop="分断の線を越えて、初めて交わされた両首脳の握手。その一瞬の温かさは、今も時々思い出したように蘇る。" data-chuni="半世紀の断絶を越えて交わされし一度の握手……されど分断の境界線は、今なお緊張と対話のはざまで揺れ続けている。"><td class="check-col">☐</td><td class="cmd-col">南北首脳会談</td><td class="desc-col">2000年に初の南北首脳会談、太陽政策のもとで対話が進展</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="add-section">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left">
+      <span class="card-commit-dot" style="background:var(--green);"></span>
+      <span class="card-section-name" style="color:var(--green);">用語を追加</span>
+    </div>
+    <span class="card-hash">new entry</span>
+  </div>
+  <div class="add-form">
+    <div class="field">
+      <label>用語・出来事</label>
+      <input class="cmd-input" id="new-cmd" type="text" placeholder="例: 世宗大王">
+    </div>
+    <div class="field">
+      <label>意味・説明</label>
+      <input class="desc-input" id="new-desc" type="text" placeholder="例: 1446年 ハングルを公布">
+    </div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="new-section">
+        <option value="古朝鮮">古朝鮮</option>
+        <option value="三国時代">三国時代</option>
+        <option value="統一新羅・渤海">統一新羅・渤海</option>
+        <option value="高麗">高麗</option>
+        <option value="朝鮮王朝前期">朝鮮王朝前期</option>
+        <option value="朝鮮王朝後期">朝鮮王朝後期</option>
+        <option value="大韓帝国・日本統治時代">大韓帝国・日本統治時代</option>
+        <option value="大韓民国の成立と朝鮮戦争">大韓民国の成立と朝鮮戦争</option>
+        <option value="現代（民主化と経済発展）">現代（民主化と経済発展）</option>
+        <option value="マイ用語">＋ 新しいカテゴリ「マイ用語」</option>
+      </select>
+    </div>
+    <button id="add-btn">+ 追加</button>
+  </div>
+</div>
+
+<footer>
+  <span>Korea History Timeline Blackboard</span>
+  <span>2026</span>
+  <p>&copy;bombaycat0428</p>
+</footer>
+
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-word">
+    <button class="modal-close" id="modal-close" aria-label="閉じる">×</button>
+    <div class="modal-word" id="modal-word"></div>
+    <div class="modal-meaning" id="modal-meaning"></div>
+    <div class="modal-example">
+      <div class="modal-example-label">通常の解説</div>
+      <div class="modal-example-en" id="modal-normal"></div>
+    </div>
+    <div class="modal-example pop">
+      <div class="modal-example-label">歴史ソングバージョン（イメージ・フィクションです）</div>
+      <div class="modal-example-en" id="modal-pop"></div>
+    </div>
+    <div class="modal-example alt">
+      <div class="modal-example-label">中二病バージョン</div>
+      <div class="modal-example-en" id="modal-chuni"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const CUSTOM_KEY  = 'korea_cheatsheet_custom';
+const LEARNED_KEY = 'korea_cheatsheet_learned';
+const ORDER_KEY   = 'korea_cheatsheet_order';
+
+function lsGet(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch(e) { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+const learnedSet = new Set(lsGet(LEARNED_KEY, []));
+function saveLearnedSet() { lsSet(LEARNED_KEY, [...learnedSet]); }
+
+function applyLearned(tr, isLearned) {
+  const check = tr.querySelector('.check-col');
+  if (isLearned) { tr.classList.add('learned');   check.textContent = '✔'; }
+  else           { tr.classList.remove('learned'); check.textContent = '☐'; }
+}
+
+/* ── modal ── */
+const overlay = document.getElementById('modal-overlay');
+function openModal(tr) {
+  const word = tr.querySelector('.cmd-col').textContent.trim();
+  const meaning = tr.querySelector('.desc-col').textContent.trim();
+  const normal = tr.dataset.normal || '';
+  const pop    = tr.dataset.pop || '';
+  const chuni  = tr.dataset.chuni || '';
+  document.getElementById('modal-word').textContent = word;
+  document.getElementById('modal-meaning').textContent = meaning;
+  document.getElementById('modal-normal').textContent = normal || 'この用語の解説はまだ登録されていません。';
+  document.getElementById('modal-pop').textContent = pop || 'この用語の歴史ソングバージョンはまだ登録されていません。';
+  document.getElementById('modal-chuni').textContent = chuni || 'この用語の中二病バージョンはまだ登録されていません。';
+  overlay.classList.add('open');
+}
+function closeModal() { overlay.classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function attachRowEvents(tr) {
+  const key = tr.querySelector('.cmd-col').textContent.trim();
+  applyLearned(tr, learnedSet.has(key));
+  tr.addEventListener('click', (e) => {
+    if (e.target.closest('.del-col')) return;
+    if (e.target.closest('.check-col')) {
+      learnedSet.has(key) ? learnedSet.delete(key) : learnedSet.add(key);
+      applyLearned(tr, learnedSet.has(key));
+      saveLearnedSet();
+      updateProgress();
+      return;
+    }
+    openModal(tr);
+  });
+}
+document.querySelectorAll('tr').forEach(tr => {
+  if (!tr.querySelector('.cmd-col')) return;
+  attachRowEvents(tr);
+});
+
+function getCustomRows() { return lsGet(CUSTOM_KEY, []); }
+function saveCustomRows(rows) { lsSet(CUSTOM_KEY, rows); }
+
+function addRowToDOM(section, cmd, desc, isCustom) {
+  let card = document.querySelector(`.card[data-section="${CSS.escape(section)}"]`);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.section = section;
+    const lessonNo = document.querySelectorAll('#grid .card').length + 1;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="card-commit-dot"></span>
+          <span class="card-section-name">${section}</span>
+        </div>
+        <div class="card-header-right">
+          <span class="card-hash">Lesson ${lessonNo}</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+      </div>
+      <table></table>`;
+    document.getElementById('grid').appendChild(card);
+    buildGraph();
+  }
+
+  const table = card.querySelector('table');
+  const tr = document.createElement('tr');
+  const delCell = isCustom ? `<td class="del-col" title="削除">✕</td>` : '';
+  tr.innerHTML = `<td class="check-col">☐</td><td class="cmd-col">${cmd}</td><td class="desc-col">${desc}</td>${delCell}`;
+
+  if (isCustom) {
+    tr.querySelector('.del-col').addEventListener('click', (e) => {
+      e.stopPropagation();
+      tr.style.transition = 'opacity 0.15s';
+      tr.style.opacity = '0';
+      setTimeout(() => {
+        tr.remove();
+        saveCustomRows(getCustomRows().filter(r => !(r.section === section && r.cmd === cmd)));
+        if (!table.querySelector('tr')) card.remove();
+        updateProgress();
+      }, 150);
+    });
+  }
+
+  table.appendChild(tr);
+  attachRowEvents(tr);
+  updateProgress();
+}
+
+getCustomRows().forEach(r => addRowToDOM(r.section, r.cmd, r.desc, true));
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  const cmd     = document.getElementById('new-cmd').value.trim();
+  const desc    = document.getElementById('new-desc').value.trim();
+  const section = document.getElementById('new-section').value;
+  if (!cmd || !desc) { alert('用語と意味を入力してください'); return; }
+  addRowToDOM(section, cmd, desc, true);
+  const rows = getCustomRows();
+  rows.push({ section, cmd, desc });
+  saveCustomRows(rows);
+  document.getElementById('new-cmd').value  = '';
+  document.getElementById('new-desc').value = '';
+});
+
+['new-cmd', 'new-desc'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-btn').click();
+  });
+});
+
+function saveOrder() {
+  lsSet(ORDER_KEY, [...document.querySelectorAll('#grid .card')].map(c => c.dataset.section));
+}
+function restoreOrder() {
+  const order = lsGet(ORDER_KEY, []);
+  const grid = document.getElementById('grid');
+  order.forEach(sec => {
+    const card = grid.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (card) grid.appendChild(card);
+  });
+}
+restoreOrder();
+
+function updateProgress() {
+  const allRows = [...document.querySelectorAll('#grid tr')].filter(tr => tr.querySelector('.cmd-col'));
+  const total   = allRows.length;
+  const learned = allRows.filter(tr => tr.classList.contains('learned')).length;
+
+  document.getElementById('stat-learned').textContent = learned;
+  document.getElementById('stat-total').textContent   = total;
+
+  document.querySelectorAll('#grid .card').forEach(card => {
+    const rows    = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal  = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct     = sTotal > 0 ? sLearned / sTotal : 0;
+    card.querySelector('.card-header').style.setProperty('--section-pct', pct);
+    card.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  const nodes = [...document.querySelectorAll('.graph-node')];
+  const lines = [...document.querySelectorAll('.graph-line')];
+
+  nodes.forEach(node => {
+    const sec  = node.dataset.section;
+    const card = document.querySelector(`.card[data-section="${CSS.escape(sec)}"]`);
+    if (!card) return;
+    const rows     = [...card.querySelectorAll('tr')].filter(tr => tr.querySelector('.cmd-col'));
+    const sTotal   = rows.length;
+    const sLearned = rows.filter(tr => tr.classList.contains('learned')).length;
+    const pct      = sTotal > 0 ? sLearned / sTotal : 0;
+    node.querySelector('.graph-dot').style.setProperty('--pct', pct);
+    node.dataset.complete = (sLearned === sTotal && sTotal > 0);
+  });
+
+  lines.forEach((line, i) => {
+    const leftDot = nodes[i]?.querySelector('.graph-dot');
+    if (!leftDot) return;
+    const lp = parseFloat(leftDot.style.getPropertyValue('--pct')) || 0;
+    line.style.setProperty('--filled', lp);
+  });
+}
+
+function buildGraph() {
+  const graph = document.getElementById('git-graph');
+  graph.innerHTML = '';
+  const cards = [...document.querySelectorAll('#grid .card')];
+
+  cards.forEach((card, i) => {
+    const sec   = card.dataset.section;
+    const node  = document.createElement('div');
+    node.className   = 'graph-node';
+    node.dataset.section = sec;
+
+    const dot = document.createElement('div');
+    dot.className = 'graph-dot';
+
+    const label = document.createElement('div');
+    label.className = 'graph-label';
+    label.textContent = sec.replace('・', '·').slice(0, 9);
+    label.title = sec;
+
+    node.appendChild(dot);
+    node.appendChild(label);
+    graph.appendChild(node);
+
+    if (i < cards.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'graph-line';
+      line.style.setProperty('--filled', 0);
+      graph.appendChild(line);
+    }
+  });
+
+  updateProgress();
+}
+
+buildGraph();
+
+Sortable.create(document.getElementById('grid'), {
+  handle: '.card-header',
+  animation: 150,
+  ghostClass: 'sortable-ghost',
+  dragClass: 'sortable-drag',
+  onEnd: () => { saveOrder(); buildGraph(); },
+});
+</script>
+
+</body>
+</html>
