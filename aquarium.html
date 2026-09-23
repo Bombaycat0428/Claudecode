@@ -656,9 +656,10 @@ function initFish(){
       if(fish.every(o=>Math.hypot(o.x-px2,o.y-py2)>90)) break;
     }
     const L=(sp.size[0]+Math.random()*(sp.size[1]-sp.size[0]))*(innerWidth<600?.8:1);
+    const dir0=Math.random()*Math.PI*2;
     fish.push({
       x:px2, y:py2,
-      dir:Math.random()*Math.PI*2,
+      dir:dir0, dirTarget:dir0, turnTimer:Math.random()*1.5,
       speed:14+L*0.55+Math.random()*10,
       L, sp,
       phase:Math.random()*Math.PI*2,
@@ -675,9 +676,14 @@ function fishDepth(f,t){
   return Math.min(1,Math.max(0, zc*.5+.5));
 }
 function updateFish(f,dt){
-  // ゆらゆらと気ままに向きを変える
-  f.dir+=(Math.random()-.5)*1.6*dt;
-  // 壁に近づいたら内側へ緩やかに旋回
+  // 目標角度をたまに決め、そこへゆっくり滑らかに向きを合わせる
+  // （毎フレーム生乱数を直接足すと細かく震えて弱った動きに見えるため）
+  f.turnTimer-=dt;
+  if(f.turnTimer<=0){
+    f.dirTarget=f.dir+(Math.random()-.5)*2.6;
+    f.turnTimer=0.7+Math.random()*1.6;
+  }
+  // 壁に近づいたら内側へ向くよう目標を上書き
   const m=f.L*0.8+40;
   let ax=0, ay=0;
   if(f.x<m) ax+=1;
@@ -685,11 +691,12 @@ function updateFish(f,dt){
   if(f.y<m) ay+=1;
   if(f.y>innerHeight-m) ay-=1;
   if(ax||ay){
-    const wallDir=Math.atan2(ay,ax);
-    let diff=wallDir-f.dir;
-    diff=((diff+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
-    f.dir+=diff*Math.min(1,dt*3);
+    f.dirTarget=Math.atan2(ay,ax);
+    f.turnTimer=Math.min(f.turnTimer,0.4);
   }
+  let diff=f.dirTarget-f.dir;
+  diff=((diff+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+  f.dir+=diff*Math.min(1,dt*2.2);
   // 深いところ（z大）ほどゆっくり進んで見える
   const spd=f.speed*(1-f.z*0.45);
   f.x+=Math.cos(f.dir)*spd*dt;
@@ -705,6 +712,8 @@ function renderFish3D(t){
   g3.clear(g3.COLOR_BUFFER_BIT|g3.DEPTH_BUFFER_BIT);
   for(const f of fish){
     const d=26+f.z*maxD;                 // 水面からの深さ(px相当)
+    const wz=camH+d;
+    const k=wz/camH;   // 深さの上下動が遠近法で横ズレして見えないよう、画面位置をf.x,f.yに固定する補正
     const [sx,sy,sz]=f.sp.prop;
     const c=Math.cos(f.dir), s=Math.sin(f.dir);
     // Model行列 = 平行移動 × Z回転 × 種ごとの体型スケール（列優先）
@@ -712,7 +721,7 @@ function renderFish3D(t){
       c*sx*f.L,  s*sx*f.L, 0,0,
       -s*sy*f.L, c*sy*f.L, 0,0,
       0,0, sz*f.L, 0,
-      f.x-innerWidth/2, f.y-innerHeight/2, camH+d, 1
+      (f.x-innerWidth/2)*k, (f.y-innerHeight/2)*k, wz, 1
     ]);
     g3.uniformMatrix4fv(U3.mvp,false,m4mul(projM,M));
     g3.uniform2f(U3.rot,c,s);
@@ -728,10 +737,9 @@ function pickFish(px2,py2){
   let best=null, bestD=1e9;
   for(const f of fish){
     const d=26+f.z*maxD, sc=camH/(camH+d);
-    const sx=innerWidth/2+(f.x-innerWidth/2)*sc;
-    const sy=innerHeight/2+(f.y-innerHeight/2)*sc;
+    // 画面位置はrenderFish3Dの補正済みで f.x,f.y に固定されている。サイズだけ深さに応じて縮む
     const rr=f.L*0.65*sc+14;
-    if(Math.hypot(px2-sx,py2-sy)<rr && d<bestD){ best=f; bestD=d; }
+    if(Math.hypot(px2-f.x,py2-f.y)<rr && d<bestD){ best=f; bestD=d; }
   }
   return best;
 }
