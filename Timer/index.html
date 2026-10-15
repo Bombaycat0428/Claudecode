@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ねこのおひるねタイマー</title>
+<link rel="icon" href="img/cat-awake.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f9f5ec;          /* 猫の絵の背景色とそろえる */
+    --disc: #f9f5ec;
+    --ink: #4a3b33;
+    --muted: #9a8a7e;
+    --line: #eadfcd;
+    --chip: #f1e8d8;
+    --chip-on: #4a3b33;
+    --mint: #8cc7a8;        /* スカーフの色 */
+    --gold: #e0a83a;        /* 懐中時計の色 */
+    --orange: #e58a3a;
+    --lav: #b9a6dd;         /* クッションの色 */
+    --ring-track: #ece2d1;
+    --btn: #4a3b33;
+    --btn-ink: #fffaf1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #2a2320; --ink: #f6ece0; --muted: #b4a597; --line: #43382f;
+      --chip: #3a302a; --chip-on: #f6ece0; --ring-track: #43382f; --btn: #f6ece0; --btn-ink: #2a2320;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #2a2320; --ink: #f6ece0; --muted: #b4a597; --line: #43382f;
+    --chip: #3a302a; --chip-on: #f6ece0; --ring-track: #43382f; --btn: #f6ece0; --btn-ink: #2a2320;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 500 16px/1.6 "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic UI", sans-serif;
+    display: flex; justify-content: center;
+    transition: background .6s;
+  }
+  body.state-running, body.state-paused { --ring: var(--lav); }
+  body.state-idle { --ring: var(--mint); }
+  body.state-done { --ring: var(--gold); }
+
+  main { width: 100%; max-width: 520px; padding: 24px 16px 40px; display: flex; flex-direction: column; align-items: center; }
+
+  header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: .04em; }
+  h1 span { color: var(--orange); }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: transparent;
+    color: var(--ink); display: grid; place-items: center; cursor: pointer;
+  }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  /* ---- 猫の円盤とリング ---- */
+  .stage { position: relative; width: min(84vw, 380px); aspect-ratio: 1; margin: 8px 0 4px; }
+  .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 10; }
+  .ring .track { stroke: var(--ring-track); }
+  .ring .bar { stroke: var(--ring); stroke-linecap: round; transition: stroke .6s; }
+  .disc {
+    position: absolute; inset: 18px; border-radius: 50%; overflow: hidden; background: var(--disc);
+    box-shadow: 0 8px 30px rgba(74, 59, 51, .10);
+  }
+  .disc img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity .5s;
+  }
+  .disc img.show { opacity: 1; }
+  body.state-running .disc img.sleep { animation: breathe 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
+  body.state-paused .disc img.sleep { filter: saturate(.6); }
+  body.state-done .disc img.done { animation: hop .9s ease-in-out infinite; transform-origin: 50% 90%; }
+  @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4%); } 60% { transform: translateY(-4%) rotate(-1deg); } }
+
+  .time {
+    font: 800 clamp(52px, 15vw, 76px)/1 "M PLUS Rounded 1c", sans-serif;
+    font-variant-numeric: tabular-nums; letter-spacing: .02em; margin-top: 12px;
+  }
+  .time.small { font-size: clamp(40px, 11vw, 60px); }
+  .msg { color: var(--muted); min-height: 1.6em; margin: 6px 0 20px; text-align: center; }
+
+  /* ---- 設定 ---- */
+  .setup { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; transition: opacity .3s; }
+  body:not(.state-idle) .setup { opacity: .35; pointer-events: none; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .chip {
+    height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--chip); color: var(--ink);
+    font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .chip.on { background: var(--chip-on); color: var(--bg); }
+  .custom { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+  .custom input {
+    width: 64px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: transparent;
+    color: var(--ink); font: 800 20px "M PLUS Rounded 1c", sans-serif; text-align: center; outline: none;
+  }
+  .custom input:focus { border-color: var(--mint); }
+  .custom input::-webkit-inner-spin-button { opacity: .4; }
+
+  /* ---- 操作 ---- */
+  .controls { display: flex; gap: 12px; margin-top: 24px; }
+  .btn {
+    height: 56px; min-width: 150px; padding: 0 28px; border-radius: 999px; border: 0; cursor: pointer;
+    font: 700 18px "Zen Maru Gothic", sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-main { background: var(--btn); color: var(--btn-ink); box-shadow: 0 6px 18px rgba(74, 59, 51, .18); }
+  body.state-done .btn-main { background: var(--orange); color: #fff; }
+  .btn-sub { background: transparent; color: var(--ink); border: 1.5px solid var(--line); min-width: 110px; }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible, .chip:focus-visible, .icon-btn:focus-visible { outline: 3px solid var(--mint); outline-offset: 2px; }
+
+  .keys { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
+  kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+
+  @media (max-width: 420px) {
+    .btn { min-width: 0; flex: 1; padding: 0 16px; }
+    .controls { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .disc img { animation: none !important; transition: none; }
+  }
+</style>
+</head>
+<body class="state-idle">
+<main>
+  <header>
+    <h1>ねこの<span>おひるね</span>タイマー</h1>
+    <button class="icon-btn" id="soundBtn" aria-label="音のオン・オフ" title="音のオン・オフ"></button>
+  </header>
+
+  <div class="stage">
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="track" cx="50" cy="50" r="45"/>
+      <circle class="bar" id="bar" cx="50" cy="50" r="45" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="0"/>
+    </svg>
+    <div class="disc">
+      <img class="awake show" src="img/cat-awake.webp" alt="懐中時計を持った三毛猫">
+      <img class="sleep" src="img/cat-sleep.webp" alt="クッションで眠る三毛猫">
+      <img class="done" src="img/cat-done.webp" alt="跳びはねて知らせる三毛猫">
+    </div>
+  </div>
+
+  <div class="time" id="time" role="timer" aria-live="off">05:00</div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+
+  <section class="setup" aria-label="時間の設定">
+    <div class="chips" id="chips"></div>
+    <div class="custom">
+      <input id="min" type="number" min="0" max="999" inputmode="numeric" aria-label="分"> 分
+      <input id="sec" type="number" min="0" max="59" inputmode="numeric" aria-label="秒"> 秒
+    </div>
+  </section>
+
+  <div class="controls">
+    <button class="btn btn-sub" id="resetBtn">リセット</button>
+    <button class="btn btn-main" id="mainBtn">スタート</button>
+  </div>
+
+  <p class="keys"><kbd>Space</kbd> スタート／一時停止　<kbd>R</kbd> リセット</p>
+</main>
+
+<script>
+const PRESETS = [1, 3, 5, 10, 15, 25, 30]; // 分
+const MESSAGES = {
+  idle: 'おひるねの時間をセットしてにゃ',
+  running: 'すやすや… 時間になったら起こすにゃ',
+  paused: 'うとうと… ひとやすみ中',
+  done: '時間だにゃ！',
+};
+
+const $ = (id) => document.getElementById(id);
+const timeEl = $('time'), msgEl = $('msg'), bar = $('bar');
+const minEl = $('min'), secEl = $('sec');
+const imgs = { awake: document.querySelector('.awake'), sleep: document.querySelector('.sleep'), done: document.querySelector('.done') };
+
+let state = 'idle';
+let total = load('neko-total', 300) * 1000; // ミリ秒
+let endAt = 0;          // 実行中：終わる時刻
+let remaining = total;  // 一時停止中・待機中の残り
+let soundOn = load('neko-sound', 1) === 1;
+let alarmTimer = null;
+let titleTimer = null;
+
+// ---------- 保存 ----------
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v === null ? fallback : Number(v); } catch { return fallback; }
+}
+function save(key, v) { try { localStorage.setItem(key, String(v)); } catch {} }
+
+// ---------- 表示 ----------
+function fmt(ms) {
+  const s = Math.ceil(ms / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}
+
+function render() {
+  const left = state === 'running' ? Math.max(0, endAt - Date.now()) : remaining;
+  const text = fmt(left);
+  timeEl.textContent = text;
+  timeEl.classList.toggle('small', text.length > 5);
+  const ratio = total ? left / total : 0;
+  bar.setAttribute('stroke-dashoffset', String(1000 * (1 - ratio)));
+  if (state === 'running') document.title = `${text} すやすや… | ねこタイマー`;
+  else if (state === 'paused') document.title = `${text} ひとやすみ | ねこタイマー`;
+  else if (state !== 'done') document.title = 'ねこのおひるねタイマー';
+}
+
+function setState(s) {
+  state = s;
+  document.body.className = `state-${s}`;
+  msgEl.textContent = MESSAGES[s];
+  const face = s === 'idle' ? 'awake' : s === 'done' ? 'done' : 'sleep';
+  for (const [k, el] of Object.entries(imgs)) el.classList.toggle('show', k === face);
+  $('mainBtn').textContent = { idle: 'スタート', running: '一時停止', paused: '再開', done: 'おはよう！' }[s];
+  render();
+}
+
+function renderChips() {
+  const totalMin = total / 60000;
+  $('chips').replaceChildren(...PRESETS.map((m) => {
+    const b = document.createElement('button');
+    b.className = `chip${m === totalMin ? ' on' : ''}`;
+    b.textContent = `${m}分`;
+    b.onclick = () => setTotal(m * 60);
+    return b;
+  }));
+  minEl.value = Math.floor(total / 60000);
+  secEl.value = Math.floor((total % 60000) / 1000);
+}
+
+function setTotal(seconds) {
+  seconds = Math.max(1, Math.min(999 * 60 + 59, Math.round(seconds)));
+  total = remaining = seconds * 1000;
+  save('neko-total', seconds);
+  renderChips();
+  render();
+}
+
+// ---------- タイマー ----------
+function start() {
+  unlockAudio();
+  if (state === 'idle') remaining = total;
+  endAt = Date.now() + remaining;
+  setState('running');
+}
+
+function pause() {
+  remaining = Math.max(0, endAt - Date.now());
+  setState('paused');
+}
+
+function reset() {
+  stopAlarm();
+  remaining = total;
+  setState('idle');
+}
+
+function finish() {
+  remaining = 0;
+  setState('done');
+  startAlarm();
+}
+
+function tick() {
+  if (state === 'running') {
+    if (Date.now() >= endAt) finish();
+    else render();
+  }
+}
+setInterval(tick, 200); // バックグラウンドのタブでも終わりを拾う
+(function loop() { tick(); requestAnimationFrame(loop); })();
+
+$('mainBtn').onclick = () => {
+  if (state === 'idle' || state === 'paused') start();
+  else if (state === 'running') pause();
+  else reset();
+};
+$('resetBtn').onclick = reset;
+
+function readCustom() {
+  const m = Math.max(0, Number(minEl.value) || 0);
+  const s = Math.max(0, Math.min(59, Number(secEl.value) || 0));
+  setTotal(m * 60 + s);
+}
+minEl.addEventListener('change', readCustom);
+secEl.addEventListener('change', readCustom);
+
+window.addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement) {
+    if (e.key === 'Enter') e.target.blur();
+    return;
+  }
+  if (e.code === 'Space') { e.preventDefault(); $('mainBtn').click(); }
+  else if (e.key === 'r' || e.key === 'R') reset();
+  else if (e.key === 'Escape' && state === 'done') reset();
+});
+
+// ---------- 音（WebAudioで鳴き声っぽいチャイムを作る） ----------
+let ac = null;
+function unlockAudio() {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+  } catch {}
+}
+
+function meow(t) {
+  // 「にゃー」っぽく上がって下がる音
+  const o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
+  o.type = 'sawtooth';
+  f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 1.2;
+  o.frequency.setValueAtTime(520, t);
+  o.frequency.exponentialRampToValueAtTime(880, t + 0.12);
+  o.frequency.exponentialRampToValueAtTime(600, t + 0.45);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.35, t + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  o.connect(f).connect(g).connect(ac.destination);
+  o.start(t); o.stop(t + 0.55);
+}
+
+function bell(t, freq) {
+  // 懐中時計のチャイム
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+  o.connect(g).connect(ac.destination);
+  o.start(t); o.stop(t + 1);
+}
+
+function chime() {
+  if (!soundOn || !ac) return;
+  const t = ac.currentTime + 0.02;
+  bell(t, 1318.5); bell(t + 0.18, 1568); bell(t + 0.36, 2093);
+  meow(t + 0.75);
+}
+
+function startAlarm() {
+  stopAlarm();
+  let count = 0;
+  chime();
+  alarmTimer = setInterval(() => { if (++count >= 15) stopAlarm(); else chime(); }, 1800); // 約30秒で止まる
+  let flip = false;
+  titleTimer = setInterval(() => { document.title = (flip = !flip) ? '🐱 時間だにゃ！' : '⏰ おきて〜'; }, 800);
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
+function stopAlarm() {
+  clearInterval(alarmTimer); alarmTimer = null;
+  clearInterval(titleTimer); titleTimer = null;
+}
+
+function renderSoundBtn() {
+  $('soundBtn').innerHTML = soundOn
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>';
+  $('soundBtn').setAttribute('aria-pressed', String(soundOn));
+}
+$('soundBtn').onclick = () => {
+  soundOn = !soundOn;
+  save('neko-sound', soundOn ? 1 : 0);
+  renderSoundBtn();
+  if (soundOn) { unlockAudio(); chime(); }
+};
+
+// ---------- 起動 ----------
+renderSoundBtn();
+renderChips();
+setState('idle');
+</script>
+</body>
+</html>
